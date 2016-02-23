@@ -1,29 +1,35 @@
 #include <iostream>
 #include <sstream>
-// #include <stdlib>
 #include <string>
 #include <vector>
 
+// #include <TROOT.h>
+// #include <TInterpreter.h>
 #include <TFile.h>
-#include <TTreeReader.h>
-#include <TTreeReaderValue.h>
-#include <TTreeReaderArray.h>
+#include <TTree.h>
+// #include <TTreeReader.h>
+// #include <TTreeReaderValue.h>
+// #include <TTreeReaderArray.h>
+#include <TTreeProxyGenerator.h>
+#include <TBranchProxyDescriptor.h>
+#include <TBranchProxyClassDescriptor.h>
 
 #include <avro.h>
 
 #define NA ((uint64_t)(-1))
 
-using namespace ROOT::Internal;   // for TTreeReaderValueBase
+using namespace ROOT::Internal;
 
 // global variables for this tiny, single-threaded program (parallelism comes from multiple processes)
 std::vector<std::string> fileLocations;
 std::string              treeLocation;
 uint64_t                 start = NA;
 uint64_t                 end = NA;
-std::vector<std::string> exclude;
-std::vector<std::string> only;
-
+// std::vector<std::string> exclude;     // replace these with some ROOT selector string, if possible
+// std::vector<std::string> only;
+bool                     schemaOnly = false;
 std::string              codec("null");
+
 avro_schema_t            schema;
 avro_schema_error_t      schemaError;
 bool                     schemaDefined = false;
@@ -39,25 +45,26 @@ void help() {
             << "Options:" << std::endl
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
-            << "  --exclude=FIELDS       Comma-delimited field (leaf) names to exclude, if any." << std::endl
-            << "  --only=FIELDS          Comma-delimited field (leaf) names to restrict to, if provided." << std::endl
+            // << "  --exclude=FIELDS       Comma-delimited field (leaf) names to exclude, if any." << std::endl
+            // << "  --only=FIELDS          Comma-delimited field (leaf) names to restrict to, if provided." << std::endl
+            << "  --schema               Output the schema only (JSON), rather than data (Avro)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
 }
 
-std::vector<std::string> splitByComma(std::string in) {
-  std::vector<std::string> out;
-  std::stringstream ss(in);
-  std::string item;
-  while (std::getline(ss, item, ','))
-    out.push_back(item);
-  return out;
-}
+// std::vector<std::string> splitByComma(std::string in) {
+//   std::vector<std::string> out;
+//   std::stringstream ss(in);
+//   std::string item;
+//   while (std::getline(ss, item, ','))
+//     out.push_back(item);
+//   return out;
+// }
 
 int main(int argc, char **argv) {
   // no, I don't care about the inefficiency of creating and recreating strings; this is not an important loop
-  for (int i = 0;  i < argc;  i++) {
+  for (int i = 1;  i < argc;  i++) {
     if (std::string(argv[i]) == std::string("-h")  ||
         std::string(argv[i]) == std::string("-help")  ||
         std::string(argv[i]) == std::string("--help")) {
@@ -68,13 +75,13 @@ int main(int argc, char **argv) {
 
   std::string startPrefix("--start=");
   std::string endPrefix("--end=");
-  std::string excludePrefix("--exclude=");
-  std::string onlyPrefix("--only=");
+  // std::string excludePrefix("--exclude=");
+  // std::string onlyPrefix("--only=");
   std::string codecPrefix("--codec=");
   std::string badPrefix("-");
 
   // nor is this an important loop
-  for (int i = 0;  i < argc;  i++) {
+  for (int i = 1;  i < argc;  i++) {
     std::string arg(argv[i]);
 
     if (arg.substr(0, startPrefix.size()) == startPrefix) {
@@ -87,17 +94,20 @@ int main(int argc, char **argv) {
       end = strtoul(value.c_str(), nullptr, 10);
     }
 
-    else if (arg.substr(0, excludePrefix.size()) == excludePrefix)
-      exclude = splitByComma(arg.substr(excludePrefix.size(), arg.size()));
+    // else if (arg.substr(0, excludePrefix.size()) == excludePrefix)
+    //   exclude = splitByComma(arg.substr(excludePrefix.size(), arg.size()));
 
-    else if (arg.substr(0, onlyPrefix.size()) == onlyPrefix)
-      only = splitByComma(arg.substr(onlyPrefix.size(), arg.size()));
+    // else if (arg.substr(0, onlyPrefix.size()) == onlyPrefix)
+    //   only = splitByComma(arg.substr(onlyPrefix.size(), arg.size()));
+
+    else if (arg == std::string("--schema"))
+      schemaOnly = true;
 
     else if (arg.substr(0, codecPrefix.size()) == codecPrefix)
       codec = arg.substr(codecPrefix.size(), arg.size());
 
     else if (arg.substr(0, badPrefix.size()) == badPrefix) {
-      std::cerr << "Recognized switches are: --start, --end, --exclude, --only, --codec." << std::endl;
+      std::cerr << "Recognized switches are: --start, --end, --schema, --codec." << std::endl;
       return -1;
     }
 
@@ -117,58 +127,106 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
+  TFile *file = TFile::Open(fileLocations[0].c_str());
+  TTree *tree;
+  file->GetObject(treeLocation.c_str(), tree);
 
-  if (avro_schema_from_json(schemastr.c_str(), schemastr.size(), &schema, &schemaError) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
-  }
-  schemaDefined = true;
+  std::string empty;
+  TTreeProxyGenerator *generator = new TTreeProxyGenerator(tree, empty.c_str(), empty.c_str(), empty.c_str(), (uint32_t)(-1));
 
-  avroInterface = avro_generic_class_from_schema(schema);
-  if (avroInterface == nullptr) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
-  }
-
-  if (avro_generic_value_new(avroInterface, &avroValue) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
+  if (true) {
+    std::cout << "Forwards:" << std::endl;
+    TIter next(&generator->fListOfForwards);
+    for (TObject *current = next();  current != nullptr;  current = next()) {
+      std::cout << "    " << current->GetTitle();
+    }
+    std::cout << std::endl;
   }
 
-  avro_value_t one;
-  avro_value_t two;
-  avro_value_t three;
-
-  if (avro_value_get_by_name(&avroValue, "one", &one, nullptr) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
+  if (true) {
+    std::cout << "Headers:" << std::endl;
+    TIter next(&generator->fListOfHeaders);
+    for (TObject *header = next();  header != nullptr;  header = next()) {
+      std::cout << "    " << header->GetTitle();
+    }
+    std::cout << std::endl;
   }
 
-  if (avro_value_get_by_name(&avroValue, "two", &two, nullptr) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
+  if (true) {
+    std::cout << "Top proxies:" << std::endl;
+    TIter next(&generator->fListOfTopProxies);
+    for (TBranchProxyDescriptor *data = (TBranchProxyDescriptor*)next();  data != nullptr;  data = (TBranchProxyDescriptor*)next()) {
+      std::cout << "    " << data->GetDataName() << "\t\t" << data->GetTypeName() << "\t\t" << data->GetBranchName() << std::endl;
+    }
+    std::cout << std::endl;
   }
 
-  if (avro_value_get_by_name(&avroValue, "three", &three, nullptr) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
+  if (true) {
+    std::cout << "Wrappers for classes:" << std::endl;
+    TIter next(&generator->fListOfClasses);
+    for (TBranchProxyClassDescriptor *clp = (TBranchProxyClassDescriptor*)next();  clp != nullptr;  clp = (TBranchProxyClassDescriptor*)next()) {
+      std::cout << "    " << clp->GetBranchName() << "\t\t" << clp->GetSubBranchPrefix() << "\t\t" << clp->GetRawSymbol() << "\t\t" << clp->IsClones() << " " << clp->IsSTL() << " " << clp->GetContainerName() << std::endl;
+    }
   }
 
-  std::string path;
-  if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), 0) != 0) {
-    std::cerr << avro_strerror() << std::endl;
-    return -1;
-  }
 
-  for (int i = 0;  i < 10;  i++) {
-    avro_value_set_int(&one, i);
-    avro_value_set_double(&two, i + i/10.0);
-    avro_value_set_string(&three, std::to_string(i).c_str());
-    avro_file_writer_append_value(avroWriter, &avroValue);
-  }
 
-  avro_file_writer_close(avroWriter);
+  // std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
+
+  // if (avro_schema_from_json(schemastr.c_str(), schemastr.size(), &schema, &schemaError) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+  // schemaDefined = true;
+
+  // avroInterface = avro_generic_class_from_schema(schema);
+  // if (avroInterface == nullptr) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // if (avro_generic_value_new(avroInterface, &avroValue) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // avro_value_t one;
+  // avro_value_t two;
+  // avro_value_t three;
+
+  // if (avro_value_get_by_name(&avroValue, "one", &one, nullptr) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // if (avro_value_get_by_name(&avroValue, "two", &two, nullptr) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // if (avro_value_get_by_name(&avroValue, "three", &three, nullptr) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // std::string path;
+  // if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), 0) != 0) {
+  //   std::cerr << avro_strerror() << std::endl;
+  //   return -1;
+  // }
+
+  // for (int i = 0;  i < 10;  i++) {
+  //   avro_value_set_int(&one, i);
+  //   avro_value_set_double(&two, i + i/10.0);
+  //   avro_value_set_string(&three, std::to_string(i).c_str());
+  //   avro_file_writer_append_value(avroWriter, &avroValue);
+  // }
+
+  // avro_file_writer_close(avroWriter);
+
+
+
+
   
   // uint64_t entry = 0;
   // for (int i = 0;  i < fileLocations.size();  i++) {
@@ -181,30 +239,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
-
-
-
-// int64_t newFile(const char *fileLocation) {
-//   return (int64_t)TFile::Open(fileLocation);
-// }
-
-// int64_t newReader(int64_t file, const char *treeLocation) {
-//   TFile *p_file = (TFile*)file;
-//   return (int64_t)(new TTreeReader(treeLocation, p_file));
-// }
-
-// bool readerNext(int64_t reader) {
-//   TTreeReader *p_reader = (TTreeReader*)reader;
-//   return p_reader->Next();
-// }
-
-// int64_t newValue_float(int64_t reader, const char *name) {
-//   TTreeReader *p_reader = (TTreeReader*)reader;
-//   return (int64_t)(new TTreeReaderValue<float>(*p_reader, name));
-// }
-
-// float getValue_float(int64_t value) {
-//   TTreeReaderValueBase *p_value = (TTreeReaderValueBase*)value;
-//   return *((float*)p_value->GetAddress());
-// }
