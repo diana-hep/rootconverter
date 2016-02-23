@@ -10,9 +10,8 @@
 // #include <TTreeReader.h>
 // #include <TTreeReaderValue.h>
 // #include <TTreeReaderArray.h>
-#include <TTreeProxyGenerator.h>
-#include <TBranchProxyDescriptor.h>
-#include <TBranchProxyClassDescriptor.h>
+#include "TTreeAvroGenerator.h"
+#include <TTreeReaderGenerator.h>
 
 #include <avro.h>
 
@@ -132,42 +131,11 @@ int main(int argc, char **argv) {
   file->GetObject(treeLocation.c_str(), tree);
 
   std::string empty;
-  TTreeProxyGenerator *generator = new TTreeProxyGenerator(tree, empty.c_str(), empty.c_str(), empty.c_str(), (uint32_t)(-1));
+  TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree, empty.c_str());
 
-  if (true) {
-    std::cout << "Forwards:" << std::endl;
-    TIter next(&generator->fListOfForwards);
-    for (TObject *current = next();  current != nullptr;  current = next()) {
-      std::cout << "    " << current->GetTitle();
-    }
-    std::cout << std::endl;
-  }
 
-  if (true) {
-    std::cout << "Headers:" << std::endl;
-    TIter next(&generator->fListOfHeaders);
-    for (TObject *header = next();  header != nullptr;  header = next()) {
-      std::cout << "    " << header->GetTitle();
-    }
-    std::cout << std::endl;
-  }
 
-  if (true) {
-    std::cout << "Top proxies:" << std::endl;
-    TIter next(&generator->fListOfTopProxies);
-    for (TBranchProxyDescriptor *data = (TBranchProxyDescriptor*)next();  data != nullptr;  data = (TBranchProxyDescriptor*)next()) {
-      std::cout << "    " << data->GetDataName() << "\t\t" << data->GetTypeName() << "\t\t" << data->GetBranchName() << std::endl;
-    }
-    std::cout << std::endl;
-  }
 
-  if (true) {
-    std::cout << "Wrappers for classes:" << std::endl;
-    TIter next(&generator->fListOfClasses);
-    for (TBranchProxyClassDescriptor *clp = (TBranchProxyClassDescriptor*)next();  clp != nullptr;  clp = (TBranchProxyClassDescriptor*)next()) {
-      std::cout << "    " << clp->GetBranchName() << "\t\t" << clp->GetSubBranchPrefix() << "\t\t" << clp->GetRawSymbol() << "\t\t" << clp->IsClones() << " " << clp->IsSTL() << " " << clp->GetContainerName() << std::endl;
-    }
-  }
 
 
 
