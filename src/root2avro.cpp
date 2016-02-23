@@ -9,20 +9,40 @@
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
 
+#include <avro.h>
+
 #define NA ((uint64_t)(-1))
 
 using namespace ROOT::Internal;   // for TTreeReaderValueBase
 
+// global variables for this tiny, single-threaded program (parallelism comes from multiple processes)
+std::vector<std::string> fileLocations;
+std::string              treeLocation;
+uint64_t                 start = NA;
+uint64_t                 end = NA;
+std::vector<std::string> exclude;
+std::vector<std::string> only;
+
+std::string              codec("null");
+avro_schema_t            schema;
+avro_schema_error_t      schemaError;
+bool                     schemaDefined = false;
+avro_file_writer_t       avroWriter;
+avro_value_iface_t       *avroInterface;
+avro_value_t             avroValue;
+
 void help() {
-  std::cout << "Usage: root2avro fileLocation1, [fileLocation2, [...]], treeLocation" << std::endl << std::endl
-            << "Where fileLocationN are either file paths or URLs TFile::Open can handle" << std::endl
-            << "and treeLocation is the path of a TTree in all the files." << std::endl << std::endl
+  std::cerr << "Usage: root2avro fileLocation1, [fileLocation2, [...]], treeLocation" << std::endl << std::endl
+            << "Where fileLocationN are either file paths or URLs TFile::Open can handle and treeLocation is the path of the" << std::endl
+            << "TTree in all the files." << std::endl << std::endl
             << "Avro is streamed to standard output and can be redirected to a file." << std::endl << std::endl
             << "Options:" << std::endl
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
             << "  --exclude=FIELDS       Comma-delimited field (leaf) names to exclude, if any." << std::endl
             << "  --only=FIELDS          Comma-delimited field (leaf) names to restrict to, if provided." << std::endl
+            << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
+            << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
 }
 
@@ -36,13 +56,6 @@ std::vector<std::string> splitByComma(std::string in) {
 }
 
 int main(int argc, char **argv) {
-  std::vector<std::string> fileLocations;
-  std::string treeLocation;
-  uint64_t start = NA;
-  uint64_t end = NA;
-  std::vector<std::string> exclude;
-  std::vector<std::string> only;
-
   // no, I don't care about the inefficiency of creating and recreating strings; this is not an important loop
   for (int i = 0;  i < argc;  i++) {
     if (std::string(argv[i]) == std::string("-h")  ||
@@ -57,6 +70,7 @@ int main(int argc, char **argv) {
   std::string endPrefix("--end=");
   std::string excludePrefix("--exclude=");
   std::string onlyPrefix("--only=");
+  std::string codecPrefix("--codec=");
   std::string badPrefix("-");
 
   // nor is this an important loop
@@ -79,8 +93,11 @@ int main(int argc, char **argv) {
     else if (arg.substr(0, onlyPrefix.size()) == onlyPrefix)
       only = splitByComma(arg.substr(onlyPrefix.size(), arg.size()));
 
+    else if (arg.substr(0, codecPrefix.size()) == codecPrefix)
+      codec = arg.substr(codecPrefix.size(), arg.size());
+
     else if (arg.substr(0, badPrefix.size()) == badPrefix) {
-      std::cerr << "Only recognized switches are --start, --end, --exclude, and --only." << std::endl;
+      std::cerr << "Recognized switches are: --start, --end, --exclude, --only, --codec." << std::endl;
       return -1;
     }
 
@@ -100,16 +117,67 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  std::cout << "HERE" << std::endl;
-  for (int i = 0;  i < fileLocations.size();  i++)
-    std::cout << "fileLocations " << fileLocations[i] << std::endl;
-  std::cout << "treeLocation " << treeLocation << std::endl;
-  std::cout << "start " << start << " NA is " << NA << std::endl;
-  std::cout << "end " << end << " NA is " << NA << std::endl;
-  for (int i = 0;  i < exclude.size();  i++)
-    std::cout << "exclude " << exclude[i] << std::endl;
-  for (int i = 0;  i < only.size();  i++)
-    std::cout << "only " << only[i] << std::endl;
+  std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
+
+  if (avro_schema_from_json(schemastr.c_str(), schemastr.size(), &schema, &schemaError) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+  schemaDefined = true;
+
+  avroInterface = avro_generic_class_from_schema(schema);
+  if (avroInterface == nullptr) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  if (avro_generic_value_new(avroInterface, &avroValue) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  avro_value_t one;
+  avro_value_t two;
+  avro_value_t three;
+
+  if (avro_value_get_by_name(&avroValue, "one", &one, nullptr) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  if (avro_value_get_by_name(&avroValue, "two", &two, nullptr) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  if (avro_value_get_by_name(&avroValue, "three", &three, nullptr) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  std::string path;
+  if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), 0) != 0) {
+    std::cerr << avro_strerror() << std::endl;
+    return -1;
+  }
+
+  for (int i = 0;  i < 10;  i++) {
+    avro_value_set_int(&one, i);
+    avro_value_set_double(&two, i + i/10.0);
+    avro_value_set_string(&three, std::to_string(i).c_str());
+    avro_file_writer_append_value(avroWriter, &avroValue);
+  }
+
+  avro_file_writer_close(avroWriter);
+  
+  // uint64_t entry = 0;
+  // for (int i = 0;  i < fileLocations.size();  i++) {
+  //   std::string message = convertFile(fileLocations[i], entry);
+  //   if (message != std::string("")) {
+  //     std::cerr << message << std::endl;
+  //     return -1;
+  //   }
+  // }
 
   return 0;
 }
