@@ -596,9 +596,90 @@ namespace ROOT {
               objInfo = branch->GetInfo();
             }
 
-            // TODO: use element->IsBase()
+            if (element->IsBase()) {
+              isBase = true;
+              prefix  = "base";
 
-            if (true) {
+              if (cl == TObject::Class() && info->GetClass()->CanIgnoreTObjectStreamer())
+                {
+                  continue;
+                }
+
+              TBranchProxyClassDescriptor *cldesc = 0;
+
+              if (branchEndname == element->GetName()) {
+                // We have a proper node for the base class, recurse
+
+                if (branch->GetListOfBranches()->GetEntries() == 0) {
+                  // The branch contains a non-split base class that we are unfolding!
+
+                  // See AnalyzeTree for similar code!
+                  TBranchProxyClassDescriptor *local_cldesc = 0;
+
+                  TVirtualStreamerInfo *binfo = branch->GetInfo();
+                  if (strcmp(cl->GetName(),binfo->GetName())!=0) {
+                    binfo = cl->GetStreamerInfo(); // might be the wrong version
+                  }
+                  local_cldesc = new TBranchProxyClassDescriptor(cl->GetName(), binfo,
+                                                                 branch->GetName(),
+                                                                 isclones, 0 /* unsplit object */,
+                                                                 containerName);
+
+                  TStreamerElement *elem = 0;
+
+                  TIter next(binfo->GetElements());
+                  // DON'T FOLLOW BASE
+                  // while( (elem = (TStreamerElement*)next()) ) {
+                  //   AnalyzeElement(branch,elem,level+1,local_cldesc,"");
+                  // }
+                  if (NeedToEmulate(cl,0)) {
+                    proxyTypeName = local_cldesc->GetName();
+                    local_cldesc = AddClass(local_cldesc);
+                  }
+
+                } else {
+
+                  Int_t pos = branchname.Last('.');
+                  if (pos != -1) {
+                    branchname.Remove(pos);
+                  }
+                  TString local_prefix = topdesc ? topdesc->GetSubBranchPrefix() : parent->GetName();
+                  cldesc = new TBranchProxyClassDescriptor(cl->GetName(), objInfo,
+                                                           branchname,
+                                                           local_prefix,
+                                                           isclones, branch->GetSplitLevel(),
+                                                           containerName);
+                  // DON'T FOLLOW BASE
+                  // lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo);
+                }
+              } else {
+                // We do not have a proper node for the base class, we need to loop over
+                // the next branches
+                Int_t pos = branchname.Last('.');
+                if (pos != -1) {
+                  branchname.Remove(pos);
+                }
+                TString local_prefix = topdesc ? topdesc->GetSubBranchPrefix() : parent->GetName();
+                objInfo = GetBaseClass( element );
+                if (objInfo == 0) {
+                  // There is no data in this base class
+                  continue;
+                }
+                cl = objInfo->GetClass();
+                cldesc = new TBranchProxyClassDescriptor(cl->GetName(), objInfo,
+                                                         branchname,
+                                                         local_prefix,
+                                                         isclones, branch->GetSplitLevel(),
+                                                         containerName);
+                usedBranch = kFALSE;
+                // DON'T FOLLOW BASE
+                // lookedAt += AnalyzeBranches( level, cldesc, branches, objInfo );
+              }
+
+              TBranchProxyClassDescriptor *added = AddClass(cldesc);
+              if (added) proxyTypeName = added->GetName();
+
+            } else {
               TBranchProxyClassDescriptor *cldesc = 0;
 
               if (branchEndname == element->GetName()) {
@@ -690,7 +771,7 @@ namespace ROOT {
 
           for (int indent = 0;  indent < level;  indent++)
             std::cout << "    ";
-          std::cout << proxyTypeName << " " << element->GetName() << std::endl;
+          std::cout << proxyTypeName << " " << element->GetName() << (element->IsBase() ? " (base)" : "") << std::endl;
 
           TString dataMemberName = element->GetName();
           if (topdesc) {
@@ -1092,7 +1173,7 @@ namespace ROOT {
 
             for (int indent = 0;  indent < level;  indent++)
               std::cout << "    ";
-            std::cout << "HERE?" << std::endl;
+            std::cout << "???" << " " << branch->GetName() << std::endl;
 
             // TBranchProxyClassDescriptor *added = AddClass(cldesc);
             // if (added) type = added->GetName();
@@ -1259,7 +1340,7 @@ namespace ROOT {
 
       for (int indent = 0;  indent < level;  indent++)
         std::cout << "    ";
-      std::cout << type << " " << element->GetName() << std::endl;
+      std::cout << type << " " << element->GetName() << "?!?" << std::endl;
 
       dataMemberName = element->GetName();
 
