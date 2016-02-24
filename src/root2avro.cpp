@@ -136,8 +136,8 @@ int main(int argc, char **argv) {
 
   TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree);
 
-
-
+  std::cout << std::endl << "HEADER:" << std::endl;
+  std::cout << generator->generateHeader();
 
 
   // std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");

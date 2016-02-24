@@ -108,8 +108,12 @@ namespace ROOT {
       return cl!=0 && cl->TestBit(TClass::kIsEmulation);
     }
 
-    UInt_t TTreeAvroGenerator::AnalyzeBranches(UInt_t level,TBranchProxyClassDescriptor *topdesc,
-                                               TBranchElement *branch, TVirtualStreamerInfo *info)
+    UInt_t TTreeAvroGenerator::AnalyzeBranches(UInt_t level,
+                                               TBranchProxyClassDescriptor *topdesc,
+                                               TBranchElement *branch,
+                                               TVirtualStreamerInfo *info,
+                                               scaffold::Node **scaffoldArray,
+                                               int scaffoldItem)
     {
       // Analyze the sub-branch and populate the TTreeAvroGenerator or the topdesc with
       // its findings.
@@ -118,13 +122,15 @@ namespace ROOT {
 
       TIter branches( branch->GetListOfBranches() );
 
-      return AnalyzeBranches( level, topdesc, branches, info );
+      return AnalyzeBranches( level, topdesc, branches, info, scaffoldArray, scaffoldItem );
     }
 
     UInt_t TTreeAvroGenerator::AnalyzeBranches(UInt_t level,
                                                TBranchProxyClassDescriptor *topdesc,
                                                TIter &branches,
-                                               TVirtualStreamerInfo *info)
+                                               TVirtualStreamerInfo *info,
+                                               scaffold::Node **scaffoldArray,
+                                               int scaffoldItem)
     {
       // Analyze the list of sub branches of a TBranchElement by looping over
       // the streamer elements and create the appropriate class proxies.
@@ -474,7 +480,7 @@ namespace ROOT {
                                                            branch->GetName(),
                                                            isclones, branch->GetSplitLevel(),
                                                            containerName);
-                  lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo);
+                  lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem);
                 }
               } else {
                 // We do not have a proper node for the base class, we need to loop over
@@ -499,7 +505,7 @@ namespace ROOT {
                                                          containerName);
                 usedBranch = kFALSE;
                 skipped = kTRUE;
-                lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo );
+                lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem );
               }
             }
 
@@ -531,7 +537,10 @@ namespace ROOT {
       return lookedAt;
     }
 
-    UInt_t TTreeAvroGenerator::AnalyzeOldLeaf(TLeaf *leaf, UInt_t level)
+    UInt_t TTreeAvroGenerator::AnalyzeOldLeaf(TLeaf *leaf,
+                                              UInt_t level,
+                                              scaffold::Node **scaffoldArray,
+                                              int scaffoldItem)
     {
       // Analyze the leaf and populate the `TTreeAvroGenerator or
       // the topdesc with its findings.
@@ -542,8 +551,11 @@ namespace ROOT {
       }
 
       TString leafTypeName = leaf->GetTypeName();
-      Int_t pos = leafTypeName.Last('_');
-      if (pos!=-1) leafTypeName.Remove(pos);
+
+      //// Don't remove the _t
+      // Int_t pos = leafTypeName.Last('_');
+      // if (pos!=-1) leafTypeName.Remove(pos);
+      Int_t pos;
 
       // Int_t len = leaf->GetLen();
       // TLeaf *leafcount = leaf->GetLeafCount();
@@ -598,53 +610,35 @@ namespace ROOT {
       if (dim == 0 && leaf->IsA() == TLeafC::Class()) {
         // For C style strings.
         dim = 1;
+        maxDim.push_back(leaf->GetMaximum());
       }
 
-      TString type;
-      switch (dim) {
-      case 0: {
-        type = "T";
-        type += leafTypeName;
-        type += "Proxy";
-        break;
-      }
-      case 1: {
-        type = "TArray";
-        type += leafTypeName;
-        type += "Proxy";
-        break;
-      }
-      default: {
-        type = "TArrayProxy<";
-        for(Int_t ind = dim - 2; ind > 0; --ind) {
-          type += "TMultiArrayType<";
-        }
-        type += "TArrayType<";
-        type += leaf->GetTypeName();
-        type += ",";
-        type += maxDim[dim-1];
-        type += "> ";
-        for(Int_t ind = dim - 2; ind > 0; --ind) {
-          type += ",";
-          type += maxDim[ind];
-          type += "> ";
-        }
-        type += ">";
-        break;
-      }
-      }
 
       TString branchName = leaf->GetBranch()->GetName();
       TString dataMemberName = leaf->GetName();
 
-      std::cout << type << " " << dataMemberName << std::endl;
+      if (dim == 0  &&  leaf->IsA() == TLeafC::Class()) {
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderStringNode(std::string(dataMemberName));
+      }
+      else if (dim == 0) {
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName));
+      }
+      else if (dim == 1) {
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName));
+      }
+      else {
+        std::cout << "BARF" << std::endl;
+      }
+      std::cout << scaffoldArray[scaffoldItem]->generateHeader(level * 4);
 
       return 0;
-
     }
 
-    UInt_t TTreeAvroGenerator::AnalyzeOldBranch(TBranch *branch, UInt_t level,
-                                                TBranchProxyClassDescriptor *topdesc)
+    UInt_t TTreeAvroGenerator::AnalyzeOldBranch(TBranch *branch,
+                                                UInt_t level,
+                                                TBranchProxyClassDescriptor *topdesc,
+                                                scaffold::Node **scaffoldArray,
+                                                int scaffoldItem)
     {
       // Analyze the branch and populate the TTreeAvroGenerator or the topdesc with
       // its findings.  Sometimes several branch of the mom are also analyzed,
@@ -665,12 +659,12 @@ namespace ROOT {
         TString type = "unknown";
         for(int l=0;l<nleaves;l++) {
           TLeaf *leaf = (TLeaf*)leaves->UncheckedAt(l);
-          extraLookedAt += AnalyzeOldLeaf(leaf,level+1);
+          extraLookedAt += AnalyzeOldLeaf(leaf, level + 1, scaffoldArray, scaffoldItem);
         }
         TString dataMemberName = branchName;
       } else {
         TLeaf *leaf = (TLeaf*)leaves->UncheckedAt(0);
-        extraLookedAt += AnalyzeOldLeaf(leaf,level);
+        extraLookedAt += AnalyzeOldLeaf(leaf, level, scaffoldArray, scaffoldItem);
       }
 
       return extraLookedAt;
@@ -682,6 +676,10 @@ namespace ROOT {
       // Analyze a TTree and its (potential) friends.
 
       std::cout << tree->GetListOfBranches()->GetEntries() << std::endl;
+
+      this->scaffoldSize = tree->GetListOfBranches()->GetEntries();
+      this->scaffold = scaffold::newArray(this->scaffoldSize);
+      int scaffoldItem = 0;
 
       TIter next( tree->GetListOfBranches() );
       TBranch *branch;
@@ -776,7 +774,7 @@ namespace ROOT {
             }
           } else {
             // We have a top level raw type.
-            AnalyzeOldBranch(branch, 0, 0);
+            AnalyzeOldBranch(branch, 0, 0, this->scaffold, scaffoldItem);
           }
 
         } else {
@@ -784,7 +782,7 @@ namespace ROOT {
 
           TIter subnext( branch->GetListOfBranches() );
           if (desc) {
-            AnalyzeBranches(1,desc,dynamic_cast<TBranchElement*>(branch),info);
+            AnalyzeBranches(1, desc, dynamic_cast<TBranchElement*>(branch), info, this->scaffold, scaffoldItem);
           }
           if (desc) {
             type = desc->GetName();
@@ -793,6 +791,8 @@ namespace ROOT {
           std::cout << classname << " " << branchname << std::endl;
 
         } // if split or non split
+
+        scaffoldItem += 1;
       }
     }
 

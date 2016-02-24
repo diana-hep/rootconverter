@@ -1,6 +1,7 @@
 #ifndef ROOT_TTreeAvroGenerator
 #define ROOT_TTreeAvroGenerator
 
+#include "scaffold.h"
 #include "TTreeGeneratorBase.h"
 
 class TBranch;
@@ -20,12 +21,16 @@ namespace ROOT {
       enum EContainer { kNone, kClones, kSTL };
       TTreeAvroGenerator(TTree* tree);
 
+      int scaffoldSize;
+      scaffold::Node **scaffold;
+      std::string generateHeader() { return scaffold::generateHeader(scaffold, scaffoldSize); }
+
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 
-      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TBranchElement *branch, TVirtualStreamerInfo *info = 0);
-      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TIter &branches, TVirtualStreamerInfo *info);
-      UInt_t AnalyzeOldBranch(TBranch *branch, UInt_t level, TBranchProxyClassDescriptor *desc);
-      UInt_t AnalyzeOldLeaf(TLeaf *leaf, UInt_t level);
+      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TBranchElement *branch, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem);
+      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TIter &branches, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem);
+      UInt_t AnalyzeOldBranch(TBranch *branch, UInt_t level, TBranchProxyClassDescriptor *desc, scaffold::Node **scaffoldArray, int scaffoldItem);
+      UInt_t AnalyzeOldLeaf(TLeaf *leaf, UInt_t level, scaffold::Node **scaffoldArray, int scaffoldItem);
       void   AnalyzeTree(TTree *tree);
     };
   }
