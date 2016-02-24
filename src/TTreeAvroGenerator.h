@@ -25,6 +25,7 @@ namespace ROOT {
       scaffold::Node **scaffold;
       std::string header() { return scaffold::header(scaffold, scaffoldSize); }
       std::string init() { return scaffold::init(scaffold, scaffoldSize); }
+      std::string loop() { return scaffold::loop(scaffold, scaffoldSize); }
 
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 

@@ -142,6 +142,9 @@ int main(int argc, char **argv) {
   std::cout << std::endl << "INIT:" << std::endl;
   std::cout << generator->init();
 
+  std::cout << std::endl << "LOOP:" << std::endl;
+  std::cout << generator->loop();
+
 
   // std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
 

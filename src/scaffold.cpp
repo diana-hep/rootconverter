@@ -20,3 +20,10 @@ std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize) {
     out += scaffoldArray[i]->init(2);
   return out;
 }
+
+std::string scaffold::loop(scaffold::Node **scaffoldArray, int scaffoldSize) {
+  std::string out;
+  for (int i = 0;  i < scaffoldSize;  i++)
+    out += scaffoldArray[i]->loop(2);
+  return out;
+}
