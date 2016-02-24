@@ -9,14 +9,14 @@ class TLeaf;
 class TStreamerElement;
 
 namespace ROOT {
-namespace Internal {
-   class TFriendProxyDescriptor;
-   class TBranchProxyDescriptor;
-   class TBranchProxyClassDescriptor;
+  namespace Internal {
+    class TFriendProxyDescriptor;
+    class TBranchProxyDescriptor;
+    class TBranchProxyClassDescriptor;
 
-   class TTreeAvroGenerator : public TTreeGeneratorBase
-   {
-   public:
+    class TTreeAvroGenerator : public TTreeGeneratorBase
+    {
+    public:
       enum EContainer { kNone, kClones, kSTL };
       enum EOption { kNoOption, kNoHist };
       UInt_t   fMaxDatamemberType;
@@ -32,8 +32,6 @@ namespace Internal {
       TList   *fCurrentListOfTopProxies; //!
       TList    fListOfForwards;
       TTreeAvroGenerator(TTree* tree, const char *option);
-
-     void AddHeader(TClass *cl);
 
       TBranchProxyClassDescriptor* AddClass(TBranchProxyClassDescriptor *desc);
       void AddDescriptor(TBranchProxyDescriptor *desc);
@@ -54,12 +52,10 @@ namespace Internal {
       UInt_t AnalyzeOldLeaf(TLeaf *leaf, UInt_t level, TBranchProxyClassDescriptor *topdesc);
       void   AnalyzeElement(TBranch *branch, TStreamerElement *element, UInt_t level, TBranchProxyClassDescriptor *desc, const char* path);
       void   AnalyzeTree(TTree *tree);
-      void   WriteProxy();
 
       const char *GetFileName() { return fHeaderFileName; }
-   };
-
-}
+    };
+  }
 }
 
 #endif
