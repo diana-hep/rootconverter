@@ -2,6 +2,7 @@
 #define SCAFFOLD_H
 
 #include <string>
+#include <vector>
 
 namespace scaffold {
   class Node {
@@ -57,6 +58,20 @@ namespace scaffold {
     std::string name_;
   public:
     ReaderArrayNode(std::string type, std::string name) : type_(type), name_(name) { }
+    std::string header(int indent) {
+      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> *") + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(">;\n");
+    }
+  };
+
+  class ReaderNestedArrayNode : public Node {
+    std::string type_;
+    std::string name_;
+    std::vector<int> fixedTail_;
+  public:
+    ReaderNestedArrayNode(std::string type, std::string name, std::vector<int> fixedTail) : type_(type), name_(name), fixedTail_(fixedTail) { }
     std::string header(int indent) {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> *") + name_ + std::string(";\n");
     }

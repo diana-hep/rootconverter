@@ -627,7 +627,11 @@ namespace ROOT {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName));
       }
       else {
-        std::cout << "BARF" << std::endl;
+        std::vector<int> fixedTail;
+        for (std::vector<int>::reverse_iterator i = maxDim.rbegin(); i != maxDim.rend()  &&  *i > 0; ++i)
+          fixedTail.insert(fixedTail.begin(), *i);
+
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderNestedArrayNode(std::string(leafTypeName), std::string(dataMemberName), fixedTail);
       }
       std::cout << scaffoldArray[scaffoldItem]->header(level * 4);
 
@@ -770,8 +774,6 @@ namespace ROOT {
               std::cout << "(C) " << type << " " << dataMemberName << std::endl;
             }
             else {
-              std::cout << "(D) " << classname << " " << branchname << std::endl;
-
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
               std::cout << this->scaffold[scaffoldItem]->header(0);
             }
