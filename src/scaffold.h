@@ -6,7 +6,8 @@
 namespace scaffold {
   class Node {
   public:
-    virtual std::string generateHeader(int indent) = 0;
+    virtual std::string header(int indent) = 0;
+    virtual std::string init(int indent) = 0;
   protected:
     std::string indentation(int indent) {
       std::string out;
@@ -18,7 +19,10 @@ namespace scaffold {
 
   class InertNode : public Node {
   public:
-    std::string generateHeader(int indent) {
+    std::string header(int indent) {
+      return std::string("");
+    }
+    std::string init(int indent) {
       return std::string("");
     }
   };
@@ -27,18 +31,24 @@ namespace scaffold {
     std::string type_;
     std::string name_;
   public:
-    ReaderValueNode(std::string type, std::string name) : type_(type), name_(name) { };
-    std::string generateHeader(int indent) {
-      return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string("> ") + name_ + std::string(";\n");
+    ReaderValueNode(std::string type, std::string name) : type_(type), name_(name) { }
+    std::string header(int indent) {
+      return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string("> *") + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(">;\n");
     }
   };
 
   class ReaderStringNode : public Node {
     std::string name_;
   public:
-    ReaderStringNode(std::string name) : name_(name) { };
-    std::string generateHeader(int indent) {
-      return indentation(indent) + std::string("TTreeReaderArray<Char_t> ") + name_ + std::string(";\n");
+    ReaderStringNode(std::string name) : name_(name) { }
+    std::string header(int indent) {
+      return indentation(indent) + std::string("TTreeReaderArray<Char_t> *") + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<Char_t>;\n");
     }
   };
 
@@ -46,15 +56,33 @@ namespace scaffold {
     std::string type_;
     std::string name_;
   public:
-    ReaderArrayNode(std::string type, std::string name) : type_(type), name_(name) { };
-    std::string generateHeader(int indent) {
-      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> ") + name_ + std::string(";\n");
+    ReaderArrayNode(std::string type, std::string name) : type_(type), name_(name) { }
+    std::string header(int indent) {
+      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> *") + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(">;\n");
+    }
+  };
+
+  class RawNode : public Node {
+    std::string type_;
+    std::string name_;
+  public:
+    RawNode(std::string type, std::string name) : type_(type), name_(name) { }
+    std::string header(int indent) {
+      return indentation(indent) + type_ + " *" + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + type_ + std::string(";\n") +
+             indentation(indent) + std::string("reader.GetTree()->SetBranchAddress(\"") + name_ + std::string("\", &") + name_ + std::string(");\n");
     }
   };
 
   Node **newArray(int size);
 
-  std::string generateHeader(Node **scaffoldArray, int scaffoldSize);
+  std::string header(Node **scaffoldArray, int scaffoldSize);
+  std::string init(Node **scaffoldArray, int scaffoldSize);
 }
 
 #endif // SCAFFOLD_H

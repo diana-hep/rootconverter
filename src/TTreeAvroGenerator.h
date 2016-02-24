@@ -23,7 +23,8 @@ namespace ROOT {
 
       int scaffoldSize;
       scaffold::Node **scaffold;
-      std::string generateHeader() { return scaffold::generateHeader(scaffold, scaffoldSize); }
+      std::string header() { return scaffold::header(scaffold, scaffoldSize); }
+      std::string init() { return scaffold::init(scaffold, scaffoldSize); }
 
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 

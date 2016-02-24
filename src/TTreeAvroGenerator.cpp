@@ -521,7 +521,7 @@ namespace ROOT {
           }
 
           for (int indent = 0;  indent < level;  indent++)
-            std::cout << "    ";
+            std::cout << "    (A) ";
           if (element->IsBase())
             std::cout << "BASE " << element->GetName() << std::endl;
           else
@@ -629,7 +629,7 @@ namespace ROOT {
       else {
         std::cout << "BARF" << std::endl;
       }
-      std::cout << scaffoldArray[scaffoldItem]->generateHeader(level * 4);
+      std::cout << scaffoldArray[scaffoldItem]->header(level * 4);
 
       return 0;
     }
@@ -737,7 +737,7 @@ namespace ROOT {
               type = Form("TStlSimpleProxy<%s >", cl->GetName());
               AddHeader(cl);
 
-              std::cout << type << " " << branch->GetName() << std::endl;
+              std::cout << "(B) " << type << " " << branch->GetName() << std::endl;
 
               continue;
             }
@@ -767,10 +767,13 @@ namespace ROOT {
 
               TString dataMemberName = branchname;
 
-              std::cout << type << " " << dataMemberName << std::endl;
+              std::cout << "(C) " << type << " " << dataMemberName << std::endl;
             }
             else {
-              std::cout << classname << " " << branchname << std::endl;
+              std::cout << "(D) " << classname << " " << branchname << std::endl;
+
+              this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
+              std::cout << this->scaffold[scaffoldItem]->header(0);
             }
           } else {
             // We have a top level raw type.
@@ -788,7 +791,7 @@ namespace ROOT {
             type = desc->GetName();
           }
 
-          std::cout << classname << " " << branchname << std::endl;
+          std::cout << "(E) " << classname << " " << branchname << std::endl;
 
         } // if split or non split
 
