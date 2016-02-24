@@ -88,7 +88,10 @@ namespace scaffold {
       return std::string("");
     }
     std::string loop(int indent) {
-      return std::string();
+      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
+             indentation(indent) + std::string("for (int i = 0;  i < ") + name_ + std::string("->GetSize(); i++)\n") +
+             indentation(indent + 2) + std::string("std::cout << (*") + name_ + std::string(")[i] << \" \";\n") +
+             indentation(indent) + std::string("std::cout << std::endl;\n");
     }
   };
 
@@ -108,7 +111,17 @@ namespace scaffold {
       return std::string("");
     }
     std::string loop(int indent) {
-      return std::string();
+      std::string out = indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
+                        indentation(indent) + std::string("for (int i0 = 0;  i0 < ") + name_ + std::string("->GetSize(); i0++)\n");
+      std::string prev = std::string("i0");
+      std::string reach = std::string("(*") + name_ + std::string(")[") + prev + std::string("]");
+      for (int n = 1;  n <= nesting_;  n++) {
+        std::string var = std::string("i") + std::to_string(n);
+        out += indentation(indent + 2*n) + std::string("for (int ") + var + std::string(" = 0;  ") + var + std::string(" < ") + reach + std::string(".size();  ") + var + std::string("++)\n");
+        reach = reach + std::string("[") + var + std::string("]");
+        prev = var;
+      }
+      return out;
     }
   };
 
