@@ -356,7 +356,32 @@ void analyzeBranches(TObjArray *branches, TVirtualStreamerInfo *info, int level)
     case TVirtualStreamerInfo::kAny:
     case TVirtualStreamerInfo::kBase:
     case TVirtualStreamerInfo::kSTL: {
-      indent(level); std::cout << element->GetName() << ":\t\t" << "object" << (ispointer ? " (pointer)" : "") << std::endl;
+      TClass *cl = element->GetClassPointer();
+
+      indent(level); std::cout << element->GetName() << ":\t\t" << cl->GetName() << (ispointer ? "*" : "") << (element->IsBase() ? " (base)" : "") << std::endl;
+
+      if (!element->IsBase()) {
+        if (branchEndname == element->GetName()) {
+          if (branch->GetListOfBranches()->GetEntries() == 0) {
+            TVirtualStreamerInfo *binfo = branch->GetInfo();
+
+            TIter next(binfo->GetElements());
+            for (TStreamerElement *elem = (TStreamerElement*)next();  elem != nullptr;  elem = (TStreamerElement*)next())
+              AnalyzeElement(branch, elem, level + 1);
+          }
+          else {
+            TVirtualStreamerInfo *objInfo = GetStreamerInfo(branch, branch->GetListOfBranches(), cl);
+            analyzeBranches(branches->GetListOfBranches(), objInfo, level + 1);
+          }
+        }
+        else {
+          TVirtualStreamerInfo *objInfo = branch->GetInfo();
+
+
+        }
+
+      }
+
       break;
     }
 
