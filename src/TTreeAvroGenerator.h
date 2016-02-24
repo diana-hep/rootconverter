@@ -50,7 +50,6 @@ namespace ROOT {
       UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TIter &branches, TVirtualStreamerInfo *info);
       UInt_t AnalyzeOldBranch(TBranch *branch, UInt_t level, TBranchProxyClassDescriptor *desc);
       UInt_t AnalyzeOldLeaf(TLeaf *leaf, UInt_t level, TBranchProxyClassDescriptor *topdesc);
-      void   AnalyzeElement(TBranch *branch, TStreamerElement *element, UInt_t level, TBranchProxyClassDescriptor *desc, const char* path);
       void   AnalyzeTree(TTree *tree);
 
       const char *GetFileName() { return fHeaderFileName; }

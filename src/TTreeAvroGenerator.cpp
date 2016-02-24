@@ -627,11 +627,6 @@ namespace ROOT {
 
                   TStreamerElement *elem = 0;
 
-                  TIter next(binfo->GetElements());
-                  // DON'T FOLLOW BASE
-                  // while( (elem = (TStreamerElement*)next()) ) {
-                  //   AnalyzeElement(branch,elem,level+1,local_cldesc,"");
-                  // }
                   if (NeedToEmulate(cl,0)) {
                     proxyTypeName = local_cldesc->GetName();
                     local_cldesc = AddClass(local_cldesc);
@@ -702,11 +697,6 @@ namespace ROOT {
 
                   TStreamerElement *elem = 0;
 
-                  TIter next(binfo->GetElements());
-                  while( (elem = (TStreamerElement*)next()) ) {
-                    AnalyzeElement(branch,elem,level+1,local_cldesc,"");
-                  }
-
                   if (NeedToEmulate(cl,0)) {
                     proxyTypeName = local_cldesc->GetName();
                     local_cldesc = AddClass(local_cldesc);
@@ -749,7 +739,7 @@ namespace ROOT {
                                                          containerName);
                 usedBranch = kFALSE;
                 skipped = kTRUE;
-                lookedAt += AnalyzeBranches( level, cldesc, branches, objInfo );
+                lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo );
               }
 
               TBranchProxyClassDescriptor *added = AddClass(cldesc);
@@ -1058,11 +1048,6 @@ namespace ROOT {
               TVirtualStreamerInfo *cinfo = cl->GetStreamerInfo();
               TStreamerElement *elem = 0;
 
-              TIter cnext(cinfo->GetElements());
-              while( (elem = (TStreamerElement*)cnext()) ) {
-                AnalyzeElement(branch,elem,1,desc,"");
-              }
-
               desc = AddClass(desc);
               type = desc->GetName();
 
@@ -1099,259 +1084,6 @@ namespace ROOT {
       }
 
       fCurrentListOfTopProxies = &fListOfTopProxies;
-    }
-
-    void TTreeAvroGenerator::AnalyzeElement(TBranch *branch, TStreamerElement *element,
-                                            UInt_t level, TBranchProxyClassDescriptor *topdesc,
-                                            const char *path)
-    {
-      // Analyze the element and populate the TTreeAvroGenerator or the topdesc with
-      // its findings.
-
-      TString dataMemberName;
-      TString pxDataMemberName;
-      TString type;
-
-      // TString prefix;
-      Bool_t isBase = false;
-      TString cname;
-      TString middle;
-      TBranchProxyClassDescriptor::ELocation isclones = TBranchProxyClassDescriptor::kOut;
-      TString containerName;
-      EContainer container = kNone;
-      if (topdesc) {
-        if (topdesc->IsClones()) {
-          container = kClones;
-          middle = "Cla";
-          isclones = TBranchProxyClassDescriptor::kClones;
-          containerName = "TClonesArray";
-        } else if (topdesc->IsSTL()) {
-          container = kSTL;
-          middle = "Stl";
-          isclones = TBranchProxyClassDescriptor::kSTL;
-          containerName = topdesc->GetContainerName();
-        }
-      }
-
-      if (!element) return;
-
-      if (strcmp(element->GetName(),"This")==0) {
-        TClass *cl = element->GetClassPointer();
-        containerName = cl->GetName();
-        cl = cl->GetCollectionProxy()->GetValueClass();
-        if (!cl) {
-          // Skip the artifical streamer element.
-          return;
-        }
-        // else return;
-
-        // In case the content is a class, move forward
-        AddForward(cl);
-        AddHeader(cl);
-
-        if (true) {
-
-          // See AnalyzeTree for similar code!
-          // TBranchProxyClassDescriptor *cldesc;
-          if (cl && cl->CanSplit()) {
-            // cldesc = new TBranchProxyClassDescriptor(cl->GetName(), cl->GetStreamerInfo(),
-            //                                          branch->GetName(),
-            //                                          isclones, 0 /* non-split object */,
-            //                                          containerName);
-
-            TVirtualStreamerInfo *info = cl->GetStreamerInfo();
-            TStreamerElement *elem = 0;
-
-            TString subpath = path;
-            if (subpath.Length()>0) subpath += ".";
-            subpath += dataMemberName;
-
-            TIter next(info->GetElements());
-            while( (elem = (TStreamerElement*)next()) ) {
-              AnalyzeElement(branch, elem, level+1, topdesc, subpath.Data());
-            }
-
-            for (int indent = 0;  indent < level;  indent++)
-              std::cout << "    ";
-            std::cout << "???" << " " << branch->GetName() << std::endl;
-
-            // TBranchProxyClassDescriptor *added = AddClass(cldesc);
-            // if (added) type = added->GetName();
-          }
-        }
-        return;
-      }
-
-      if (element->GetType()==-1) {
-        // This is an ignored TObject base class.
-        return;
-      }
-
-
-      // Bool_t ispointer = false;
-      switch(element->GetType()) {
-
-      case TVirtualStreamerInfo::kBool:    { type = "T" + middle + "BoolProxy"; break; }
-      case TVirtualStreamerInfo::kChar:    { type = "T" + middle + "CharProxy"; break; }
-      case TVirtualStreamerInfo::kShort:   { type = "T" + middle + "ShortProxy"; break; }
-      case TVirtualStreamerInfo::kInt:     { type = "T" + middle + "IntProxy"; break; }
-      case TVirtualStreamerInfo::kLong:    { type = "T" + middle + "LongProxy"; break; }
-      case TVirtualStreamerInfo::kLong64:  { type = "T" + middle + "Long64Proxy"; break; }
-      case TVirtualStreamerInfo::kFloat:   { type = "T" + middle + "FloatProxy"; break; }
-      case TVirtualStreamerInfo::kFloat16: { type = "T" + middle + "Float16Proxy"; break; }
-      case TVirtualStreamerInfo::kDouble:  { type = "T" + middle + "DoubleProxy"; break; }
-      case TVirtualStreamerInfo::kDouble32:{ type = "T" + middle + "Double32Proxy"; break; }
-      case TVirtualStreamerInfo::kUChar:   { type = "T" + middle + "UCharProxy"; break; }
-      case TVirtualStreamerInfo::kUShort:  { type = "T" + middle + "UShortProxy"; break; }
-      case TVirtualStreamerInfo::kUInt:    { type = "T" + middle + "UIntProxy"; break; }
-      case TVirtualStreamerInfo::kULong:   { type = "T" + middle + "ULongProxy"; break; }
-      case TVirtualStreamerInfo::kULong64: { type = "T" + middle + "ULong64Proxy"; break; }
-      case TVirtualStreamerInfo::kBits:    { type = "T" + middle + "UIntProxy"; break; }
-
-      case TVirtualStreamerInfo::kCharStar: { type = GetArrayType(element,"Char",container); break; }
-
-        // array of basic types  array[8]
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:    { type = GetArrayType(element,"Bool",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:    { type = GetArrayType(element,"Char",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:   { type = GetArrayType(element,"Short",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:     { type = GetArrayType(element,"Int",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:    { type = GetArrayType(element,"Long",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:  { type = GetArrayType(element,"Long64",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:   { type = GetArrayType(element,"Float",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16: { type = GetArrayType(element,"Float16",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:  { type = GetArrayType(element,"Double",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:{ type = GetArrayType(element,"Double32",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:   { type = GetArrayType(element,"UChar",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:  { type = GetArrayType(element,"UShort",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:    { type = GetArrayType(element,"UInt",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:   { type = GetArrayType(element,"ULong",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64: { type = GetArrayType(element,"ULong64",container ); break; }
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:    { type = GetArrayType(element,"UInt",container ); break; }
-
-        // pointer to an array of basic types  array[n]
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:    { type = GetArrayType(element,"Bool",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:    { type = GetArrayType(element,"Char",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:   { type = GetArrayType(element,"Short",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:     { type = GetArrayType(element,"Int",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:    { type = GetArrayType(element,"Long",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:  { type = GetArrayType(element,"Long64",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:   { type = GetArrayType(element,"Float",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16: { type = GetArrayType(element,"Float16",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:  { type = GetArrayType(element,"Double",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:{ type = GetArrayType(element,"Double32",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:   { type = GetArrayType(element,"UChar",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:  { type = GetArrayType(element,"UShort",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:    { type = GetArrayType(element,"UInt",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:   { type = GetArrayType(element,"ULong",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64: { type = GetArrayType(element,"ULong64",container ); break; }
-      case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:    { type = GetArrayType(element,"UInt",container ); break; }
-
-        // array counter //[n]
-      case TVirtualStreamerInfo::kCounter: { type = "T" + middle + "IntProxy"; break; }
-
-
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectp:
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectP:
-      case TVirtualStreamerInfo::kObjectp:
-      case TVirtualStreamerInfo::kObjectP:
-      case TVirtualStreamerInfo::kAnyp:
-      case TVirtualStreamerInfo::kAnyP:
-      case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectp:
-      case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectP:
-        // set as pointers and fall through to the next switches
-        // ispointer = true;
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObject:
-      case TVirtualStreamerInfo::kObject:
-      case TVirtualStreamerInfo::kTString:
-      case TVirtualStreamerInfo::kTNamed:
-      case TVirtualStreamerInfo::kTObject:
-      case TVirtualStreamerInfo::kAny:
-      case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kAny:
-      case TVirtualStreamerInfo::kSTL:
-      case TVirtualStreamerInfo::kBase: {
-        TClass *cl = element->GetClassPointer();
-        if (cl) {
-          type = Form("T%sObjProxy<%s >",
-                      middle.Data(),cl->GetName());
-          cname = cl->GetName();
-          if (cl==TClonesArray::Class()) {
-            isclones = TBranchProxyClassDescriptor::kClones;
-            containerName = "TClonesArray";
-
-            Long64_t i = branch->GetTree()->GetReadEntry();
-            if (i<0) i = 0;
-            branch->GetEntry(i);
-
-            //char *obj = branch->GetObject();
-
-            // now need to follow it through to this pointer!
-
-            TClonesArray *arr;
-
-            TString fullpath = branch->GetName();
-            fullpath += ".";
-            if (path && strlen(path)>0) fullpath.Append(path).Append(".");
-            fullpath += element->GetName();
-
-            TTreeFormula *formula = new TTreeFormula("clones",fullpath,branch->GetTree());
-
-            TFormLeafInfo *leafinfo = formula->GetLeafInfo(0);
-            TLeaf *leaf = formula->GetLeaf(0);
-            R__ASSERT(leaf && leafinfo);
-
-            arr = (TClonesArray*)leafinfo->GetLocalValuePointer(leaf,0);
-
-            /*
-              if (ispointer) {
-              arr = (TClonesArray*)*(void**)(obj+lOffset);
-              } else {
-              arr = (TClonesArray*)(obj+lOffset);
-              }
-            */
-            if (arr) cname = arr->GetClass()->GetName();
-
-            if (cname.Length()==0) {
-              Error("AnalyzeTree",
-                    "Introspection of TClonesArray in older file not implemented yet.");
-            }
-            delete formula;
-          } else if (cl->GetCollectionProxy()) {
-            isclones = TBranchProxyClassDescriptor::kSTL;
-            containerName = cl->GetName();
-            cl = cl->GetCollectionProxy()->GetValueClass();
-          }
-        }
-        else Error("AnalyzeTree","missing class for %s.",branch->GetName());
-        if (element->IsA()==TStreamerBase::Class()) {
-          // prefix  = "base";
-          isBase = true;
-        }
-        AddForward(cl);
-        AddHeader(cl);
-        break;
-      }
-
-      default:
-        Error("AnalyzeTree",
-              "Unsupported type for %s %s %d",
-              branch->GetName(), element->GetName(), element->GetType());
-
-      }
-
-      for (int indent = 0;  indent < level;  indent++)
-        std::cout << "    ";
-      std::cout << type << " " << element->GetName() << "?!?" << std::endl;
-
-      dataMemberName = element->GetName();
-
-      pxDataMemberName = /* prefix + */ dataMemberName;
-      if (topdesc) {
-        topdesc->AddDescriptor( new TBranchProxyDescriptor( pxDataMemberName.Data(), type,
-                                                            dataMemberName.Data(), false),
-                                isBase );
-      } else {
-        Error("AnalyzeTree","topdesc should not be null in TTreeAvroGenerator::AnalyzeElement.");
-      }
     }
 
     /////////////////////////////////////////////////////////////////////////////
