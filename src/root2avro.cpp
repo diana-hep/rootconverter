@@ -10,8 +10,16 @@
 // #include <TTreeReader.h>
 // #include <TTreeReaderValue.h>
 // #include <TTreeReaderArray.h>
-#include "TTreeAvroGenerator.h"
-#include <TTreeReaderGenerator.h>
+
+// #include "TTreeAvroGenerator.h"
+// #include <TTreeReaderGenerator.h>
+
+#include "TVirtualStreamerInfo.h"
+#include "TObjArray.h"
+#include "TClonesArray.h"
+#include "TBranch.h"
+#include "TBranchElement.h"
+#include "TStreamerElement.h"
 
 #include <avro.h>
 
@@ -60,6 +68,10 @@ void help() {
 //     out.push_back(item);
 //   return out;
 // }
+
+void analyzeTree(TTree *tree);
+void analyzeBranches(TObjArray *branches, TVirtualStreamerInfo *info, int level);
+void analyzeElement(TBranch *branch, TStreamerElement *element, int level);
 
 int main(int argc, char **argv) {
   // no, I don't care about the inefficiency of creating and recreating strings; this is not an important loop
@@ -130,12 +142,10 @@ int main(int argc, char **argv) {
   TTree *tree;
   file->GetObject(treeLocation.c_str(), tree);
 
-  std::string empty;
-  TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree, empty.c_str());
+  // std::string empty;
+  // TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree, empty.c_str());
 
-
-
-
+  analyzeTree(tree);
 
 
 
@@ -206,4 +216,157 @@ int main(int argc, char **argv) {
   // }
 
   return 0;
+}
+
+void indent(int level) {
+  for (int i = 0;  i < level;  i++)
+    std::cout << "    ";
+}
+
+void analyzeTree(TTree *tree) {
+  std::cout << "analyzeTree " << tree->GetName() << std::endl;
+
+  TIter next(tree->GetListOfBranches());
+  for (TBranch *branch = (TBranch*)next();  branch != nullptr;  branch = (TBranch*)next()) {
+    const char *branchname = branch->GetName();
+    const char *classname = branch->GetClassName();
+    TClass *cl = TClass::GetClass(classname);
+
+    std::cout << "top-level branch " << branchname << " " << classname << std::endl;
+
+    TVirtualStreamerInfo *info = nullptr;
+
+    if (cl != nullptr) {
+      if (cl == TClonesArray::Class()) {
+        // ... (no analyze)
+      }
+      else if (cl->GetCollectionProxy() != nullptr) {
+        // ... (no analyze)
+      }
+
+      TBranchElement *be = dynamic_cast<TBranchElement*>(branch);
+      info = (TVirtualStreamerInfo*)be->GetInfo();
+    }
+
+    if (branch->GetListOfBranches()->GetEntries() == 0) {
+      if (cl != nullptr) {
+        std::cout << "top-level NON-split" << std::endl;
+      }
+      else {
+        std::cout << "top-level raw type (AnalyzeOldBranch)" << std::endl;
+      }
+    }
+    else {
+      std::cout << "top-level split by " << branch->GetListOfBranches()->GetEntries() << std::endl;
+
+      analyzeBranches(branch->GetListOfBranches(), info, 1);
+    }
+  }
+}
+
+void analyzeBranches(TObjArray *branches, TVirtualStreamerInfo *info, int level) {
+  indent(level); std::cout << "analyzeBranches" << std::endl;
+
+  TIter elements(info->GetElements());
+  for (TStreamerElement *element = (TStreamerElement*)elements();  element != nullptr;  element = (TStreamerElement*)elements()) {
+    if (info->GetClass()->GetCollectionProxy() != nullptr  &&  std::string(element->GetName()) == std::string("This"))
+      continue;  // skip artificial streamer element
+    if (element->GetType() == -1)
+      continue;  // skip ignored TObject base class
+
+    TBranchElement *branch = (TBranchElement*)branches->At(0);
+
+    const char *branchname(branch->GetName());
+
+    bool ispointer = false;
+    switch(element->GetType()) {
+    case TVirtualStreamerInfo::kBool:     indent(level); std::cout << element->GetName() << ":\t\t" << "bool" << std::endl; break;
+    case TVirtualStreamerInfo::kChar:     indent(level); std::cout << element->GetName() << ":\t\t" << "char" << std::endl; break;
+    case TVirtualStreamerInfo::kShort:    indent(level); std::cout << element->GetName() << ":\t\t" << "short" << std::endl; break;
+    case TVirtualStreamerInfo::kInt:      indent(level); std::cout << element->GetName() << ":\t\t" << "int" << std::endl; break;
+    case TVirtualStreamerInfo::kLong:     indent(level); std::cout << element->GetName() << ":\t\t" << "long" << std::endl; break;
+    case TVirtualStreamerInfo::kLong64:   indent(level); std::cout << element->GetName() << ":\t\t" << "long64" << std::endl; break;
+    case TVirtualStreamerInfo::kFloat:    indent(level); std::cout << element->GetName() << ":\t\t" << "float" << std::endl; break;
+    case TVirtualStreamerInfo::kFloat16:  indent(level); std::cout << element->GetName() << ":\t\t" << "float16" << std::endl; break;
+    case TVirtualStreamerInfo::kDouble:   indent(level); std::cout << element->GetName() << ":\t\t" << "double" << std::endl; break;
+    case TVirtualStreamerInfo::kDouble32: indent(level); std::cout << element->GetName() << ":\t\t" << "double32" << std::endl; break;
+    case TVirtualStreamerInfo::kUChar:    indent(level); std::cout << element->GetName() << ":\t\t" << "uchar" << std::endl; break;
+    case TVirtualStreamerInfo::kUShort:   indent(level); std::cout << element->GetName() << ":\t\t" << "ushort" << std::endl; break;
+    case TVirtualStreamerInfo::kUInt:     indent(level); std::cout << element->GetName() << ":\t\t" << "uint" << std::endl; break;
+    case TVirtualStreamerInfo::kULong:    indent(level); std::cout << element->GetName() << ":\t\t" << "ulong" << std::endl; break;
+    case TVirtualStreamerInfo::kULong64:  indent(level); std::cout << element->GetName() << ":\t\t" << "ulong64" << std::endl; break;
+    case TVirtualStreamerInfo::kBits:     indent(level); std::cout << element->GetName() << ":\t\t" << "bits (uint)" << std::endl; break;
+
+    case TVirtualStreamerInfo::kCharStar: indent(level); std::cout << element->GetName() << ":\t\t" << "char* (string)" << std::endl; break;
+
+      // array of basic types  array[8]
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:     indent(level); std::cout << element->GetName() << ":\t\t" << "bool[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:     indent(level); std::cout << element->GetName() << ":\t\t" << "char[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:    indent(level); std::cout << element->GetName() << ":\t\t" << "short[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:      indent(level); std::cout << element->GetName() << ":\t\t" << "int[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:     indent(level); std::cout << element->GetName() << ":\t\t" << "long[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:   indent(level); std::cout << element->GetName() << ":\t\t" << "long64[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:    indent(level); std::cout << element->GetName() << ":\t\t" << "float[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16:  indent(level); std::cout << element->GetName() << ":\t\t" << "float16[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:   indent(level); std::cout << element->GetName() << ":\t\t" << "double[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32: indent(level); std::cout << element->GetName() << ":\t\t" << "double32[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:    indent(level); std::cout << element->GetName() << ":\t\t" << "uchar[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:   indent(level); std::cout << element->GetName() << ":\t\t" << "ushort[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:     indent(level); std::cout << element->GetName() << ":\t\t" << "uint[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:    indent(level); std::cout << element->GetName() << ":\t\t" << "ulong[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64:  indent(level); std::cout << element->GetName() << ":\t\t" << "ulong64[]" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:     indent(level); std::cout << element->GetName() << ":\t\t" << "uint[]" << std::endl; break;
+
+      // pointer to an array of basic types  array[n]
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:     indent(level); std::cout << element->GetName() << ":\t\t" << "bool*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:     indent(level); std::cout << element->GetName() << ":\t\t" << "char*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:    indent(level); std::cout << element->GetName() << ":\t\t" << "short*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:      indent(level); std::cout << element->GetName() << ":\t\t" << "int*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:     indent(level); std::cout << element->GetName() << ":\t\t" << "long*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:   indent(level); std::cout << element->GetName() << ":\t\t" << "long64*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:    indent(level); std::cout << element->GetName() << ":\t\t" << "float*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16:  indent(level); std::cout << element->GetName() << ":\t\t" << "float16*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:   indent(level); std::cout << element->GetName() << ":\t\t" << "double*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32: indent(level); std::cout << element->GetName() << ":\t\t" << "double32*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:    indent(level); std::cout << element->GetName() << ":\t\t" << "uchar*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:   indent(level); std::cout << element->GetName() << ":\t\t" << "ushort*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:     indent(level); std::cout << element->GetName() << ":\t\t" << "uint*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:    indent(level); std::cout << element->GetName() << ":\t\t" << "ulong*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64:  indent(level); std::cout << element->GetName() << ":\t\t" << "ulong64*" << std::endl; break;
+    case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:     indent(level); std::cout << element->GetName() << ":\t\t" << "uint*" << std::endl; break;
+
+      // array counter //[n]
+    case TVirtualStreamerInfo::kCounter: indent(level); std::cout << element->GetName() << ":\t\t" << "int (counter)" << std::endl; break;
+
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectp:
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectP:
+    case TVirtualStreamerInfo::kObjectp:
+    case TVirtualStreamerInfo::kObjectP:
+    case TVirtualStreamerInfo::kAnyp:
+    case TVirtualStreamerInfo::kAnyP:
+    case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectp:
+    case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectP:
+      // set as pointers and fall through to the next switches
+      ispointer = true;
+    case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObject:
+    case TVirtualStreamerInfo::kObject:
+    case TVirtualStreamerInfo::kTString:
+    case TVirtualStreamerInfo::kTNamed:
+    case TVirtualStreamerInfo::kTObject:
+    case TVirtualStreamerInfo::kAny:
+    case TVirtualStreamerInfo::kBase:
+    case TVirtualStreamerInfo::kSTL: {
+      indent(level); std::cout << element->GetName() << ":\t\t" << "object" << (ispointer ? " (pointer)" : "") << std::endl;
+      break;
+    }
+
+    default: indent(level); std::cout << element->GetName() << ":\t\t" << "BAD BAD BAD" << std::endl;
+    }
+  }
+
+}
+
+void analyzeElement(TBranch *branch, TStreamerElement *element, int level) {
+  indent(level); std::cout << "analyzeElement " << branch->GetName() << std::endl;
+
 }
