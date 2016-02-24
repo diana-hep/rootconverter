@@ -134,8 +134,7 @@ int main(int argc, char **argv) {
   TTree *tree;
   file->GetObject(treeLocation.c_str(), tree);
 
-  std::string empty;
-  TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree, empty.c_str());
+  TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree);
 
 
 

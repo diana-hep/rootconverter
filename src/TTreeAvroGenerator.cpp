@@ -1,41 +1,20 @@
+#include <stdio.h>
 #include <iostream>
 
-#include "TTreeAvroGenerator.h"
-
-#include "TFriendProxyDescriptor.h"
-#include "TBranchProxyDescriptor.h"
+#include "TBranchElement.h"
 #include "TBranchProxyClassDescriptor.h"
-
-#include "TList.h"
-#include "Varargs.h"
-#include <stdio.h>
-
-class TTree;
-class TBranch;
-class TStreamerElement;
-
 #include "TClass.h"
-#include "TClassEdit.h"
 #include "TClonesArray.h"
 #include "TError.h"
-#include "TROOT.h"
-#include "TObjString.h"
-
-#include "TTreeFormula.h"
 #include "TFormLeafInfo.h"
-
-#include "TBranchElement.h"
-#include "TChain.h"
-#include "TFile.h"
-#include "TFriendElement.h"
-#include "TLeaf.h"
 #include "TLeafC.h"
+#include "TLeaf.h"
+#include "TLeafObject.h"
+#include "TStreamerElement.h"
 #include "TTree.h"
 #include "TVirtualStreamerInfo.h"
-#include "TStreamerElement.h"
-#include "TSystem.h"
-#include "TLeafObject.h"
-#include "TVirtualCollectionProxy.h"
+
+#include "TTreeAvroGenerator.h"
 
 namespace ROOT {
   namespace Internal {
@@ -117,17 +96,8 @@ namespace ROOT {
       */
     }
 
-    TTreeAvroGenerator::TTreeAvroGenerator(TTree* tree, const char *option) :
-      TTreeGeneratorBase(tree, option),
-      fMaxDatamemberType(2),
-      fScript(),
-      fCutScript(),
-      fPrefix(),
-      fHeaderFileName(),
-      fOptions(0),
-      fCurrentListOfTopProxies(&fListOfTopProxies)
+    TTreeAvroGenerator::TTreeAvroGenerator(TTree* tree) : TTreeGeneratorBase(tree, "")
     {
-      ParseOptions();
       AnalyzeTree(fTree);
     }
 
@@ -136,211 +106,6 @@ namespace ROOT {
       // Return true if we should create a nested class representing this class
 
       return cl!=0 && cl->TestBit(TClass::kIsEmulation);
-    }
-
-    TBranchProxyClassDescriptor*
-    TTreeAvroGenerator::AddClass( TBranchProxyClassDescriptor* desc )
-    {
-      // Add a Class Descriptor.
-
-      if (desc==0) return 0;
-
-      TBranchProxyClassDescriptor *existing =
-        (TBranchProxyClassDescriptor*)fListOfClasses(desc->GetName());
-
-      int count = 0;
-      while (existing) {
-        if (! existing->IsEquivalent( desc )  ) {
-          TString newname = desc->GetRawSymbol();
-          count++;
-          newname += "_";
-          newname += count;
-
-          desc->SetName(newname);
-          existing = (TBranchProxyClassDescriptor*)fListOfClasses(desc->GetName());
-        } else {
-          // we already have the exact same class
-          delete desc;
-          return existing;
-        }
-      }
-      fListOfClasses.Add(desc);
-      return desc;
-    }
-
-    void TTreeAvroGenerator::AddFriend( TFriendProxyDescriptor* desc )
-    {
-      // Add Friend descriptor.
-
-      if (desc==0) return;
-
-      TFriendProxyDescriptor *existing =
-        (TFriendProxyDescriptor*)fListOfFriends(desc->GetName());
-
-      int count = 0;
-      while (existing) {
-        if (! existing->IsEquivalent( desc )  ) {
-          TString newname = desc->GetName();
-          count++;
-          newname += "_";
-          newname += count;
-
-          desc->SetName(newname);
-          existing = (TFriendProxyDescriptor*)fListOfFriends(desc->GetName());
-
-        } else {
-
-          desc->SetDuplicate();
-          break;
-        }
-      }
-
-      // Insure uniqueness of the title also.
-      TString basetitle = desc->GetTitle();
-      TIter next( &fListOfFriends );
-      while ( (existing = (TFriendProxyDescriptor*)next()) ) {
-        if (strcmp(existing->GetTitle(),desc->GetTitle())==0) {
-
-          TString newtitle = basetitle;
-          count++;
-          newtitle += "_";
-          newtitle += count;
-
-          desc->SetTitle(newtitle);
-
-          // Restart of the begining of the loop.
-          next = &fListOfFriends;
-        }
-      }
-
-      fListOfFriends.Add(desc);
-    }
-
-    void TTreeAvroGenerator::AddForward( const char *classname )
-    {
-      // Add a forward declaration request.
-
-      TObject *obj = fListOfForwards.FindObject(classname);
-      if (obj) return;
-
-      if (strstr(classname,"<")!=0) {
-        // this is a template instantiation.
-        // let's ignore it for now
-      } else if (strcmp(classname,"string")==0) {
-        // no need to forward declare string
-      } else {
-        fListOfForwards.Add(new TNamed(classname,Form("class %s;\n",classname)));
-      }
-      return;
-    }
-
-    void TTreeAvroGenerator::AddForward(TClass *cl)
-    {
-      // Add a forward declaration request.
-
-      if (cl) AddForward(cl->GetName());
-    }
-
-    void TTreeAvroGenerator::AddPragma(const char *pragma_text)
-    {
-      // Add a forward declaration request.
-
-      TIter i( &fListOfPragmas );
-      for(TObjString *n = (TObjString*) i(); n; n = (TObjString*)i() ) {
-        if (pragma_text == n->GetString()) {
-          return;
-        }
-      }
-
-      fListOfPragmas.Add( new TObjString( pragma_text ) );
-
-    }
-
-    void TTreeAvroGenerator::AddDescriptor(TBranchProxyDescriptor *desc)
-    {
-      // Add a branch descriptor.
-
-      if (desc) {
-        TBranchProxyDescriptor *existing =
-          (TBranchProxyDescriptor*)((*fCurrentListOfTopProxies)(desc->GetName()));
-        if (existing) {
-          Warning("TTreeAvroGenerator","The branch name \"%s\" is duplicated. Only the first instance \n"
-                  "\twill be available directly. The other instance(s) might be available via their complete name\n"
-                  "\t(including the name of their mother branche's name).",desc->GetName());
-        } else {
-          fCurrentListOfTopProxies->Add(desc);
-          UInt_t len = strlen(desc->GetTypeName());
-          if ((len+2)>fMaxDatamemberType) fMaxDatamemberType = len+2;
-        }
-      }
-    }
-
-    void TTreeAvroGenerator::AddMissingClassAsEnum(const char *clname, Bool_t isscope)
-    {
-      // Generate an enum for a given type if it is not known in the list of class
-      // unless the type itself a template.
-
-      if (!TClassEdit::IsStdClass(clname) && !TClass::GetClass(clname) && gROOT->GetType(clname) == 0) {
-
-        TObject *obj = fListOfForwards.FindObject(clname);
-        if (obj) return;
-
-        // The class does not exist, let's create it if ew can.
-        if (clname[strlen(clname)-1]=='>') {
-          // Template instantiation.
-          fListOfForwards.Add(new TNamed(clname,TString::Format("template <> class %s { public: operator int() { return 0; } };\n", clname).Data()));
-        } else if (isscope) {
-          // a scope
-
-        } else {
-          // Class or enum we know nothing about, let's assume it is an enum.
-          fListOfForwards.Add(new TNamed(clname,TString::Format("enum %s { kDefault_%s };\n", clname, clname).Data()));
-        }
-      }
-    }
-
-    void TTreeAvroGenerator::CheckForMissingClass(const char *clname)
-    {
-      // Check if the template parameter refers to an enum and/or a missing class (we can't tell those 2 apart unless
-      // the name as template syntax).
-
-      UInt_t len = strlen(clname);
-      UInt_t nest = 0;
-      UInt_t last = 0;
-      //Bool_t istemplate = kFALSE; // mark whether the current right most entity is a class template.
-
-      for (UInt_t i = 0; i < len; ++i) {
-        switch (clname[i]) {
-        case ':':
-          if (nest == 0 && clname[i+1] == ':') {
-            TString incName(clname, i);
-            AddMissingClassAsEnum(incName.Data(), kTRUE);
-            //istemplate = kFALSE;
-          }
-          break;
-        case '<':
-          ++nest;
-          if (nest == 1) last = i + 1;
-          break;
-        case '>':
-          if (nest == 0) return; // The name is not well formed, give up.
-          --nest; /* intentional fall throught to the next case */
-        case ',':
-          if ((clname[i] == ',' && nest == 1) || (clname[i] == '>' && nest == 0)) {
-            TString incName(clname + last, i - last);
-            incName = TClassEdit::ShortType(incName.Data(), TClassEdit::kDropTrailStar | TClassEdit::kLong64);
-            if (clname[i] == '>' && nest == 1) incName.Append(">");
-
-            if (isdigit(incName[0])) {
-              // Not a class name, nothing to do.
-            } else {
-              AddMissingClassAsEnum(incName.Data(),kFALSE);
-            }
-            last = i + 1;
-          }
-        }
-      }
-      AddMissingClassAsEnum(TClassEdit::ShortType(clname, TClassEdit::kDropTrailStar | TClassEdit::kLong64).c_str(),kFALSE);
     }
 
     UInt_t TTreeAvroGenerator::AnalyzeBranches(UInt_t level,TBranchProxyClassDescriptor *topdesc,
@@ -581,10 +346,7 @@ namespace ROOT {
               TClass *valueClass = cl->GetCollectionProxy()->GetValueClass();
               if (valueClass) cname = valueClass->GetName();
               else {
-                CheckForMissingClass(cname);
                 proxyTypeName = Form("TStlSimpleProxy<%s >", cl->GetName());
-                //                   AddPragma(Form("#pragma create TClass %s;\n", cl->GetName()));
-                if (!cl->IsLoaded()) AddPragma(Form("#pragma link C++ class %s;\n", cl->GetName()));
               }
             }
 
@@ -629,7 +391,6 @@ namespace ROOT {
 
                   if (NeedToEmulate(cl,0)) {
                     proxyTypeName = local_cldesc->GetName();
-                    local_cldesc = AddClass(local_cldesc);
                   }
 
                 } else {
@@ -670,10 +431,6 @@ namespace ROOT {
                 // DON'T FOLLOW BASE
                 // lookedAt += AnalyzeBranches( level, cldesc, branches, objInfo );
               }
-
-              TBranchProxyClassDescriptor *added = AddClass(cldesc);
-              if (added) proxyTypeName = added->GetName();
-
             } else {
               TBranchProxyClassDescriptor *cldesc = 0;
 
@@ -699,7 +456,6 @@ namespace ROOT {
 
                   if (NeedToEmulate(cl,0)) {
                     proxyTypeName = local_cldesc->GetName();
-                    local_cldesc = AddClass(local_cldesc);
                   }
 
                 } else {
@@ -741,13 +497,8 @@ namespace ROOT {
                 skipped = kTRUE;
                 lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo );
               }
-
-              TBranchProxyClassDescriptor *added = AddClass(cldesc);
-              if (added) proxyTypeName = added->GetName();
-
             }
 
-            AddForward(cl);
             AddHeader(cl);
             break;
           }
@@ -761,17 +512,13 @@ namespace ROOT {
 
           for (int indent = 0;  indent < level;  indent++)
             std::cout << "    ";
-          std::cout << proxyTypeName << " " << element->GetName() << (element->IsBase() ? " (base)" : "") << std::endl;
+
+          if (element->IsBase())
+            std::cout << "BASE " << element->GetName() << std::endl;
+          else
+            std::cout << proxyTypeName << " " << element->GetName() << std::endl;
 
           TString dataMemberName = element->GetName();
-          if (topdesc) {
-            topdesc->AddDescriptor(  new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                                 proxyTypeName, branchname, true, skipped ), isBase );
-          } else {
-            dataMemberName.Prepend(prefix);
-            AddDescriptor( new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                       proxyTypeName, branchname, true, skipped ) );
-          }
 
           if (usedBranch) {
             branches.Next();
@@ -781,8 +528,7 @@ namespace ROOT {
       return lookedAt;
     }
 
-    UInt_t TTreeAvroGenerator::AnalyzeOldLeaf(TLeaf *leaf, UInt_t level,
-                                              TBranchProxyClassDescriptor *topdesc)
+    UInt_t TTreeAvroGenerator::AnalyzeOldLeaf(TLeaf *leaf, UInt_t level)
     {
       // Analyze the leaf and populate the `TTreeAvroGenerator or
       // the topdesc with its findings.
@@ -890,19 +636,6 @@ namespace ROOT {
 
       std::cout << type << " " << dataMemberName << std::endl;
 
-      if (topdesc) {
-        topdesc->AddDescriptor( new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                            type,
-                                                            branchName.Data(),
-                                                            true, false, true ),
-                                0 );
-      } else {
-        AddDescriptor( new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                   type,
-                                                   branchName.Data(),
-                                                   true, false, true ) );
-      }
-
       return 0;
 
     }
@@ -927,29 +660,14 @@ namespace ROOT {
       if (nleaves>1) {
         // Create a holder
         TString type = "unknown";
-        TBranchProxyClassDescriptor *cldesc = AddClass( new TBranchProxyClassDescriptor(branch->GetName()) );
-        if (cldesc) {
-          type = cldesc->GetName();
-          for(int l=0;l<nleaves;l++) {
-            TLeaf *leaf = (TLeaf*)leaves->UncheckedAt(l);
-            extraLookedAt += AnalyzeOldLeaf(leaf,level+1,cldesc);
-          }
+        for(int l=0;l<nleaves;l++) {
+          TLeaf *leaf = (TLeaf*)leaves->UncheckedAt(l);
+          extraLookedAt += AnalyzeOldLeaf(leaf,level+1);
         }
         TString dataMemberName = branchName;
-        if (topdesc) {
-          topdesc->AddDescriptor(  new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                               type,
-                                                               branchName.Data() ),
-                                   0 );
-        } else {
-          // leafname.Prepend(prefix);
-          AddDescriptor( new TBranchProxyDescriptor( dataMemberName.Data(),
-                                                     type,
-                                                     branchName.Data() ) );
-        }
       } else {
         TLeaf *leaf = (TLeaf*)leaves->UncheckedAt(0);
-        extraLookedAt += AnalyzeOldLeaf(leaf,level,topdesc);
+        extraLookedAt += AnalyzeOldLeaf(leaf,level);
       }
 
       return extraLookedAt;
@@ -967,7 +685,6 @@ namespace ROOT {
         const char *branchname = branch->GetName();
         const char *classname = branch->GetClassName();
         if (classname && strlen(classname)) {
-          AddForward( classname );
           AddHeader( classname );
         }
 
@@ -1014,11 +731,8 @@ namespace ROOT {
             if (cl->GetCollectionProxy()->GetValueClass()) {
               cl = cl->GetCollectionProxy()->GetValueClass();
             } else {
-              CheckForMissingClass(cl->GetName());
               type = Form("TStlSimpleProxy<%s >", cl->GetName());
               AddHeader(cl);
-              if (!cl->IsLoaded()) AddPragma(Form("#pragma link C++ class %s;\n", cl->GetName()));
-              AddDescriptor( new TBranchProxyDescriptor( branchname, type, branchname ) );
 
               std::cout << type << " " << branch->GetName() << std::endl;
 
@@ -1048,14 +762,11 @@ namespace ROOT {
               TVirtualStreamerInfo *cinfo = cl->GetStreamerInfo();
               TStreamerElement *elem = 0;
 
-              desc = AddClass(desc);
               type = desc->GetName();
 
               TString dataMemberName = branchname;
 
               std::cout << type << " " << dataMemberName << std::endl;
-
-              AddDescriptor( new TBranchProxyDescriptor( dataMemberName, type, branchname ) );
             }
           } else {
 
@@ -1071,74 +782,15 @@ namespace ROOT {
           if (desc) {
             AnalyzeBranches(1,desc,dynamic_cast<TBranchElement*>(branch),info);
           }
-          desc = AddClass(desc);
           if (desc) {
             type = desc->GetName();
-            TString dataMemberName = branchname;
-            AddDescriptor( new TBranchProxyDescriptor( dataMemberName, type, branchname ) );
           }
 
           std::cout << classname << " " << branchname << std::endl;
 
         } // if split or non split
       }
-
-      fCurrentListOfTopProxies = &fListOfTopProxies;
     }
 
-    /////////////////////////////////////////////////////////////////////////////
-    /// Parse the options string.
-
-    void TTreeAvroGenerator::ParseOptions()
-    {
-      TString opt = fOptionStr;
-
-      fOptions = 0;
-      if ( opt.Contains("nohist") ) {
-        opt.ReplaceAll("nohist","");
-        fOptions |= kNoHist;
-      }
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    /// Add the "pragma C++ class" if needed and return
-    /// true if it has been added _or_ if it is known to
-    /// not be needed.
-    /// (I.e. return kFALSE if a container of this class
-    /// can not have a "pragma C++ class"
-
-    static Bool_t R__AddPragmaForClass(TTreeAvroGenerator *gen, TClass *cl)
-    {
-      if (!cl) return kFALSE;
-      if (cl->GetCollectionProxy()) {
-        TClass *valcl = cl->GetCollectionProxy()->GetValueClass();
-        if (!valcl) {
-          if (!cl->IsLoaded()) gen->AddPragma(Form("#pragma link C++ class %s;\n", cl->GetName()));
-          return kTRUE;
-        } else if (R__AddPragmaForClass(gen, valcl)) {
-          if (!cl->IsLoaded()) gen->AddPragma(Form("#pragma link C++ class %s;\n", cl->GetName()));
-          return kTRUE;
-        }
-      }
-      if (cl->IsLoaded()) return kTRUE;
-      return kFALSE;
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    /// Add the "pragma C++ class" if needed and return
-    /// true if it has been added _or_ if it is known to
-    /// not be needed.
-    /// (I.e. return kFALSE if a container of this class
-    /// can not have a "pragma C++ class"
-
-    static Bool_t R__AddPragmaForClass(TTreeAvroGenerator *gen, const char *classname)
-    {
-      return R__AddPragmaForClass( gen, TClass::GetClass(classname) );
-
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    /// Check whether the file exist and do something useful if it does
-
-  } // namespace Internal
-} // namespace ROOT
+  }
+}
