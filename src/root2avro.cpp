@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
   std::cout << generator->header();
 
   std::cout << std::endl << "INIT:" << std::endl;
-  std::cout << generator->init();
+  std::cout << generator->init(fileLocations, treeLocation);
 
   std::cout << std::endl << "LOOP:" << std::endl;
   std::cout << generator->loop();

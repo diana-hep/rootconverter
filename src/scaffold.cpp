@@ -14,8 +14,10 @@ std::string scaffold::header(scaffold::Node **scaffoldArray, int scaffoldSize) {
   return out;
 }
 
-std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize) {
+std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize, std::vector<std::string> fileLocations, std::string treeLocation) {
   std::string out;
+  out += std::string("  TFile *file = TFile::Open(\"") + fileLocations[0] + std::string("\");\n");
+  out += std::string("  TTreeReader reader(\"") + treeLocation + std::string("\", file);\n");
   for (int i = 0;  i < scaffoldSize;  i++)
     out += scaffoldArray[i]->init(2);
   return out;
@@ -23,7 +25,12 @@ std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize) {
 
 std::string scaffold::loop(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
+  out += std::string("  while (reader.Next()) {\n");
+  out += std::string("    std::cout << \"start entry\" << std::endl;\n");
   for (int i = 0;  i < scaffoldSize;  i++)
-    out += scaffoldArray[i]->loop(2);
+    out += scaffoldArray[i]->loopHeader(4);
+  for (int i = 0;  i < scaffoldSize;  i++)
+    out += scaffoldArray[i]->loop(4);
+  out += std::string("  }\n");
   return out;
 }
