@@ -45,14 +45,23 @@ void test() {
   TTreeReaderValue<Int_t> one(reader2, "one");
   TTreeReaderValue<Float_t> two(reader2, "two");
   TTreeReaderArray<Char_t> three(reader2, "three");
-  // TTreeReaderValue<TString*> fourfour(reader2, "fourfour");
-  // TTreeReaderValue<std::string> four(reader2, "four");
+  TString *fourfour = new TString;
+  reader2.GetTree()->SetBranchAddress("fourfour", &fourfour);
+  std::string *four = new std::string;
+  reader2.GetTree()->SetBranchAddress("four", &four);
   TTreeReaderArray<Float_t> five(reader2, "five");
   TTreeReaderArray<Float_t> six(reader2, "six");
   TTreeReaderArray<Float_t> seven(reader2, "seven");
-  // TTreeReaderValue<TObjArray> eight(reader, "eight");
+  TObjArray *eight = new TObjArray;
+  reader2.GetTree()->SetBranchAddress("eight", &eight);
   while (reader2.Next()) {
+    reader2.GetTree()->GetEntry(reader2.GetCurrentEntry());
+
     std::cout << *(one.Get()) << " " << *(two.Get()) << " " << (char *)three.GetAddress() << std::endl;
+
+    std::cout << "    >" << fourfour->Data() << "<" << std::endl;
+    std::cout << "    >" << *four << "<" << std::endl;
+
     std::cout << "    ";
     for (int i = 0;  i < five.GetSize();  i++)
       std::cout << five[i] << " ";
@@ -66,6 +75,11 @@ void test() {
     std::cout << "    ";
     for (int i = 0;  i < seven.GetSize();  i++)
       std::cout << seven[i] << " ";
+    std::cout << std::endl;
+
+    std::cout << "    ";
+    for (int i = 0;  i < eight->GetEntries();  i++)
+      std::cout << ((TObjString*)eight->At(i))->GetString().Data() << " ";
     std::cout << std::endl;
   }
 
