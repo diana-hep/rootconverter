@@ -156,6 +156,10 @@ namespace ROOT {
       TString subBranchPrefix;
       Bool_t skipped = false;
 
+      for (int indent = 0;  indent < level;  indent++)
+        std::cout << "    ";
+      std::cout << info->GetElements()->GetEntries() << std::endl;
+
       {
         TIter peek = branches;
         TBranchElement *branch = (TBranchElement*)peek();
@@ -512,7 +516,6 @@ namespace ROOT {
 
           for (int indent = 0;  indent < level;  indent++)
             std::cout << "    ";
-
           if (element->IsBase())
             std::cout << "BASE " << element->GetName() << std::endl;
           else
@@ -678,6 +681,8 @@ namespace ROOT {
     {
       // Analyze a TTree and its (potential) friends.
 
+      std::cout << tree->GetListOfBranches()->GetEntries() << std::endl;
+
       TIter next( tree->GetListOfBranches() );
       TBranch *branch;
       while ( (branch = (TBranch*)next()) ) {
@@ -754,10 +759,8 @@ namespace ROOT {
         }
 
         if ( branch->GetListOfBranches()->GetEntries() == 0 ) {
-
           if (cl) {
             // We have a non-split object!
-
             if (desc) {
               TVirtualStreamerInfo *cinfo = cl->GetStreamerInfo();
               TStreamerElement *elem = 0;
@@ -768,14 +771,15 @@ namespace ROOT {
 
               std::cout << type << " " << dataMemberName << std::endl;
             }
+            else {
+              std::cout << classname << " " << branchname << std::endl;
+            }
           } else {
-
             // We have a top level raw type.
             AnalyzeOldBranch(branch, 0, 0);
           }
 
         } else {
-
           // We have a split object
 
           TIter subnext( branch->GetListOfBranches() );
