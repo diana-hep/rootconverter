@@ -802,7 +802,10 @@ namespace ROOT {
               type = desc->GetName();
               TString dataMemberName = branchname;
 
-              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
+              if (std::string(cl->GetName()) == std::string("string"))
+                this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName));
+              else
+                this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
               std::cout << this->scaffold[scaffoldItem]->header(0);
             }

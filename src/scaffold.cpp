@@ -30,7 +30,7 @@ std::string scaffold::loop(scaffold::Node **scaffoldArray, int scaffoldSize) {
   for (int i = 0;  i < scaffoldSize;  i++)
     out += scaffoldArray[i]->loopHeader(4);
   for (int i = 0;  i < scaffoldSize;  i++)
-    out += scaffoldArray[i]->loop(4);
+    out += std::string("\n") + scaffoldArray[i]->loop(4);
   out += std::string("  }\n");
   return out;
 }

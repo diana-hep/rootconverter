@@ -52,7 +52,7 @@ void test() {
   TTreeReaderArray<Float_t> five(reader2, "five");
   TTreeReaderArray<Float_t> six(reader2, "six");
   TTreeReaderArray<Float_t> seven(reader2, "seven");
-  // TTreeReaderArray<TTreeReaderArray<Float_t> > sevenseven(reader2, "sevenseven");
+  TTreeReaderArray<Float_t> sevenseven(reader2, "sevenseven");
   TObjArray *eight = new TObjArray;
   reader2.GetTree()->SetBranchAddress("eight", &eight);
   while (reader2.Next()) {
@@ -76,6 +76,11 @@ void test() {
     std::cout << "    ";
     for (int i = 0;  i < seven.GetSize();  i++)
       std::cout << seven[i] << " ";
+    std::cout << std::endl;
+
+    std::cout << "    ";
+    for (int i = 0;  i < sevenseven.GetSize();  i++)
+      std::cout << sevenseven[i] << " ";
     std::cout << std::endl;
 
     // std::cout << "    ";

@@ -1,6 +1,7 @@
 #ifndef SCAFFOLD_H
 #define SCAFFOLD_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -121,6 +122,8 @@ namespace scaffold {
         reach = reach + std::string("[") + var + std::string("]");
         prev = var;
       }
+      out += indentation(indent + 2*nesting_ + 2) + std::string("std::cout << ") + reach + std::string(" << \" \";\n");
+      out += indentation(indent) + std::string("std::cout << std::endl;\n");
       return out;
     }
   };
@@ -128,7 +131,7 @@ namespace scaffold {
   class ReaderNestedArrayNode : public Node {
     std::string type_;
     std::string name_;
-    std::vector<int> fixedTail_;
+    std::vector<int> fixedTail_;   // use this to preserve some nesting
   public:
     ReaderNestedArrayNode(std::string type, std::string name, std::vector<int> fixedTail) : type_(type), name_(name), fixedTail_(fixedTail) { }
     std::string header(int indent) {
@@ -141,7 +144,10 @@ namespace scaffold {
       return std::string("");
     }
     std::string loop(int indent) {
-      return std::string();
+      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
+             indentation(indent) + std::string("for (int i = 0;  i < ") + name_ + std::string("->GetSize(); i++)\n") +
+             indentation(indent + 2) + std::string("std::cout << (*") + name_ + std::string(")[i] << \" \";\n") +
+             indentation(indent) + std::string("std::cout << std::endl;\n");
     }
   };
 
@@ -161,7 +167,16 @@ namespace scaffold {
       return std::string("");
     }
     std::string loop(int indent) {
-      return std::string();
+      std::string expr;
+      if (type_ == std::string("string"))
+        expr = std::string("*") + name_;
+      else if (type_ == std::string("TString"))
+        expr = name_ + std::string("->Data()");
+      else if (type_ == std::string("TObjArray"))   // for testing; we don't know enough about this type to handle it
+        expr = std::string("\"NOT ENOUGH INFO\"");
+      else
+        throw;
+      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << ") + expr + std::string(" << std::endl;\n");
     }
   };
 
