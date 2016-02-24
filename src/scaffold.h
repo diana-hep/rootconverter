@@ -34,10 +34,10 @@ namespace scaffold {
   public:
     ReaderValueNode(std::string type, std::string name) : type_(type), name_(name) { }
     std::string header(int indent) {
-      return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string("> *") + name_ + std::string(";\n");
+      return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string(" > *") + name_ + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(">;\n");
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(" >;\n");
     }
   };
 
@@ -46,10 +46,10 @@ namespace scaffold {
   public:
     ReaderStringNode(std::string name) : name_(name) { }
     std::string header(int indent) {
-      return indentation(indent) + std::string("TTreeReaderArray<Char_t> *") + name_ + std::string(";\n");
+      return indentation(indent) + std::string("TTreeReaderArray<Char_t > *") + name_ + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<Char_t>;\n");
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<Char_t >;\n");
     }
   };
 
@@ -59,10 +59,24 @@ namespace scaffold {
   public:
     ReaderArrayNode(std::string type, std::string name) : type_(type), name_(name) { }
     std::string header(int indent) {
-      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> *") + name_ + std::string(";\n");
+      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + name_ + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(">;\n");
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >;\n");
+    }
+  };
+
+  class ReaderArrayArrayNode : public Node {
+    std::string type_;
+    std::string name_;
+    int nesting_;
+  public:
+    ReaderArrayArrayNode(std::string type, std::string name, int nesting) : type_(type), name_(name), nesting_(nesting) { }
+    std::string header(int indent) {
+      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + name_ + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >;\n");
     }
   };
 
@@ -73,10 +87,10 @@ namespace scaffold {
   public:
     ReaderNestedArrayNode(std::string type, std::string name, std::vector<int> fixedTail) : type_(type), name_(name), fixedTail_(fixedTail) { }
     std::string header(int indent) {
-      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string("> *") + name_ + std::string(";\n");
+      return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + name_ + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(">;\n");
+      return indentation(indent) + name_ + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >;\n");
     }
   };
 

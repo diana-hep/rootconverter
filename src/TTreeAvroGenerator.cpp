@@ -800,10 +800,11 @@ namespace ROOT {
               TStreamerElement *elem = 0;
 
               type = desc->GetName();
-
               TString dataMemberName = branchname;
 
-              std::cout << "(C) " << type << " " << dataMemberName << std::endl;
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
+
+              std::cout << this->scaffold[scaffoldItem]->header(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));

@@ -95,17 +95,17 @@ void test() {
   TFile *file3 = TFile::Open("file:///home/pivarski/diana-github/scaroot/test-examples/notsosimple.root");
   TTreeReader reader3("tree", file3);
   TTreeReaderValue<Double_t> scalar(reader3, "scalar");
-  TTreeReaderArray<Double_t> vector(reader3, "vector");
-  TTreeReaderArray<std::string> vector2(reader3, "vector2");
-  TTreeReaderArray<std::vector<Double_t> > tensor(reader3, "tensor");
+  TTreeReaderArray<Double_t> vekkktor(reader3, "vekkktor");
+  TTreeReaderArray<std::string> vekkktor2(reader3, "vekkktor2");
+  TTreeReaderArray<std::vector<double> > tensor(reader3, "tensor");
   while (reader3.Next()) {
     std::cout << *(scalar.Get()) << std::endl;
-    for (int i = 0;  i < vector.GetSize();  i++) {
-      std::cout << vector[i] << " ";
+    for (int i = 0;  i < vekkktor.GetSize();  i++) {
+      std::cout << vekkktor[i] << " ";
     }
     std::cout << std::endl;
-    for (int i = 0;  i < vector2.GetSize();  i++) {
-      std::cout << vector2[i] << " ";
+    for (int i = 0;  i < vekkktor2.GetSize();  i++) {
+      std::cout << vekkktor2[i] << " ";
     }
     std::cout << std::endl;
     for (int i = 0;  i < tensor.GetSize();  i++) {
