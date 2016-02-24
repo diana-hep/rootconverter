@@ -41,10 +41,12 @@ void test() {
   TTreeReaderValue<Int_t> one(reader, "one");
   TTreeReaderValue<Float_t> two(reader, "two");
   TTreeReaderArray<Char_t> three(reader, "three");
+  // TTreeReaderValue<TString*> fourfour(reader, "fourfour");
+  // TTreeReaderValue<std::string> four(reader, "four");
   TTreeReaderArray<Float_t> five(reader, "five");
   TTreeReaderArray<Float_t> six(reader, "six");
   TTreeReaderArray<Float_t> seven(reader, "seven");
-  // TTreeReaderValue<Float_t[2]> five(reader, "five");
+  // TTreeReaderValue<TObjArray> eight(reader, "eight");
   while (reader.Next()) {
     std::cout << *(one.Get()) << " " << *(two.Get()) << " " << (char *)three.GetAddress() << std::endl;
     std::cout << "    ";
@@ -82,4 +84,34 @@ void test() {
   // tree->Branch("seven", &seven, "seven[2][2]/F");
   // tree->Branch("eight", &eight, 16000, 0);
 
+
+
+
+
+
+
+  // TFile *file = TFile::Open("file:///home/pivarski/diana-github/scaroot/test-examples/notsosimple.root");
+  // TTreeReader reader("tree", file);
+  // TTreeReaderValue<Double_t> scalar(reader, "scalar");
+  // TTreeReaderArray<Double_t> vector(reader, "vector");
+  // TTreeReaderArray<std::string> vector2(reader, "vector2");
+  // TTreeReaderArray<std::vector<Double_t> > tensor(reader, "tensor");
+  // while (reader.Next()) {
+  //   std::cout << *(scalar.Get()) << std::endl;
+  //   for (int i = 0;  i < vector.GetSize();  i++) {
+  //     std::cout << vector[i] << " ";
+  //   }
+  //   std::cout << std::endl;
+  //   for (int i = 0;  i < vector2.GetSize();  i++) {
+  //     std::cout << vector2[i] << " ";
+  //   }
+  //   std::cout << std::endl;
+  //   for (int i = 0;  i < tensor.GetSize();  i++) {
+  //     for (int j = 0;  j < tensor[i].size();  j++) {
+  //       std::cout << tensor[i][j] << " ";
+  //     }
+  //   }
+  //   std::cout << std::endl;
+  //   std::cout << std::endl;
+  // }
 }
