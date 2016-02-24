@@ -741,8 +741,40 @@ namespace ROOT {
               type = Form("TStlSimpleProxy<%s >", cl->GetName());
               AddHeader(cl);
 
-              std::cout << "(B) " << type << " " << branch->GetName() << std::endl;
+              std::string typeName;
+              switch (cl->GetCollectionProxy()->GetType()) {
+              case EDataType::kChar_t:     { typeName = "Char_t"; break; }
+              case EDataType::kUChar_t:    { typeName = "UChar_t"; break; }
+              case EDataType::kShort_t:    { typeName = "Short_t"; break; }
+              case EDataType::kUShort_t:   { typeName = "UShort_t"; break; }
+              case EDataType::kInt_t:      { typeName = "Int_t"; break; }
+              case EDataType::kUInt_t:     { typeName = "UInt_t"; break; }
+              case EDataType::kLong_t:     { typeName = "Long_t"; break; }
+              case EDataType::kULong_t:    { typeName = "ULong_t"; break; }
+              case EDataType::kFloat_t:    { typeName = "Float_t"; break; }
+              case EDataType::kDouble_t:   { typeName = "Double_t"; break; }
+              case EDataType::kDouble32_t: { typeName = "Double32_t"; break; }
+              case EDataType::kchar:       { typeName = "char"; break; }
+              case EDataType::kBool_t:     { typeName = "Bool_t"; break; }
+              case EDataType::kLong64_t:   { typeName = "Long64_t"; break; }
+              case EDataType::kULong64_t:  { typeName = "ULong64_t"; break; }
+              case EDataType::kOther_t:    { typeName = "ULong64_t"; break; }
+              case EDataType::kFloat16_t:  { typeName = "Float16_t"; break; }
+              case EDataType::kCounter:    { typeName = "Int_t"; break; }
+              case EDataType::kCharStar:   { typeName = "char*"; break; }
+              case EDataType::kBits:       { typeName = "UInt_t"; break; }
+              case EDataType::kVoid_t:     { typeName = "void*"; break; }
+              case EDataType::kNoType_t:
+              case EDataType::kDataTypeAliasUnsigned_t:
+              case EDataType::kDataTypeAliasSignedChar_t:
+              default:
+                Error("AnalyzeTree", "Unrecognized EDataType in STL container %s.", branch->GetName());
+              }
 
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()));
+              scaffoldItem += 1;
+
+              std::cout << this->scaffold[scaffoldItem]->header(0);
               continue;
             }
           }
