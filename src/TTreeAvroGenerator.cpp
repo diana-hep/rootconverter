@@ -113,7 +113,8 @@ namespace ROOT {
                                                TBranchElement *branch,
                                                TVirtualStreamerInfo *info,
                                                scaffold::Node **scaffoldArray,
-                                               int scaffoldItem)
+                                               int scaffoldItem,
+                                               scaffold::Def *def)
     {
       // Analyze the sub-branch and populate the TTreeAvroGenerator or the topdesc with
       // its findings.
@@ -122,7 +123,7 @@ namespace ROOT {
 
       TIter branches( branch->GetListOfBranches() );
 
-      return AnalyzeBranches( level, topdesc, branches, info, scaffoldArray, scaffoldItem );
+      return AnalyzeBranches( level, topdesc, branches, info, scaffoldArray, scaffoldItem, def );
     }
 
     UInt_t TTreeAvroGenerator::AnalyzeBranches(UInt_t level,
@@ -130,7 +131,8 @@ namespace ROOT {
                                                TIter &branches,
                                                TVirtualStreamerInfo *info,
                                                scaffold::Node **scaffoldArray,
-                                               int scaffoldItem)
+                                               int scaffoldItem,
+                                               scaffold::Def *def)
     {
       // Analyze the list of sub branches of a TBranchElement by looping over
       // the streamer elements and create the appropriate class proxies.
@@ -480,7 +482,13 @@ namespace ROOT {
                                                            branch->GetName(),
                                                            isclones, branch->GetSplitLevel(),
                                                            containerName);
-                  lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem);
+
+                  scaffold::Def *nested = new scaffold::Def(std::string(proxyTypeName));
+
+                  lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem, nested);
+
+                  defs.insert(std::pair<const std::string, scaffold::Def*>(nested->typeName(), nested));
+
                 }
               } else {
                 // We do not have a proper node for the base class, we need to loop over
@@ -505,7 +513,12 @@ namespace ROOT {
                                                          containerName);
                 usedBranch = kFALSE;
                 skipped = kTRUE;
-                lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem );
+
+                scaffold::Def *nested = new scaffold::Def(std::string(proxyTypeName));
+
+                lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem, nested);
+
+                defs.insert(std::pair<const std::string, scaffold::Def*>(nested->typeName(), nested));
               }
             }
 
@@ -520,14 +533,22 @@ namespace ROOT {
 
           }
 
-          for (int indent = 0;  indent < level;  indent++)
-            std::cout << "    (A) ";
-          if (element->IsBase())
-            std::cout << "BASE " << element->GetName() << std::endl;
-          else
-            std::cout << proxyTypeName << " " << element->GetName() << std::endl;
-
           TString dataMemberName = element->GetName();
+
+
+          for (int indent = 0;  indent < level;  indent++)
+            std::cout << "    ";
+
+          if (element->IsBase()) {
+            std::cout << "BASE " << dataMemberName << std::endl;
+            def->addBase(std::string(dataMemberName));
+          }
+          else {
+            std::cout << proxyTypeName << " " << dataMemberName << std::endl;
+            def->addField(std::string(proxyTypeName), std::string(dataMemberName));
+          }
+
+
 
           if (usedBranch) {
             branches.Next();
@@ -633,7 +654,7 @@ namespace ROOT {
 
         scaffoldArray[scaffoldItem] = new scaffold::ReaderNestedArrayNode(std::string(leafTypeName), std::string(dataMemberName), fixedTail);
       }
-      std::cout << scaffoldArray[scaffoldItem]->header(level * 4);
+      std::cout << scaffoldArray[scaffoldItem]->declare(level * 4);
 
       return 0;
     }
@@ -774,7 +795,7 @@ namespace ROOT {
               this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()));
               scaffoldItem += 1;
 
-              std::cout << this->scaffold[scaffoldItem]->header(0);
+              std::cout << this->scaffold[scaffoldItem]->declare(0);
               continue;
             }
           }
@@ -807,11 +828,11 @@ namespace ROOT {
               else
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
-              std::cout << this->scaffold[scaffoldItem]->header(0);
+              std::cout << this->scaffold[scaffoldItem]->declare(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
-              std::cout << this->scaffold[scaffoldItem]->header(0);
+              std::cout << this->scaffold[scaffoldItem]->declare(0);
             }
           } else {
             // We have a top level raw type.
@@ -821,16 +842,19 @@ namespace ROOT {
         } else {
           // We have a split object
 
+          scaffold::Def *def = new scaffold::Def(classname);
+
           TIter subnext( branch->GetListOfBranches() );
           if (desc) {
-            AnalyzeBranches(1, desc, dynamic_cast<TBranchElement*>(branch), info, this->scaffold, scaffoldItem);
+            AnalyzeBranches(1, desc, dynamic_cast<TBranchElement*>(branch), info, this->scaffold, scaffoldItem, def);
           }
           if (desc) {
             type = desc->GetName();
           }
 
-          std::cout << "(E) " << classname << " " << branchname << std::endl;
-
+          defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
+          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname));
+          std::cout << this->scaffold[scaffoldItem]->declare(0);
         } // if split or non split
 
         scaffoldItem += 1;

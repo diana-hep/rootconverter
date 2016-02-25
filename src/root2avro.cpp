@@ -136,8 +136,11 @@ int main(int argc, char **argv) {
 
   TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree);
 
-  std::cout << std::endl << "HEADER:" << std::endl;
-  std::cout << generator->header();
+  std::cout << std::endl << "DEFINITIONS:" << std::endl;
+  std::cout << generator->definitions();
+
+  std::cout << std::endl << "DECLARATIONS:" << std::endl;
+  std::cout << generator->declarations();
 
   std::cout << std::endl << "INIT:" << std::endl;
   std::cout << generator->init(fileLocations, treeLocation);

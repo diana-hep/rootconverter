@@ -11,10 +11,22 @@ scaffold::Node **scaffold::newArray(int size) {
   return out;
 }
 
-std::string scaffold::header(scaffold::Node **scaffoldArray, int scaffoldSize) {
+std::string scaffold::definitions(std::map<const std::string, scaffold::Def*> defs) {
+  std::string out;
+  for (auto pair = defs.begin();  pair != defs.end();  ++pair) {
+    out += pair->second->forward();
+  }
+  for (auto pair = defs.begin();  pair != defs.end();  ++pair) {
+    out += std::string("\n");
+    out += pair->second->def();
+  }
+  return out;
+}
+
+std::string scaffold::declarations(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
   for (int i = 0;  i < scaffoldSize;  i++)
-    out += scaffoldArray[i]->header(2);
+    out += scaffoldArray[i]->declare(2);
   return out;
 }
 

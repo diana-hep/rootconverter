@@ -23,14 +23,16 @@ namespace ROOT {
 
       int scaffoldSize;
       scaffold::Node **scaffold;
-      std::string header() { return scaffold::header(scaffold, scaffoldSize); }
+      std::map<const std::string, scaffold::Def*> defs;
+      std::string definitions() { return scaffold::definitions(defs); }
+      std::string declarations() { return scaffold::declarations(scaffold, scaffoldSize); }
       std::string init(std::vector<std::string> fileLocations, std::string treeLocation) { return scaffold::init(scaffold, scaffoldSize, fileLocations, treeLocation); }
       std::string loop() { return scaffold::loop(scaffold, scaffoldSize); }
 
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 
-      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TBranchElement *branch, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem);
-      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TIter &branches, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem);
+      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TBranchElement *branch, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem, scaffold::Def *defClass);
+      UInt_t AnalyzeBranches(UInt_t level, TBranchProxyClassDescriptor *topdesc, TIter &branches, TVirtualStreamerInfo *info, scaffold::Node **scaffoldArray, int scaffoldItem, scaffold::Def *defClass);
       UInt_t AnalyzeOldBranch(TBranch *branch, UInt_t level, TBranchProxyClassDescriptor *desc, scaffold::Node **scaffoldArray, int scaffoldItem);
       UInt_t AnalyzeOldLeaf(TLeaf *leaf, UInt_t level, scaffold::Node **scaffoldArray, int scaffoldItem);
       void   AnalyzeTree(TTree *tree);

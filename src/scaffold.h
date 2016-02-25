@@ -4,13 +4,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace scaffold {
   std::string rootDummy(std::string fieldName);
 
   class Node {
   public:
-    virtual std::string header(int indent) = 0;
+    virtual std::string declare(int indent) = 0;
     virtual std::string init(int indent) = 0;
     virtual std::string loop(int indent) = 0;
   protected:
@@ -24,7 +25,7 @@ namespace scaffold {
 
   class InertNode : public Node {
   public:
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return std::string("");
     }
     std::string init(int indent) {
@@ -40,7 +41,7 @@ namespace scaffold {
     std::string name_;
   public:
     ReaderValueNode(std::string type, std::string name) : type_(type), name_(name) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
@@ -55,7 +56,7 @@ namespace scaffold {
     std::string name_;
   public:
     ReaderStringNode(std::string name) : name_(name) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderArray<Char_t > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
@@ -71,7 +72,7 @@ namespace scaffold {
     std::string name_;
   public:
     ReaderArrayNode(std::string type, std::string name) : type_(type), name_(name) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
@@ -91,7 +92,7 @@ namespace scaffold {
     int nesting_;
   public:
     ReaderArrayArrayNode(std::string type, std::string name, int nesting) : type_(type), name_(name), nesting_(nesting) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
@@ -120,7 +121,7 @@ namespace scaffold {
     std::vector<int> fixedTail_;   // use this to preserve some nesting
   public:
     ReaderNestedArrayNode(std::string type, std::string name, std::vector<int> fixedTail) : type_(type), name_(name), fixedTail_(fixedTail) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
@@ -139,7 +140,7 @@ namespace scaffold {
     std::string name_;
   public:
     RawNode(std::string type, std::string name) : type_(type), name_(name) { }
-    std::string header(int indent) {
+    std::string declare(int indent) {
       return indentation(indent) + type_ + " *" + rootDummy(name_) + std::string(";\n") +
              indentation(indent) + "TBranch *b_" + rootDummy(name_) + std::string(";\n");
     }
@@ -163,9 +164,57 @@ namespace scaffold {
     }
   };
 
+  class Def {
+    std::string typeName_;
+    std::vector<std::string> bases_;
+    std::vector<std::string> names_;
+    std::vector<std::string> types_;
+  public:
+    Def(std::string typeName) : typeName_(typeName) { }
+    std::string typeName() { return typeName_; }
+    void addBase(std::string base) {
+      bases_.push_back(base);
+    }
+    void addField(std::string type, std::string name) {
+      names_.push_back(name);
+      types_.push_back(type);
+    }
+    bool empty() {
+      return (bases_.size() == 0  &&  types_.size() == 0);
+    }
+    std::string forward() {
+      if (empty())
+        return std::string();
+      else
+        return std::string("class ") + typeName_ + std::string(";\n");
+    }
+    std::string def() {
+      if (empty())
+        return std::string();
+      else {
+        std::string out = std::string("class ") + typeName_;
+        for (int i = 0;  i < bases_.size();  i++) {
+          if (i == 0)
+            out += std::string(" : ");
+          else
+            out += std::string(", ");
+          out += std::string("public ") + bases_[i];
+        }
+        out += std::string(" {\n");
+        for (int i = 0;  i < names_.size();  i++) {
+          out += std::string("  ") + types_[i] + std::string(" ") + names_[i] + std::string(";\n");
+        }
+        out += std::string("};\n");
+        return out;
+      }
+    }
+    std::string ref() { return typeName_; }
+  };
+
   Node **newArray(int size);
 
-  std::string header(Node **scaffoldArray, int scaffoldSize);
+  std::string definitions(std::map<const std::string, Def*> defs);
+  std::string declarations(Node **scaffoldArray, int scaffoldSize);
   std::string init(Node **scaffoldArray, int scaffoldSize, std::vector<std::string> fileLocations, std::string treeLocation);
   std::string loop(Node **scaffoldArray, int scaffoldSize);
 }
