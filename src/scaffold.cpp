@@ -1,5 +1,9 @@
 #include "scaffold.h"
 
+std::string scaffold::rootDummy(std::string fieldName) {
+  return std::string("root_") + fieldName;
+}
+
 scaffold::Node **scaffold::newArray(int size) {
   scaffold::Node **out = new scaffold::Node*[size];
   for (int i = 0;  i < size;  i++)
