@@ -172,6 +172,29 @@ namespace scaffold {
   public:
     Def(std::string typeName) : typeName_(typeName) { }
     std::string typeName() { return typeName_; }
+    std::string name(int i) { return names_[i]; }
+    std::string type(int i, bool base) {
+      if (!base)
+        return types_[i];
+      else {
+        std::string out;
+        std::string t = types_[i];
+        for (int j = 0;  j < t.size()  &&  t[j] != '[';  j++)
+          out += t[j];
+        return out;
+      }
+    }
+    std::vector<int> dims(int i) {
+      std::vector<int> out;
+      std::string t = types_[i];
+      for (int j = 0;  j < t.size()  &&  t[j];  j++) {
+        if (t[j] == '[')
+          out.push_back(0);
+        else if ('0' <= t[j]  &&  t[j] <= '9'  &&  out.size() > 0)
+          out.back() = 10 * out.back() + ((int)t[j] - (int)'0');
+      }
+      return out;
+    }
     void addBase(std::string base) {
       bases_.push_back(base);
     }
@@ -202,7 +225,11 @@ namespace scaffold {
         }
         out += std::string(" {\n");
         for (int i = 0;  i < names_.size();  i++) {
-          out += std::string("  ") + types_[i] + std::string(" ") + names_[i] + std::string(";\n");
+          std::vector<int> d = dims(i);
+          std::string dd;
+          for (int j = 0;  j < d.size();  j++)
+            dd += std::string("[") + std::to_string(d[j]) + std::string("]");
+          out += std::string("  ") + type(i, true) + std::string(" ") + names_[i] + dd + std::string(";\n");
         }
         out += std::string("};\n");
         return out;
