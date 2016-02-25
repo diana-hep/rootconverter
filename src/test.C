@@ -45,22 +45,26 @@ void test() {
   TTreeReaderValue<Int_t> one(reader2, "one");
   TTreeReaderValue<Float_t> two(reader2, "two");
   TTreeReaderArray<Char_t> three(reader2, "three");
-  TString *fourfour = new TString;
-  reader2.GetTree()->SetBranchAddress("fourfour", &fourfour);
-  std::string *four = new std::string;
-  reader2.GetTree()->SetBranchAddress("four", &four);
+  TString *fourfour = nullptr;
+  TBranch *b_fourfour;
+  reader2.GetTree()->SetBranchAddress("fourfour", &fourfour, &b_fourfour);
+  std::string *four = nullptr;
+  TBranch *b_four;
+  reader2.GetTree()->SetBranchAddress("four", &four, &b_four);
   TTreeReaderArray<Float_t> five(reader2, "five");
   TTreeReaderArray<Float_t> six(reader2, "six");
   TTreeReaderArray<Float_t> seven(reader2, "seven");
   TTreeReaderArray<Float_t> sevenseven(reader2, "sevenseven");
-  TObjArray *eight = new TObjArray;
-  reader2.GetTree()->SetBranchAddress("eight", &eight);
+  TObjArray *eight = nullptr;
+  TBranch *b_eight;
+  reader2.GetTree()->SetBranchAddress("eight", &eight, &b_eight);
   while (reader2.Next()) {
-    reader2.GetTree()->GetEntry(reader2.GetCurrentEntry());
-
     std::cout << *(one.Get()) << " " << *(two.Get()) << " " << (char *)three.GetAddress() << std::endl;
 
+    b_fourfour->GetEntry(reader2.GetCurrentEntry());
     std::cout << "    >" << fourfour->Data() << "<" << std::endl;
+
+    b_four->GetEntry(reader2.GetCurrentEntry());
     std::cout << "    >" << *four << "<" << std::endl;
 
     std::cout << "    ";
@@ -89,6 +93,7 @@ void test() {
     //     std::cout << sevenseven[i][j] << " ";
     // std::cout << std::endl;
 
+    b_eight->GetEntry(reader2.GetCurrentEntry());
     std::cout << "    ";
     for (int i = 0;  i < eight->GetEntries();  i++)
       std::cout << ((TObjString*)eight->At(i))->GetString().Data() << " ";
