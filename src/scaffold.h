@@ -140,11 +140,12 @@ namespace scaffold {
   public:
     RawNode(std::string type, std::string name) : type_(type), name_(name) { }
     std::string header(int indent) {
-      return indentation(indent) + type_ + " *" + rootDummy(name_) + std::string(" = nullptr;\n") +
-             indentation(indent) + "TBranch *b_" + rootDummy(name_) + std::string(" = nullptr;\n");
+      return indentation(indent) + type_ + " *" + rootDummy(name_) + std::string(";\n") +
+             indentation(indent) + "TBranch *b_" + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + type_ + std::string(";\n") +
+      return indentation(indent) + rootDummy(name_) + std::string(" = nullptr;\n") +
+             indentation(indent) + std::string("b_") + rootDummy(name_) + std::string(" = nullptr;\n") +
              indentation(indent) + std::string("reader.GetTree()->SetBranchAddress(\"") + name_ + std::string("\", &") + rootDummy(name_) + std::string(", &b_") + rootDummy(name_) + std::string(");\n");
     }
     std::string loop(int indent) {
