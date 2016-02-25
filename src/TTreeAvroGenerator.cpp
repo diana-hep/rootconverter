@@ -31,43 +31,49 @@ namespace ROOT {
       }
       ndim += element->GetArrayDim();
 
-      TString middle;
-      if (container == TTreeAvroGenerator::kClones) {
-        middle = "Cla";
-      } else if  (container == TTreeAvroGenerator::kSTL) {
-        middle = "Stl";
+      result = subtype;
+      for (int i = 0;  i < ndim;  i++) {
+        result += "[";
+        result += element->GetMaxIndex(i);
+        result += "]";
       }
 
-      if (ndim==0) {
-        result = "T";
-        result += middle;
-        result += subtype;
-        result += "Proxy";
-      } else if (ndim==1) {
-        result = "T";
-        result += middle;
-        result += "Array";
-        result += subtype;
-        result += "Proxy";
-      } else {
-        result = "T";
-        result += middle;
-        result += "ArrayProxy<";
-        for(Int_t ind = ndim - 2; ind > 0; --ind) {
-          result += "TMultiArrayType<";
-        }
-        result += "TArrayType<";
-        result += element->GetTypeName();
-        result += ",";
-        result += element->GetMaxIndex(ndim-1);
-        result += "> ";
-        for(Int_t ind = ndim - 2; ind > 0; --ind) {
-          result += ",";
-          result += element->GetMaxIndex(ind);
-          result += "> ";
-        }
-        result += ">";
-      }
+      // TString middle;
+      // if (container == TTreeAvroGenerator::kClones) {
+      //   middle = "Cla";
+      // } else if  (container == TTreeAvroGenerator::kSTL) {
+      //   middle = "Stl";
+      // }
+      // if (ndim==0) {
+      //   result = "T";
+      //   result += middle;
+      //   result += subtype;
+      //   result += "Proxy";
+      // } else if (ndim==1) {
+      //   result = "T";
+      //   result += middle;
+      //   result += "Array";
+      //   result += subtype;
+      //   result += "Proxy";
+      // } else {
+      //   result = "T";
+      //   result += middle;
+      //   result += "ArrayProxy<";
+      //   for(Int_t ind = ndim - 2; ind > 0; --ind) {
+      //     result += "TMultiArrayType<";
+      //   }
+      //   result += "TArrayType<";
+      //   result += element->GetTypeName();
+      //   result += ",";
+      //   result += element->GetMaxIndex(ndim-1);
+      //   result += "> ";
+      //   for(Int_t ind = ndim - 2; ind > 0; --ind) {
+      //     result += ",";
+      //     result += element->GetMaxIndex(ind);
+      //     result += "> ";
+      //   }
+      //   result += ">";
+      // }
       return result;
 
       /*
@@ -158,7 +164,8 @@ namespace ROOT {
       UInt_t lookedAt = 0;
       EContainer container = kNone;
       TString middle;
-      TString proxyTypeName;
+      TString typeName;
+      TString defTypeName;
       TBranchProxyClassDescriptor::ELocation outer_isclones = TBranchProxyClassDescriptor::kOut;
       TString containerName;
       TString subBranchPrefix;
@@ -265,64 +272,63 @@ namespace ROOT {
           Bool_t ispointer = false;
           switch(element->GetType()) {
 
-          case TVirtualStreamerInfo::kBool:    { proxyTypeName = "T" + middle + "BoolProxy"; break; }
-          case TVirtualStreamerInfo::kChar:    { proxyTypeName = "T" + middle + "CharProxy"; break; }
-          case TVirtualStreamerInfo::kShort:   { proxyTypeName = "T" + middle + "ShortProxy"; break; }
-          case TVirtualStreamerInfo::kInt:     { proxyTypeName = "T" + middle + "IntProxy"; break; }
-          case TVirtualStreamerInfo::kLong:    { proxyTypeName = "T" + middle + "LongProxy"; break; }
-          case TVirtualStreamerInfo::kLong64:  { proxyTypeName = "T" + middle + "Long64Proxy"; break; }
-          case TVirtualStreamerInfo::kFloat:   { proxyTypeName = "T" + middle + "FloatProxy"; break; }
-          case TVirtualStreamerInfo::kFloat16: { proxyTypeName = "T" + middle + "Float16Proxy"; break; }
-          case TVirtualStreamerInfo::kDouble:  { proxyTypeName = "T" + middle + "DoubleProxy"; break; }
-          case TVirtualStreamerInfo::kDouble32:{ proxyTypeName = "T" + middle + "Double32Proxy"; break; }
-          case TVirtualStreamerInfo::kUChar:   { proxyTypeName = "T" + middle + "UCharProxy"; break; }
-          case TVirtualStreamerInfo::kUShort:  { proxyTypeName = "T" + middle + "UShortProxy"; break; }
-          case TVirtualStreamerInfo::kUInt:    { proxyTypeName = "T" + middle + "UIntProxy"; break; }
-          case TVirtualStreamerInfo::kULong:   { proxyTypeName = "T" + middle + "ULongProxy"; break; }
-          case TVirtualStreamerInfo::kULong64: { proxyTypeName = "T" + middle + "ULong64Proxy"; break; }
-          case TVirtualStreamerInfo::kBits:    { proxyTypeName = "T" + middle + "UIntProxy"; break; }
+          case TVirtualStreamerInfo::kBool:    { typeName = "Bool_t"; break; }
+          case TVirtualStreamerInfo::kChar:    { typeName = "Char_t"; break; }
+          case TVirtualStreamerInfo::kShort:   { typeName = "Short_t"; break; }
+          case TVirtualStreamerInfo::kInt:     { typeName = "Int_t"; break; }
+          case TVirtualStreamerInfo::kLong:    { typeName = "Long_t"; break; }
+          case TVirtualStreamerInfo::kLong64:  { typeName = "Long64_t"; break; }
+          case TVirtualStreamerInfo::kFloat:   { typeName = "Float_t"; break; }
+          case TVirtualStreamerInfo::kFloat16: { typeName = "Float16_t"; break; }
+          case TVirtualStreamerInfo::kDouble:  { typeName = "Double_t"; break; }
+          case TVirtualStreamerInfo::kDouble32:{ typeName = "Double32_t"; break; }
+          case TVirtualStreamerInfo::kUChar:   { typeName = "UChar_t"; break; }
+          case TVirtualStreamerInfo::kUShort:  { typeName = "UShort_t"; break; }
+          case TVirtualStreamerInfo::kUInt:    { typeName = "UInt_t"; break; }
+          case TVirtualStreamerInfo::kULong:   { typeName = "ULong_t"; break; }
+          case TVirtualStreamerInfo::kULong64: { typeName = "ULong64_t"; break; }
+          case TVirtualStreamerInfo::kBits:    { typeName = "UInt_t"; break; }
 
-          case TVirtualStreamerInfo::kCharStar: { proxyTypeName = GetArrayType(element,"Char",container); break; }
+          case TVirtualStreamerInfo::kCharStar: { defTypeName = "Char_t"; typeName = GetArrayType(element,"Char_t",container); break; }
 
             // array of basic types  array[8]
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:    { proxyTypeName = GetArrayType(element,"Bool",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:    { proxyTypeName = GetArrayType(element,"Char",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:   { proxyTypeName = GetArrayType(element,"Short",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:     { proxyTypeName = GetArrayType(element,"Int",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:    { proxyTypeName = GetArrayType(element,"Long",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:  { proxyTypeName = GetArrayType(element,"Long64",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:   { proxyTypeName = GetArrayType(element,"Float",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16: { proxyTypeName = GetArrayType(element,"Float16",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:  { proxyTypeName = GetArrayType(element,"Double",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:{ proxyTypeName = GetArrayType(element,"Double32",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:   { proxyTypeName = GetArrayType(element,"UChar",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:  { proxyTypeName = GetArrayType(element,"UShort",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:    { proxyTypeName = GetArrayType(element,"UInt",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:   { proxyTypeName = GetArrayType(element,"ULong",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64: { proxyTypeName = GetArrayType(element,"ULong64",container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:    { proxyTypeName = GetArrayType(element,"UInt",container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
 
             // pointer to an array of basic types  array[n]
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:    { proxyTypeName = GetArrayType(element,"Bool",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:    { proxyTypeName = GetArrayType(element,"Char",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:   { proxyTypeName = GetArrayType(element,"Short",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:     { proxyTypeName = GetArrayType(element,"Int",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:    { proxyTypeName = GetArrayType(element,"Long",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:  { proxyTypeName = GetArrayType(element,"Long64",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:   { proxyTypeName = GetArrayType(element,"Float",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16: { proxyTypeName = GetArrayType(element,"Float16",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:  { proxyTypeName = GetArrayType(element,"Double",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:{ proxyTypeName = GetArrayType(element,"Double32",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:   { proxyTypeName = GetArrayType(element,"UChar",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:  { proxyTypeName = GetArrayType(element,"UShort",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:    { proxyTypeName = GetArrayType(element,"UInt",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:   { proxyTypeName = GetArrayType(element,"ULong",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64: { proxyTypeName = GetArrayType(element,"ULong64",container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:    { proxyTypeName = GetArrayType(element,"UInt",container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
 
             // array counter //[n]
-          case TVirtualStreamerInfo::kCounter: { proxyTypeName = "T" + middle + "IntProxy"; break; }
-
+          case TVirtualStreamerInfo::kCounter: { typeName = "Int_t"; break; }
 
           case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectp:
           case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectP:
@@ -345,7 +351,11 @@ namespace ROOT {
             TClass *cl = element->GetClassPointer();
             R__ASSERT(cl);
 
-            proxyTypeName = Form("T%sObjProxy<%s >", middle.Data(), cl->GetName());
+            typeName = cl->GetName();
+            defTypeName = typeName(typeName.Last('<') + 1, typeName.Length());
+            defTypeName = defTypeName(0, defTypeName.First('>'));
+
+            // proxyTypeName = Form("T%sObjProxy<%s >", middle.Data(), cl->GetName());
             TString cname = cl->GetName();
             TBranchProxyClassDescriptor::ELocation isclones = outer_isclones;
             if (cl==TClonesArray::Class()) {
@@ -358,7 +368,7 @@ namespace ROOT {
               TClass *valueClass = cl->GetCollectionProxy()->GetValueClass();
               if (valueClass) cname = valueClass->GetName();
               else {
-                proxyTypeName = Form("TStlSimpleProxy<%s >", cl->GetName());
+                // proxyTypeName = Form("TStlSimpleProxy<%s >", cl->GetName());
               }
             }
 
@@ -402,7 +412,7 @@ namespace ROOT {
                   TStreamerElement *elem = 0;
 
                   if (NeedToEmulate(cl,0)) {
-                    proxyTypeName = local_cldesc->GetName();
+                    typeName = local_cldesc->GetName();
                   }
 
                 } else {
@@ -467,7 +477,7 @@ namespace ROOT {
                   TStreamerElement *elem = 0;
 
                   if (NeedToEmulate(cl,0)) {
-                    proxyTypeName = local_cldesc->GetName();
+                    typeName = local_cldesc->GetName();
                   }
 
                 } else {
@@ -483,7 +493,7 @@ namespace ROOT {
                                                            isclones, branch->GetSplitLevel(),
                                                            containerName);
 
-                  scaffold::Def *nested = new scaffold::Def(std::string(proxyTypeName));
+                  scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
 
                   lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem, nested);
 
@@ -514,7 +524,7 @@ namespace ROOT {
                 usedBranch = kFALSE;
                 skipped = kTRUE;
 
-                scaffold::Def *nested = new scaffold::Def(std::string(proxyTypeName));
+                scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
 
                 lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem, nested);
 
@@ -544,8 +554,8 @@ namespace ROOT {
             def->addBase(std::string(dataMemberName));
           }
           else {
-            std::cout << proxyTypeName << " " << dataMemberName << std::endl;
-            def->addField(std::string(proxyTypeName), std::string(dataMemberName));
+            std::cout << typeName << " " << dataMemberName << std::endl;
+            def->addField(std::string(typeName), std::string(dataMemberName));
           }
 
 
