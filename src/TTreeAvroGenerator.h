@@ -26,8 +26,8 @@ namespace ROOT {
       std::map<const std::string, scaffold::Def*> defs;
       std::string definitions() { return scaffold::definitions(defs); }
       std::string declarations() { return scaffold::declarations(scaffold, scaffoldSize); }
-      std::string init(std::vector<std::string> fileLocations, std::string treeLocation) { return scaffold::init(scaffold, scaffoldSize, fileLocations, treeLocation); }
-      std::string loop() { return scaffold::loop(scaffold, scaffoldSize); }
+      std::string init() { return scaffold::init(scaffold, scaffoldSize); }
+      std::string printJSON() { return scaffold::printJSON(scaffold, scaffoldSize); }
 
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 

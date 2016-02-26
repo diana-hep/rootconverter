@@ -25,26 +25,36 @@ std::string scaffold::definitions(std::map<const std::string, scaffold::Def*> de
 
 std::string scaffold::declarations(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
+  out += std::string("TTreeReader *getReader();");
   for (int i = 0;  i < scaffoldSize;  i++)
-    out += scaffoldArray[i]->declare(2);
+    out += scaffoldArray[i]->declare(0);
   return out;
 }
 
-std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize, std::vector<std::string> fileLocations, std::string treeLocation) {
+std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
-  out += std::string("  TFile *file = TFile::Open(\"") + fileLocations[0] + std::string("\");\n");
-  out += std::string("  TTreeReader reader(\"") + treeLocation + std::string("\", file);\n");
+  out += std::string("void init() {\n");
   for (int i = 0;  i < scaffoldSize;  i++)
     out += scaffoldArray[i]->init(2);
+  out += std::string("}");
   return out;
 }
 
-std::string scaffold::loop(scaffold::Node **scaffoldArray, int scaffoldSize) {
+std::string scaffold::printJSON(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
-  out += std::string("  while (reader.Next()) {\n");
-  out += std::string("    std::cout << \"start entry\" << std::endl;\n");
-  for (int i = 0;  i < scaffoldSize;  i++)
-    out += std::string("\n") + scaffoldArray[i]->loop(4);
-  out += std::string("  }\n");
+  out += std::string("void printJSON() {\n");
+  out += std::string("  while (getReader()->Next()) {\n");
+  out += std::string("    std::cout << \"{\";\n");
+  for (int i = 0;  i < scaffoldSize;  i++) {
+    if (i > 0)
+      out += std::string("    std::cout << \", \";\n");
+    out += std::string("\n") + scaffoldArray[i]->printJSON(4);
+  }
+  out += std::string("    std::cout << \"}\" << std::endl;\n");
+  out += std::string("  }\n}\n");
   return out;
+}
+
+std::string quoteJSON(std::string string) {
+  return string;   // TODO! Escape bad characters, especially '\n'
 }

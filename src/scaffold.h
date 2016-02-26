@@ -13,7 +13,7 @@ namespace scaffold {
   public:
     virtual std::string declare(int indent) = 0;
     virtual std::string init(int indent) = 0;
-    virtual std::string loop(int indent) = 0;
+    virtual std::string printJSON(int indent) = 0;
   protected:
     std::string indentation(int indent) {
       std::string out;
@@ -31,7 +31,7 @@ namespace scaffold {
     std::string init(int indent) {
       return std::string("");
     }
-    std::string loop(int indent) {
+    std::string printJSON(int indent) {
       return std::string("");
     }
   };
@@ -39,16 +39,21 @@ namespace scaffold {
   class ReaderValueNode : public Node {
     std::string type_;
     std::string name_;
+    bool structure_;
   public:
-    ReaderValueNode(std::string type, std::string name) : type_(type), name_(name) { }
+    ReaderValueNode(std::string type, std::string name, bool structure) : type_(type), name_(name), structure_(structure) { }
     std::string declare(int indent) {
       return indentation(indent) + std::string("TTreeReaderValue<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(" >(reader, \"") + name_ + std::string("\");\n");
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
-    std::string loop(int indent) {
-      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << *(") + rootDummy(name_) + std::string("->Get()) << std::endl;\n");
+    std::string printJSON(int indent) {
+      if (structure_)
+        return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \";\n") +
+               indentation(indent) + rootDummy(name_) + std::string("->Get().printJSON();\n");
+      else
+        return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \" << *(") + rootDummy(name_) + std::string("->Get());\n");
     }
   };
 
@@ -60,10 +65,10 @@ namespace scaffold {
       return indentation(indent) + std::string("TTreeReaderArray<Char_t > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<Char_t >(reader, \"") + name_ + std::string("\");\n");
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<Char_t >(*getReader(), \"") + name_ + std::string("\");\n");
     }
-    std::string loop(int indent) {
-      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << (char*)") + rootDummy(name_) + std::string("->GetAddress() << std::endl;\n");
+    std::string printJSON(int indent) {
+      return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \" << scaffold::quoteJSON(std::string((char*)") + rootDummy(name_) + std::string("->GetAddress()));\n");
     }
   };
 
@@ -76,13 +81,16 @@ namespace scaffold {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(reader, \"") + name_ + std::string("\");\n");
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
-    std::string loop(int indent) {
-      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
-             indentation(indent) + std::string("for (int i = 0;  i < ") + rootDummy(name_) + std::string("->GetSize(); i++)\n") +
-             indentation(indent + 2) + std::string("std::cout << (*") + rootDummy(name_) + std::string(")[i] << \" \";\n") +
-             indentation(indent) + std::string("std::cout << std::endl;\n");
+    std::string printJSON(int indent) {
+      return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": [\";\n") +
+             indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
+             indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string(";  i++) {\n") +
+             indentation(indent) + std::string("  if (i != 0) std::cout << \", \";\n");
+             indentation(indent) + std::string("  std::cout << (*") + rootDummy(name_) + std::string(")[i];\n") +
+             indentation(indent) + std::string("};\n") +
+             indentation(indent) + std::string("std::cout << \"]\"\n;");
     }
   };
 
@@ -96,21 +104,33 @@ namespace scaffold {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(reader, \"") + name_ + std::string("\");\n");
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
-    std::string loop(int indent) {
-      std::string out = indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
-                        indentation(indent) + std::string("for (int i0 = 0;  i0 < ") + rootDummy(name_) + std::string("->GetSize(); i0++)\n");
-      std::string prev = std::string("i0");
-      std::string reach = std::string("(*") + rootDummy(name_) + std::string(")[") + prev + std::string("]");
+    std::string printJSON(int indent) {
+      std::string item = std::string("item0_") + rootDummy(name_);
+      std::string out = indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": [\";\n") +
+                        indentation(indent) + std::string("int len0_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
+                        indentation(indent) + std::string("for (int i0 = 0;  i0 < len0_") + rootDummy(name_) + std::string(";  i0++) {\n") +
+                        indentation(indent) + std::string("  auto ") + item + std::string(" = ") + rootDummy(name_) + std::string("[i0];\n");
       for (int n = 1;  n <= nesting_;  n++) {
-        std::string var = std::string("i") + std::to_string(n);
-        out += indentation(indent + 2*n) + std::string("for (int ") + var + std::string(" = 0;  ") + var + std::string(" < ") + reach + std::string(".size();  ") + var + std::string("++)\n");
-        reach = reach + std::string("[") + var + std::string("]");
-        prev = var;
+        std::string len = std::string("len") + std::to_string(n) + std::string("_") + rootDummy(name_);
+        std::string index = std::string("i") + std::to_string(n);
+        std::string newitem = std::string("item") + std::to_string(n) + std::string("_") + rootDummy(name_);
+        out += indentation(indent + 2*n) + std::string("int ") + len + std::string(" = ") + item + std::string(".size();\n") +
+               indentation(indent + 2*n) + std::string("for (int ") + index + std::string(" = 0;  ") + index + std::string(" < ") + len + std::string("; ") + index + std::string("++) {\n") +
+               indentation(indent + 2*n) + std::string("  auto ") + newitem + std::string(" = ") + item + std::string("[") + index + std::string("];\n");
+        if (n < nesting_)
+          out += indentation(indent + 2*n) + std::string("  if (") + index + std::string(" > 0) std::cout << \", \";\n") +
+                 indentation(indent + 2*n) + std::string("  std::cout << \"[\";\n");
+        item = newitem;
       }
-      out += indentation(indent + 2*nesting_ + 2) + std::string("std::cout << ") + reach + std::string(" << \" \";\n");
-      out += indentation(indent) + std::string("std::cout << std::endl;\n");
+      out += indentation(indent + 2*nesting_) + std::string("  if (i") + std::to_string(nesting_) + std::string(" != 0) std::cout << \", \";\n") +
+             indentation(indent + 2*nesting_) + std::string("  std::cout << ") + item + std::string(";\n");
+      for (int n = nesting_;  n >= 0;  n--) {
+        if (n < nesting_)
+          out += indentation(indent + 2*n) + std::string("  std::cout << \"]\";\n");
+        out += indentation(indent + 2*n) + std::string("}\n");
+      }
       return out;
     }
   };
@@ -125,14 +145,15 @@ namespace scaffold {
       return indentation(indent) + std::string("TTreeReaderArray<") + type_ + std::string(" > *") + rootDummy(name_) + std::string(";\n");
     }
     std::string init(int indent) {
-      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(reader, \"") + name_ + std::string("\");\n");
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
-    std::string loop(int indent) {
-      return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
-             indentation(indent) + std::string("for (int i = 0;  i < ") + rootDummy(name_) + std::string("->GetSize(); i++)\n") +
-             indentation(indent + 2) + std::string("std::cout << (*") + rootDummy(name_) + std::string(")[i] << \" \";\n") +
-             indentation(indent) + std::string("std::cout << std::endl;\n");
-    }
+    std::string printJSON(int indent) { return std::string(); }
+    // std::string loop(int indent) {
+    //   return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
+    //          indentation(indent) + std::string("for (int i = 0;  i < ") + rootDummy(name_) + std::string("->GetSize(); i++)\n") +
+    //          indentation(indent + 2) + std::string("std::cout << (*") + rootDummy(name_) + std::string(")[i] << \" \";\n") +
+    //          indentation(indent) + std::string("std::cout << std::endl;\n");
+    // }
   };
 
   class RawNode : public Node {
@@ -147,58 +168,96 @@ namespace scaffold {
     std::string init(int indent) {
       return indentation(indent) + rootDummy(name_) + std::string(" = nullptr;\n") +
              indentation(indent) + std::string("b_") + rootDummy(name_) + std::string(" = nullptr;\n") +
-             indentation(indent) + std::string("reader.GetTree()->SetBranchAddress(\"") + name_ + std::string("\", &") + rootDummy(name_) + std::string(", &b_") + rootDummy(name_) + std::string(");\n");
+             indentation(indent) + std::string("getReader()->GetTree()->SetBranchAddress(\"") + name_ + std::string("\", &") + rootDummy(name_) + std::string(", &b_") + rootDummy(name_) + std::string(");\n");
     }
-    std::string loop(int indent) {
-      std::string expr;
-      if (type_ == std::string("string"))
-        expr = std::string("*") + rootDummy(name_);
-      else if (type_ == std::string("TString"))
-        expr = rootDummy(name_) + std::string("->Data()");
-      else if (type_ == std::string("TObjArray"))   // for testing; we don't know enough about this type to handle it
-        expr = std::string("\"NOT ENOUGH INFO\"");
+    std::string printJSON(int indent) { return std::string(); }
+    // std::string loop(int indent) {
+    //   std::string expr;
+    //   if (type_ == std::string("string"))
+    //     expr = std::string("*") + rootDummy(name_);
+    //   else if (type_ == std::string("TString"))
+    //     expr = rootDummy(name_) + std::string("->Data()");
+    //   else if (type_ == std::string("TObjArray"))   // for testing; we don't know enough about this type to handle it
+    //     expr = std::string("\"NOT ENOUGH INFO\"");
+    //   else
+    //     throw;
+    //   return indentation(indent) + std::string("b_") + rootDummy(name_) + std::string("->GetEntry(getReader()->GetCurrentEntry());\n") +
+    //          indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << ") + expr + std::string(" << std::endl;\n");
+    // }
+  };
+
+  enum Kind { scalar, array, vector, structure };
+
+  class Type {
+    std::string type_;
+    Kind kind_;
+    std::vector<int> dims_;
+  public:
+    Type(std::string type, Kind kind) {
+      if (kind == array) {
+        int i;
+        for (i = 0;  i < type.size()  &&  type[i] != '[';  i++)
+          type_ += type[i];
+        for (;  i < type.size();  i++) {
+          if (type[i] == '[')
+            dims_.push_back(0);
+          else if ('0' <= type[i]  &&  type[i] <= '9'  &&  dims_.size() > 0)
+            dims_.back() = 10 * dims_.back() + ((int)type[i] - (int)'0');
+        }
+      }
       else
-        throw;
-      return indentation(indent) + std::string("b_") + rootDummy(name_) + std::string("->GetEntry(reader.GetCurrentEntry());\n") +
-             indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << ") + expr + std::string(" << std::endl;\n");
+        type_ = type;
+      kind_ = kind;
     }
+    std::string typeName() { return type_; }
+    std::string arrayBrackets() {
+      std::string out;
+      for (int i = 0;  i < dims_.size();  i++)
+        out += std::string("[") + std::to_string(i) + std::string("]");
+      return out;
+    }
+    std::string printJSON(int indent) { return std::string(); }
+    // std::string loop(std::string name) {
+    //   if (kind_ == scalar)
+    //     return name + std::string(" << std::endl;\n");
+    //   else if (kind_ == array  ||  kind_ == vector) {
+    //     std::string out;
+    //     for (int n = 0;  n < dims_.size();  n++) {
+    //       std::string var = std::string("i") + std::to_string(n);
+    //       for (int i = 0;  i < n;  i++)
+    //         out += std::string("  ");
+    //       out += std::string("for (int ") + var + std::string(" = 0;  ") + var + std::string(" < ") + std::to_string(dims_[n]) + std::string(";  ") + var + std::string("++)\n");
+    //     }
+    //     for (int i = 0;  i < dims_.size();  i++)
+    //       out += std::string("  ");
+    //     out += std::string("std::cout << \" \" << ") + name;
+    //     for (int n = 0;  n < dims_.size();  n++) {
+    //       std::string var = std::string("i") + std::to_string(n);
+    //       out += std::string("[") + var + std::string("]");
+    //     }
+    //     out += std::string(";\n");
+    //     out += std::string("  std::cout << std::endl;\n");
+    //   }
+    //   else if (kind_ == structure) {
+        
+    //   }
+    // }
   };
 
   class Def {
     std::string typeName_;
     std::vector<std::string> bases_;
     std::vector<std::string> names_;
-    std::vector<std::string> types_;
+    std::vector<Type> types_;
   public:
     Def(std::string typeName) : typeName_(typeName) { }
     std::string typeName() { return typeName_; }
     std::string name(int i) { return names_[i]; }
-    std::string type(int i, bool base) {
-      if (!base)
-        return types_[i];
-      else {
-        std::string out;
-        std::string t = types_[i];
-        for (int j = 0;  j < t.size()  &&  t[j] != '[';  j++)
-          out += t[j];
-        return out;
-      }
-    }
-    std::vector<int> dims(int i) {
-      std::vector<int> out;
-      std::string t = types_[i];
-      for (int j = 0;  j < t.size()  &&  t[j];  j++) {
-        if (t[j] == '[')
-          out.push_back(0);
-        else if ('0' <= t[j]  &&  t[j] <= '9'  &&  out.size() > 0)
-          out.back() = 10 * out.back() + ((int)t[j] - (int)'0');
-      }
-      return out;
-    }
+    Type type(int i) { return types_[i]; }
     void addBase(std::string base) {
       bases_.push_back(base);
     }
-    void addField(std::string type, std::string name) {
+    void addField(Type type, std::string name) {
       names_.push_back(name);
       types_.push_back(type);
     }
@@ -225,13 +284,13 @@ namespace scaffold {
         }
         out += std::string(" {\n");
         for (int i = 0;  i < names_.size();  i++) {
-          std::vector<int> d = dims(i);
-          std::string dd;
-          for (int j = 0;  j < d.size();  j++)
-            dd += std::string("[") + std::to_string(d[j]) + std::string("]");
-          out += std::string("  ") + type(i, true) + std::string(" ") + names_[i] + dd + std::string(";\n");
+          out += std::string("  ") + type(i).typeName() + std::string(" ") + name(i) + type(i).arrayBrackets() + std::string(";\n");
         }
-        out += std::string("};\n");
+        out += std::string("  void printJSON() {\n");
+        for (int i = 0;  i < names_.size();  i++) {
+          // out += std::string("    std::cout << \"") + name(i) + std::string(" \";\n") + type(i).loop(name(i));
+        }
+        out += std::string("  }\n};\n");
         return out;
       }
     }
@@ -242,8 +301,9 @@ namespace scaffold {
 
   std::string definitions(std::map<const std::string, Def*> defs);
   std::string declarations(Node **scaffoldArray, int scaffoldSize);
-  std::string init(Node **scaffoldArray, int scaffoldSize, std::vector<std::string> fileLocations, std::string treeLocation);
-  std::string loop(Node **scaffoldArray, int scaffoldSize);
+  std::string init(Node **scaffoldArray, int scaffoldSize);
+  std::string printJSON(Node **scaffoldArray, int scaffoldSize);
+  std::string quoteJSON(std::string string);
 }
 
 #endif // SCAFFOLD_H

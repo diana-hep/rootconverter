@@ -19,6 +19,8 @@
 namespace ROOT {
   namespace Internal {
 
+    bool DEBUG = false;
+
     TString GetArrayType(TStreamerElement *element, const char *subtype,
                          TTreeAvroGenerator::EContainer container)
     {
@@ -166,14 +168,17 @@ namespace ROOT {
       TString middle;
       TString typeName;
       TString defTypeName;
+      scaffold::Kind fieldKind = scaffold::scalar;
       TBranchProxyClassDescriptor::ELocation outer_isclones = TBranchProxyClassDescriptor::kOut;
       TString containerName;
       TString subBranchPrefix;
       Bool_t skipped = false;
 
-      for (int indent = 0;  indent < level;  indent++)
-        std::cout << "    ";
-      std::cout << info->GetElements()->GetEntries() << std::endl;
+      if (DEBUG) {
+        for (int indent = 0;  indent < level;  indent++)
+          std::cout << "    ";
+        std::cout << info->GetElements()->GetEntries() << std::endl;
+      }
 
       {
         TIter peek = branches;
@@ -289,43 +294,43 @@ namespace ROOT {
           case TVirtualStreamerInfo::kULong64: { typeName = "ULong64_t"; break; }
           case TVirtualStreamerInfo::kBits:    { typeName = "UInt_t"; break; }
 
-          case TVirtualStreamerInfo::kCharStar: { defTypeName = "Char_t"; typeName = GetArrayType(element,"Char_t",container); break; }
+          case TVirtualStreamerInfo::kCharStar: { defTypeName = "Char_t"; typeName = GetArrayType(element,"Char_t",container); fieldKind = scaffold::array; break; }
 
             // array of basic types  array[8]
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); break; }
-          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); fieldKind = scaffold::array; break; }
 
             // pointer to an array of basic types  array[n]
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); break; }
-          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:    { defTypeName = "Bool_t";     typeName = GetArrayType(element,"Bool_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:    { defTypeName = "Char_t";     typeName = GetArrayType(element,"Char_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:   { defTypeName = "Short_t";    typeName = GetArrayType(element,"Short_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:     { defTypeName = "Int_t";      typeName = GetArrayType(element,"Int_t",      container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:    { defTypeName = "Long_t";     typeName = GetArrayType(element,"Long_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:  { defTypeName = "Long64_t";   typeName = GetArrayType(element,"Long64_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:   { defTypeName = "Float_t";    typeName = GetArrayType(element,"Float_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16: { defTypeName = "Float16_t";  typeName = GetArrayType(element,"Float16_t",  container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:  { defTypeName = "Double_t";   typeName = GetArrayType(element,"Double_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:{ defTypeName = "Double32_t"; typeName = GetArrayType(element,"Double32_t", container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:   { defTypeName = "UChar_t";    typeName = GetArrayType(element,"UChar_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:  { defTypeName = "UShort_t";   typeName = GetArrayType(element,"UShort_t",   container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:   { defTypeName = "ULong_t";    typeName = GetArrayType(element,"ULong_t",    container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64: { defTypeName = "ULong64_t";  typeName = GetArrayType(element,"ULong64_t",  container ); fieldKind = scaffold::array; break; }
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:    { defTypeName = "UInt_t";     typeName = GetArrayType(element,"UInt_t",     container ); fieldKind = scaffold::array; break; }
 
             // array counter //[n]
           case TVirtualStreamerInfo::kCounter: { typeName = "Int_t"; break; }
@@ -354,6 +359,8 @@ namespace ROOT {
             typeName = cl->GetName();
             defTypeName = typeName(typeName.Last('<') + 1, typeName.Length());
             defTypeName = defTypeName(0, defTypeName.First('>'));
+            if (element->GetType() == TVirtualStreamerInfo::kSTL)
+              fieldKind = scaffold::vector;
 
             // proxyTypeName = Form("T%sObjProxy<%s >", middle.Data(), cl->GetName());
             TString cname = cl->GetName();
@@ -494,6 +501,7 @@ namespace ROOT {
                                                            containerName);
 
                   scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
+                  fieldKind = scaffold::structure;
 
                   lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem, nested);
 
@@ -525,6 +533,7 @@ namespace ROOT {
                 skipped = kTRUE;
 
                 scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
+                fieldKind = scaffold::structure;
 
                 lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem, nested);
 
@@ -546,17 +555,19 @@ namespace ROOT {
           TString dataMemberName = element->GetName();
 
 
-          for (int indent = 0;  indent < level;  indent++)
-            std::cout << "    ";
+          if (DEBUG) {
+            for (int indent = 0;  indent < level;  indent++)
+              std::cout << "    ";
+            if (element->IsBase())
+              std::cout << "BASE " << dataMemberName << std::endl;
+            else
+              std::cout << typeName << " " << dataMemberName << std::endl;
+          }
 
-          if (element->IsBase()) {
-            std::cout << "BASE " << dataMemberName << std::endl;
+          if (element->IsBase())
             def->addBase(std::string(dataMemberName));
-          }
-          else {
-            std::cout << typeName << " " << dataMemberName << std::endl;
-            def->addField(std::string(typeName), std::string(dataMemberName));
-          }
+          else
+            def->addField(scaffold::Type(std::string(typeName), fieldKind), std::string(dataMemberName));
 
 
 
@@ -652,7 +663,7 @@ namespace ROOT {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderStringNode(std::string(dataMemberName));
       }
       else if (dim == 0) {
-        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName));
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), false);
       }
       else if (dim == 1) {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName));
@@ -664,7 +675,9 @@ namespace ROOT {
 
         scaffoldArray[scaffoldItem] = new scaffold::ReaderNestedArrayNode(std::string(leafTypeName), std::string(dataMemberName), fixedTail);
       }
-      std::cout << scaffoldArray[scaffoldItem]->declare(level * 4);
+
+      if (DEBUG)
+        std::cout << scaffoldArray[scaffoldItem]->declare(level * 4);
 
       return 0;
     }
@@ -710,7 +723,8 @@ namespace ROOT {
     {
       // Analyze a TTree and its (potential) friends.
 
-      std::cout << tree->GetListOfBranches()->GetEntries() << std::endl;
+      if (DEBUG)
+        std::cout << tree->GetListOfBranches()->GetEntries() << std::endl;
 
       this->scaffoldSize = tree->GetListOfBranches()->GetEntries();
       this->scaffold = scaffold::newArray(this->scaffoldSize);
@@ -805,7 +819,9 @@ namespace ROOT {
               this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()));
               scaffoldItem += 1;
 
-              std::cout << this->scaffold[scaffoldItem]->declare(0);
+              if (DEBUG)
+                std::cout << this->scaffold[scaffoldItem]->declare(0);
+
               continue;
             }
           }
@@ -838,11 +854,14 @@ namespace ROOT {
               else
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
-              std::cout << this->scaffold[scaffoldItem]->declare(0);
+              if (DEBUG)
+                std::cout << this->scaffold[scaffoldItem]->declare(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
-              std::cout << this->scaffold[scaffoldItem]->declare(0);
+
+              if (DEBUG)
+                std::cout << this->scaffold[scaffoldItem]->declare(0);
             }
           } else {
             // We have a top level raw type.
@@ -863,8 +882,10 @@ namespace ROOT {
           }
 
           defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
-          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname));
-          std::cout << this->scaffold[scaffoldItem]->declare(0);
+          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), true);
+
+          if (DEBUG)
+            std::cout << this->scaffold[scaffoldItem]->declare(0);
         } // if split or non split
 
         scaffoldItem += 1;

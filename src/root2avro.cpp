@@ -3,13 +3,10 @@
 #include <string>
 #include <vector>
 
-// #include <TROOT.h>
-// #include <TInterpreter.h>
+#include <TROOT.h>
+#include <TInterpreter.h>
 #include <TFile.h>
-#include <TTree.h>
-// #include <TTreeReader.h>
-// #include <TTreeReaderValue.h>
-// #include <TTreeReaderArray.h>
+#include <TTreeReader.h>
 
 #include "TTreeAvroGenerator.h"
 
@@ -24,17 +21,14 @@ std::vector<std::string> fileLocations;
 std::string              treeLocation;
 uint64_t                 start = NA;
 uint64_t                 end = NA;
-// std::vector<std::string> exclude;     // replace these with some ROOT selector string, if possible
-// std::vector<std::string> only;
-bool                     schemaOnly = false;
-std::string              codec("null");
+std::string              mode = "avro";
+std::string              codec = "null";
+bool                     debug = false;
 
-avro_schema_t            schema;
-avro_schema_error_t      schemaError;
-bool                     schemaDefined = false;
-avro_file_writer_t       avroWriter;
-avro_value_iface_t       *avroInterface;
-avro_value_t             avroValue;
+TFile                   *file = nullptr;
+TTreeReader             *reader = nullptr;
+
+TTreeReader *getReader() { return reader; }
 
 void help() {
   std::cerr << "Usage: root2avro fileLocation1, [fileLocation2, [...]], treeLocation" << std::endl << std::endl
@@ -44,29 +38,18 @@ void help() {
             << "Options:" << std::endl
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
-            // << "  --exclude=FIELDS       Comma-delimited field (leaf) names to exclude, if any." << std::endl
-            // << "  --only=FIELDS          Comma-delimited field (leaf) names to restrict to, if provided." << std::endl
-            << "  --schema               Output the schema only (JSON), rather than data (Avro)." << std::endl
+            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
+            << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
 }
-
-// std::vector<std::string> splitByComma(std::string in) {
-//   std::vector<std::string> out;
-//   std::stringstream ss(in);
-//   std::string item;
-//   while (std::getline(ss, item, ','))
-//     out.push_back(item);
-//   return out;
-// }
 
 void analyzeTree(TTree *tree);
 void analyzeBranches(TObjArray *branches, TVirtualStreamerInfo *info, int level);
 void analyzeElement(TBranch *branch, TStreamerElement *element, int level);
 
 int main(int argc, char **argv) {
-  // no, I don't care about the inefficiency of creating and recreating strings; this is not an important loop
   for (int i = 1;  i < argc;  i++) {
     if (std::string(argv[i]) == std::string("-h")  ||
         std::string(argv[i]) == std::string("-help")  ||
@@ -78,12 +61,10 @@ int main(int argc, char **argv) {
 
   std::string startPrefix("--start=");
   std::string endPrefix("--end=");
-  // std::string excludePrefix("--exclude=");
-  // std::string onlyPrefix("--only=");
+  std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
   std::string badPrefix("-");
 
-  // nor is this an important loop
   for (int i = 1;  i < argc;  i++) {
     std::string arg(argv[i]);
 
@@ -97,20 +78,18 @@ int main(int argc, char **argv) {
       end = strtoul(value.c_str(), nullptr, 10);
     }
 
-    // else if (arg.substr(0, excludePrefix.size()) == excludePrefix)
-    //   exclude = splitByComma(arg.substr(excludePrefix.size(), arg.size()));
-
-    // else if (arg.substr(0, onlyPrefix.size()) == onlyPrefix)
-    //   only = splitByComma(arg.substr(onlyPrefix.size(), arg.size()));
-
-    else if (arg == std::string("--schema"))
-      schemaOnly = true;
+    else if (arg.substr(0, modePrefix.size()) == modePrefix) {
+      mode = arg.substr(modePrefix.size(), arg.size());
+    }
 
     else if (arg.substr(0, codecPrefix.size()) == codecPrefix)
       codec = arg.substr(codecPrefix.size(), arg.size());
 
+    else if (arg == std::string("-d")  ||  arg == std::string("-debug")  ||  arg == std::string("--debug"))
+      debug = true;
+
     else if (arg.substr(0, badPrefix.size()) == badPrefix) {
-      std::cerr << "Recognized switches are: --start, --end, --schema, --codec." << std::endl;
+      std::cerr << "Recognized switches are: --start, --end, --mode, --codec, --debug, --help." << std::endl;
       return -1;
     }
 
@@ -130,24 +109,46 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  TFile *file = TFile::Open(fileLocations[0].c_str());
-  TTree *tree;
-  file->GetObject(treeLocation.c_str(), tree);
+  // FIXME: handle TChains
+  file = TFile::Open(fileLocations[0].c_str());
+  reader = new TTreeReader(treeLocation.c_str(), file);
 
-  TTreeAvroGenerator *generator = new TTreeAvroGenerator(tree);
+  TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 
-  std::cout << std::endl << "DEFINITIONS:" << std::endl;
-  std::cout << generator->definitions();
+  std::string codeToRun = generator->definitions();
+  codeToRun += std::string("\n\n") + generator->declarations();
+  codeToRun += std::string("\n\n") + generator->init();
+  if (mode == std::string("json"))
+    codeToRun += std::string("\n\n") + generator->printJSON();
+  else
+    std::cout << "FIXME" << std::endl;
 
-  std::cout << std::endl << "DECLARATIONS:" << std::endl;
-  std::cout << generator->declarations();
+  if (debug)
+    std::cout << codeToRun << std::endl;
+  else {
+    gInterpreter->Declare(codeToRun.c_str());
 
-  std::cout << std::endl << "INIT:" << std::endl;
-  std::cout << generator->init(fileLocations, treeLocation);
+    gROOT->ProcessLine("init();");
+    if (mode == std::string("json"))
+      gROOT->ProcessLine("printJSON();");
+    else
+      std::cout << "FIXME" << std::endl;
+  }
 
-  std::cout << std::endl << "LOOP:" << std::endl;
-  std::cout << generator->loop();
+  return 0;
+}
 
+
+
+
+// reminder of how to do Avro, when we get to it...
+
+// avro_schema_t            schema;
+// avro_schema_error_t      schemaError;
+// bool                     schemaDefined = false;
+// avro_file_writer_t       avroWriter;
+// avro_value_iface_t       *avroInterface;
+// avro_value_t             avroValue;
 
   // std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
 
@@ -201,19 +202,3 @@ int main(int argc, char **argv) {
   // }
 
   // avro_file_writer_close(avroWriter);
-
-
-
-
-  
-  // uint64_t entry = 0;
-  // for (int i = 0;  i < fileLocations.size();  i++) {
-  //   std::string message = convertFile(fileLocations[i], entry);
-  //   if (message != std::string("")) {
-  //     std::cerr << message << std::endl;
-  //     return -1;
-  //   }
-  // }
-
-  return 0;
-}
