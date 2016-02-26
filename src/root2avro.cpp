@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <TROOT.h>
 #include <TInterpreter.h>
 #include <TFile.h>
 #include <TTreeReader.h>
@@ -115,25 +114,40 @@ int main(int argc, char **argv) {
 
   TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 
-  std::string codeToRun = generator->definitions();
-  codeToRun += std::string("\n\n") + generator->declarations();
-  codeToRun += std::string("\n\n") + generator->init();
-  if (mode == std::string("json"))
-    codeToRun += std::string("\n\n") + generator->printJSON();
+  std::string codeToDeclare;
+
+  codeToDeclare = std::string("TTreeReader *getReader();\n\n");
+  codeToDeclare += std::string("class Root2Avro {\n");
+  codeToDeclare += std::string("public:\n");
+  codeToDeclare += generator->definitions() + std::string("\n");
+  codeToDeclare += generator->declarations() + std::string("\n");
+  codeToDeclare += generator->init() + std::string("\n");
+
+  if (mode == std::string("json")) {
+    codeToDeclare += generator->printJSON();
+  }
   else
     std::cout << "FIXME" << std::endl;
 
-  if (debug)
-    std::cout << codeToRun << std::endl;
-  else {
-    gInterpreter->Declare(codeToRun.c_str());
+  codeToDeclare += std::string("};\n");
 
-    gROOT->ProcessLine("init();");
-    if (mode == std::string("json"))
-      gROOT->ProcessLine("printJSON();");
-    else
-      std::cout << "FIXME" << std::endl;
+  if (debug)
+    std::cout << codeToDeclare << std::endl;
+  else {
+    // declare the new class
+    gInterpreter->Declare(codeToDeclare.c_str());
+
+    // and run it
+    ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
+    TString methodName = "run";
+    CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
+    Long_t offset = -1;
+    gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
+    void *instance = gInterpreter->ClassInfo_New(classInfo);
+    gInterpreter->CallFunc_Exec(callFunc, instance);
   }
+
+  file->Close();
 
   return 0;
 }

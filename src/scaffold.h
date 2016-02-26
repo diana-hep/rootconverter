@@ -49,11 +49,43 @@ namespace scaffold {
       return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderValue<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
     std::string printJSON(int indent) {
+      std::string out = indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \");\n");
       if (structure_)
-        return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \";\n") +
-               indentation(indent) + rootDummy(name_) + std::string("->Get().printJSON();\n");
+        out += indentation(indent) + rootDummy(name_) + std::string("->Get().printJSON();\n");
+      else if (type_ == std::string("Bool_t"))
+        out += indentation(indent) + std::string("b(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Char_t"))
+        out += indentation(indent) + std::string("d(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer in Avro
+      else if (type_ == std::string("Short_t"))
+        out += indentation(indent) + std::string("hd(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Int_t"))
+        out += indentation(indent) + std::string("d(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Long_t"))
+        out += indentation(indent) + std::string("ld(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Long64_t"))
+        out += indentation(indent) + std::string("ld(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Float_t"))
+        out += indentation(indent) + std::string("fg(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Float16_t"))
+        out += indentation(indent) + std::string("fg(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Double_t"))
+        out += indentation(indent) + std::string("g(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("Double32_t"))
+        out += indentation(indent) + std::string("g(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("UChar_t"))
+        out += indentation(indent) + std::string("u(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer in Avro
+      else if (type_ == std::string("UShort_t"))
+        out += indentation(indent) + std::string("hu(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("UInt_t"))
+        out += indentation(indent) + std::string("u(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("ULong_t"))
+        out += indentation(indent) + std::string("lu(*(") + rootDummy(name_) + std::string("->Get()));\n");
+      else if (type_ == std::string("ULong64_t"))
+        out += indentation(indent) + std::string("lu(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else
-        return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \" << *(") + rootDummy(name_) + std::string("->Get());\n");
+        throw;
+
+      return out;
     }
   };
 
