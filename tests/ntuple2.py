@@ -1,5 +1,7 @@
 treeType = TreeType(Float_t, Float_t)
 
+note = "using TNtuple interface, rather than TTree"
+
 fill = r"""
 TNtuple *t = new TNtuple("t", "", "x:y");
 t->Fill(1, 1.1);

@@ -1,14 +1,19 @@
 treeType = TreeType(Float_t)
 
-note = "using TNtuple interface, rather than TTree"
-
 fill = r"""
-TNtuple *t = new TNtuple("t", "", "x");
-t->Fill(1);
-t->Fill(2);
-t->Fill(3);
-t->Fill(4);
-t->Fill(5);
+TTree *t = new TTree("t", "");
+float x;
+t->Branch("x", &x, "x/F");
+x = 1;
+t->Fill();
+x = 2;
+t->Fill();
+x = 3;
+t->Fill();
+x = 4;
+t->Fill();
+x = 5;
+t->Fill();
 """
 
 schema = {"type": "record",

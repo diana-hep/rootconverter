@@ -161,8 +161,8 @@ def dumpsPretty(x):
 for test in tests:
     print repr(test["treeType"]), "in", test["testFileName"] + "...",
     sys.stdout.flush()
-    if "notes" in test:
-        print test["notes"],
+    if "note" in test:
+        print "(" + test["note"] + ")",
     if "skip" in test:
         print "SKIPPED because " + test["skip"]
         continue

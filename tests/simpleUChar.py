@@ -1,9 +1,9 @@
-treeType = TreeType(Char_t)
+treeType = TreeType(UChar_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
 char x;
-t->Branch("x", &x, "x/B");
+t->Branch("x", &x, "x/b");
 x = 0;
 t->Fill();
 x = 1;
@@ -26,5 +26,5 @@ json = [{"x": 0},
         {"x": 1},
         {"x": 2},
         {"x": 127},
-        {"x": -128},    # note the wrap-around
-        {"x": -1}]
+        {"x": 128},    # note the lack of wrap-around
+        {"x": 255}]

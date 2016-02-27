@@ -1,20 +1,18 @@
-treeType = TreeType(Char_t)
+treeType = TreeType(Short_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
-char x;
-t->Branch("x", &x, "x/B");
-x = 0;
-t->Fill();
+short x;
+t->Branch("x", &x, "x/S");
 x = 1;
 t->Fill();
 x = 2;
 t->Fill();
-x = 127;
+x = 3;
 t->Fill();
-x = 128;
+x = 4;
 t->Fill();
-x = 255;
+x = 5;
 t->Fill();
 """
 
@@ -22,9 +20,8 @@ schema = {"type": "record",
           "name": "t",
           "fields": [{"name": "x", "type": "int"}]}
 
-json = [{"x": 0},
-        {"x": 1},
+json = [{"x": 1},
         {"x": 2},
-        {"x": 127},
-        {"x": -128},    # note the wrap-around
-        {"x": -1}]
+        {"x": 3},
+        {"x": 4},
+        {"x": 5}]
