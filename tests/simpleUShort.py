@@ -2,7 +2,7 @@ treeType = TreeType(UShort_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
-short x;
+unsigned short x;
 t->Branch("x", &x, "x/s");
 x = 1;
 t->Fill();

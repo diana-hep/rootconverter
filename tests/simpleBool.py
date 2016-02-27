@@ -2,15 +2,15 @@ treeType = TreeType(Bool_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
-int x;
+bool x;
 t->Branch("x", &x, "x/O");
-x = 0;
+x = false;
 t->Fill();
-x = 1;
+x = true;
 t->Fill();
-x = 0;
+x = false;
 t->Fill();
-x = 1;
+x = true;
 t->Fill();
 """
 

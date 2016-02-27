@@ -274,16 +274,86 @@ namespace scaffold {
       return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
     }
     std::string printJSON(int indent) {
-      return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": [\";\n") +
+      std::string out;
+      out += indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
              indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
-             indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string(";  i++) {\n") +
-             indentation(indent) + std::string("  if (i != 0) std::cout << \", \";\n");
-             indentation(indent) + std::string("  std::cout << (*") + rootDummy(name_) + std::string(")[i];\n") +
-             indentation(indent) + std::string("};\n") +
-             indentation(indent) + std::string("std::cout << \"]\"\n;");
+             indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string("; i++) {\n") +
+             indentation(indent) + std::string("  if (i != 0) s(\", \");\n");
+      
+      if (type_ == std::string("Bool_t"))
+        out += indentation(indent) + std::string("  b((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Char_t"))
+        out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer in Avro
+      else if (type_ == std::string("Short_t"))
+        out += indentation(indent) + std::string("  hd((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Int_t"))
+        out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Long_t"))
+        out += indentation(indent) + std::string("  ld((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Long64_t"))
+        out += indentation(indent) + std::string("  ld((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Float_t"))
+        out += indentation(indent) + std::string("  fg((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Float16_t"))
+        out += indentation(indent) + std::string("  fg((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Double_t"))
+        out += indentation(indent) + std::string("  g((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("Double32_t"))
+        out += indentation(indent) + std::string("  g((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("UChar_t"))
+        out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer in Avro
+      else if (type_ == std::string("UShort_t"))
+        out += indentation(indent) + std::string("  hu((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("UInt_t"))
+        out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("ULong_t"))
+        out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("ULong64_t"))
+        out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else
+        throw;
+
+      out += indentation(indent) + std::string("};\n") +
+             indentation(indent) + std::string("s(\"]\");\n");
+
+      return out;
     }
     std::string schema(int indent, std::string ns) {
-      return std::string("");
+      std::string out;
+      out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": {\"type\": \"array\", \"items\": ");
+      if (type_ == std::string("Bool_t"))
+        out += std::string("\"boolean\"}}");
+      else if (type_ == std::string("Char_t"))
+        out += std::string("\"int\"}}");
+      else if (type_ == std::string("Short_t"))
+        out += std::string("\"int\"}}");
+      else if (type_ == std::string("Int_t"))
+        out += std::string("\"int\"}}");
+      else if (type_ == std::string("Long_t"))
+        out += std::string("\"long\"}}");
+      else if (type_ == std::string("Long64_t"))
+        out += std::string("\"long\"}}");
+      else if (type_ == std::string("Float_t"))
+        out += std::string("\"float\"}}");
+      else if (type_ == std::string("Float16_t"))
+        out += std::string("\"float\"}}");
+      else if (type_ == std::string("Double_t"))
+        out += std::string("\"double\"}}");
+      else if (type_ == std::string("Double32_t"))
+        out += std::string("\"double\"}}");
+      else if (type_ == std::string("UChar_t"))
+        out += std::string("\"int\"}}");
+      else if (type_ == std::string("UShort_t"))
+        out += std::string("\"int\"}}");
+      else if (type_ == std::string("UInt_t"))
+        out += std::string("\"long\"}}");
+      else if (type_ == std::string("ULong_t"))
+        out += std::string("\"double\"}}");
+      else if (type_ == std::string("ULong64_t"))
+        out += std::string("\"double\"}}");
+      else
+        throw;
+      return out;
     }
   };
 

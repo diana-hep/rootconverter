@@ -2,7 +2,7 @@ treeType = TreeType(UChar_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
-char x;
+unsigned char x;
 t->Branch("x", &x, "x/b");
 x = 0;
 t->Fill();

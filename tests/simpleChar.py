@@ -1,5 +1,7 @@
 treeType = TreeType(Char_t)
 
+note = "uses /B instead of /C to indicate that this is a number, not the beginning of a C-style string"
+
 fill = r"""
 TTree *t = new TTree("t", "");
 char x;

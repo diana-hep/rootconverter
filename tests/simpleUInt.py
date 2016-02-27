@@ -2,7 +2,7 @@ treeType = TreeType(UInt_t)
 
 fill = r"""
 TTree *t = new TTree("t", "");
-short x;
+unsigned int x;
 t->Branch("x", &x, "x/i");
 x = 1;
 t->Fill();

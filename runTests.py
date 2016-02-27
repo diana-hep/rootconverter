@@ -160,12 +160,16 @@ def dumpsPretty(x):
 
 for test in tests:
     print repr(test["treeType"]), "in", test["testFileName"] + "...",
-    sys.stdout.flush()
+
     if "note" in test:
         print "(" + test["note"] + ")",
+
     if "skip" in test:
         print "SKIPPED because " + test["skip"]
+        sys.stdout.flush()
         continue
+    else:
+        sys.stdout.flush()
 
     try:
         rootFile = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".root")
