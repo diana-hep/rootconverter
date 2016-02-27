@@ -1,10 +1,8 @@
-treeType = TreeType(Vector(CharBrackets(10)))
-
-skip = "this doesn't make retrievable vector of strings (try t->Scan() to see what I mean)"
+treeType = TreeType(Vector(StdString))
 
 fill = r"""
 TTree *t = new TTree("t", "");
-std::vector<const char*> x;
+std::vector<std::string> x;
 t->Branch("x", &x);
 
 x = {};

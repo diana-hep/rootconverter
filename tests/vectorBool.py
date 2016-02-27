@@ -5,13 +5,13 @@ TTree *t = new TTree("t", "");
 std::vector<bool> x;
 t->Branch("x", &x);
 
-x = {true, true, true};
+x = {};
 t->Fill();
 
-x = {true, true, false};
+x = {true};
 t->Fill();
 
-x = {true, false, true};
+x = {true, false};
 t->Fill();
 
 x = {true, false, false};
@@ -25,8 +25,8 @@ schema = {"type": "record",
           "name": "t",
           "fields": [{"name": "x", "type": {"type": "array", "items": "boolean"}}]}
 
-json = [{"x": [True, True, True]},
-        {"x": [True, True, False]},
-        {"x": [True, False, True]},
+json = [{"x": []},
+        {"x": [True]},
+        {"x": [True, False]},
         {"x": [True, False, False]},
         {"x": [False, False, False]}]

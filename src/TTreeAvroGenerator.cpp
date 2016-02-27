@@ -856,12 +856,12 @@ namespace ROOT {
               type = desc->GetName();
               TString dataMemberName = branchname;
 
-              if (std::string(cl->GetName()) == std::string("string"))
+              if (std::string(cl->GetName()) == std::string("string")  ||  std::string(cl->GetName()) == std::string("TString"))
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName));
               else
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
-              std::cout << "two" << std::endl;
+              // HERE
 
               if (DEBUG)
                 std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
@@ -869,7 +869,7 @@ namespace ROOT {
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
 
-              std::cout << "three" << std::endl;
+              // AND THERE
 
               if (DEBUG)
                 std::cout << "(H) " << this->scaffold[scaffoldItem]->declare(0);
@@ -894,8 +894,6 @@ namespace ROOT {
 
           defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
           this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def);
-
-          std::cout << "four" << std::endl;
 
           if (DEBUG)
             std::cout << "(I) " << this->scaffold[scaffoldItem]->declare(0);

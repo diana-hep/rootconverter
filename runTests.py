@@ -62,6 +62,7 @@ Float16_t = Primitive("Float16_t")
 Double_t = Primitive("Double_t")
 Double32_t = Primitive("Double32_t")
 
+StdString = Primitive("StdString")
 TString = Primitive("TString")
 CharStar = Primitive("CharStar")
 class CharBrackets:
@@ -184,12 +185,12 @@ for test in tests:
             root.stdin.write("tfile->Close();\n")
             root.stdin.write(".q\n")
             if root.wait() != 0:
-                raise RuntimeError("root TTree filling failed with exit code %d" % root.returncode)
+                raise RuntimeError("root TTree filling failed with exit code %d" % root2avro.returncode)
 
         command = ["build/root2avro", "--mode=schema", "file://" + rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
         if root2avro.wait() != 0:
-            raise RuntimeError("root2avro failed with exit code %d" % root.returncode)
+            raise RuntimeError("root2avro failed with exit code %d" % root2avro.returncode)
         schemaResult = root2avro.stdout.read()
 
         try:
@@ -203,7 +204,7 @@ for test in tests:
         command = ["build/root2avro", "--mode=json", "file://" + rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
         if root2avro.wait() != 0:
-            raise RuntimeError("root2avro --mode=json failed with exit code %d" % root.returncode)
+            raise RuntimeError("root2avro --mode=json failed with exit code %d" % root2avro.returncode)
         dataResult = root2avro.stdout.readlines()
 
         try:

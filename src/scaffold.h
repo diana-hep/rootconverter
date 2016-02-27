@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <stdexcept>
 
 namespace scaffold {
   enum Kind { scalar, array, vector, structure };
@@ -201,8 +202,8 @@ namespace scaffold {
         out += indentation(indent) + std::string("lu(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else if (type_ == std::string("ULong64_t"))
         out += indentation(indent) + std::string("lu(*(") + rootDummy(name_) + std::string("->Get()));\n");
-      else
-        throw;
+      else 
+        throw std::invalid_argument(std::string("unrecognized type (A): ") + type_);
       return out;
     }
     std::string schema(int indent, std::string ns) {
@@ -243,7 +244,7 @@ namespace scaffold {
       else if (type_ == std::string("ULong64_t"))
         out += std::string("\"double\"}");
       else
-        throw;
+        throw std::invalid_argument(std::string("unrecognized type (B): ") + type_);
       return out;
     }
   };
@@ -341,8 +342,12 @@ namespace scaffold {
         out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
       else if (type_ == std::string("ULong64_t"))
         out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
+      else if (type_ == std::string("string"))
+        out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON((*") + rootDummy(name_) + std::string(")[i]).c_str()); s(\"\\\"\");\n");
+      else if (type_ == std::string("TString"))
+        out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON(std::string((*") + rootDummy(name_) + std::string(")[i].Data())).c_str()); s(\"\\\"\");\n");
       else
-        throw;
+        throw std::invalid_argument(std::string("unrecognized type (C): ") + type_);
 
       out += indentation(indent) + std::string("};\n") +
              indentation(indent) + std::string("s(\"]\");\n");
@@ -384,8 +389,12 @@ namespace scaffold {
         out += std::string("\"double\"}}");
       else if (type_ == std::string("ULong64_t"))
         out += std::string("\"double\"}}");
+      else if (type_ == std::string("string"))
+        out += std::string("\"string\"}}");
+      else if (type_ == std::string("TString"))
+        out += std::string("\"string\"}}");
       else
-        throw;
+        throw std::invalid_argument(std::string("unrecognized type (D): ") + type_);
       return out;
     }
   };
@@ -472,22 +481,27 @@ namespace scaffold {
              indentation(indent) + std::string("b_") + rootDummy(name_) + std::string(" = nullptr;\n") +
              indentation(indent) + std::string("getReader()->GetTree()->SetBranchAddress(\"") + name_ + std::string("\", &") + rootDummy(name_) + std::string(", &b_") + rootDummy(name_) + std::string(");\n");
     }
-    std::string printJSON(int indent) { return std::string(); }
-    // std::string loop(int indent) {
-    //   std::string expr;
-    //   if (type_ == std::string("string"))
-    //     expr = std::string("*") + rootDummy(name_);
-    //   else if (type_ == std::string("TString"))
-    //     expr = rootDummy(name_) + std::string("->Data()");
-    //   else if (type_ == std::string("TObjArray"))   // for testing; we don't know enough about this type to handle it
-    //     expr = std::string("\"NOT ENOUGH INFO\"");
-    //   else
-    //     throw;
-    //   return indentation(indent) + std::string("b_") + rootDummy(name_) + std::string("->GetEntry(getReader()->GetCurrentEntry());\n") +
-    //          indentation(indent) + std::string("std::cout << \"") + name_ + std::string(" \" << ") + expr + std::string(" << std::endl;\n");
-    // }
+    std::string printJSON(int indent) {
+      std::string out = indentation(indent) + std::string("b_") + rootDummy(name_) + std::string("->GetEntry(getReader()->GetCurrentEntry());\n") +
+                        indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \");\n");
+      if (type_ == std::string("string"))
+        out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON(*") + rootDummy(name_) + std::string(").c_str()); s(\"\\\"\");\n");
+      else if (type_ == std::string("TString"))
+        out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON(std::string(") + rootDummy(name_) + std::string("->Data())).c_str()); s(\"\\\"\");\n");
+      else
+        throw std::invalid_argument(std::string("unrecognized type (E): ") + type_);
+      return out;
+    }
     std::string schema(int indent, std::string ns) {
-      return std::string("");
+      std::string out;
+      out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ");
+      if (type_ == std::string("string"))
+        out += std::string("\"string\"}");
+      else if (type_ == std::string("TString"))
+        out += std::string("\"string\"}");
+      else
+        throw std::invalid_argument(std::string("unrecognized type (F): ") + type_);
+      return out;
     }
   };
 
