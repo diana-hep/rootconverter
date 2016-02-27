@@ -663,7 +663,7 @@ namespace ROOT {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderStringNode(std::string(dataMemberName));
       }
       else if (dim == 0) {
-        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), false);
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), nullptr);
       }
       else if (dim == 1) {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName));
@@ -882,7 +882,7 @@ namespace ROOT {
           }
 
           defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
-          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), true);
+          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def);
 
           if (DEBUG)
             std::cout << this->scaffold[scaffoldItem]->declare(0);

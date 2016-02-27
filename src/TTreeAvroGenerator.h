@@ -28,6 +28,7 @@ namespace ROOT {
       std::string declarations() { return scaffold::declarations(scaffold, scaffoldSize); }
       std::string init() { return scaffold::init(scaffold, scaffoldSize); }
       std::string printJSON() { return scaffold::printJSON(scaffold, scaffoldSize); }
+      std::string schema(int indent, std::string name, std::string ns) { return scaffold::schema(indent, name, ns, scaffold, scaffoldSize); }
 
       Bool_t NeedToEmulate(TClass *cl, UInt_t level);
 

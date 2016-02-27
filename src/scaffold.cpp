@@ -67,6 +67,31 @@ std::string scaffold::printJSON(scaffold::Node **scaffoldArray, int scaffoldSize
   return out;
 }
 
-std::string quoteJSON(std::string string) {
+std::string scaffold::quoteJSON(std::string string) {
   return string;   // TODO! Escape bad characters, especially '\n'
+}
+
+std::string indentation(int indent) {
+  std::string out;
+  for (int i = 0;  i < indent;  i++)
+    out += std::string(" ");
+  return out;
+}
+
+std::string scaffold::schema(int indent, std::string name, std::string ns, scaffold::Node **scaffoldArray, int scaffoldSize) {
+  std::string out;
+  out += indentation(indent) + std::string("{\"type\": \"record\",\n");
+  out += indentation(indent) + std::string(" \"name\": \"") + name + std::string("\",\n");
+  if (ns.size() > 0)
+    out += indentation(indent) + std::string(" \"namespace\": \"") + ns + std::string("\",\n");
+  out += indentation(indent) + std::string(" \"fields\": [\n");
+  for (int i = 0;  i < scaffoldSize;  i++) {
+    out += scaffoldArray[i]->schema(3, ns);
+    if (i < scaffoldSize - 1)
+      out += std::string(",\n");
+    else
+      out += std::string("\n ]\n");
+  }
+  out += indentation(indent) + std::string("}\n");
+  return out;
 }

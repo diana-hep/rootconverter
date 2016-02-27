@@ -1,4 +1,4 @@
-treeType = TreeType(Float_t)
+treeType = TreeType(Float_t, Float_t)
 
 fill = r"""
 TNtuple *t = new TNtuple("t", "", "x:y");
@@ -10,7 +10,7 @@ t->Fill(5, 5.5);
 """
 
 schema = {"type": "record",
-          "name": "TTree",
+          "name": "t",
           "fields": [{"name": "x", "type": "float"},
                      {"name": "y", "type": "float"}]}
 

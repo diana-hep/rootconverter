@@ -22,6 +22,8 @@ uint64_t                 start = NA;
 uint64_t                 end = NA;
 std::string              mode = "avro";
 std::string              codec = "null";
+std::string              schemaName = "";
+std::string              ns = "";
 bool                     debug = false;
 
 TFile                   *file = nullptr;
@@ -40,6 +42,8 @@ void help() {
             << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
+            << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
+            << "  --ns=NAMESPACE         Namespace for schema (blank if not provided)." << std::endl
             << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
 }
@@ -62,6 +66,8 @@ int main(int argc, char **argv) {
   std::string endPrefix("--end=");
   std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
+  std::string namePrefix("--name=");
+  std::string nsPrefix("--ns=");
   std::string badPrefix("-");
 
   for (int i = 1;  i < argc;  i++) {
@@ -84,11 +90,19 @@ int main(int argc, char **argv) {
     else if (arg.substr(0, codecPrefix.size()) == codecPrefix)
       codec = arg.substr(codecPrefix.size(), arg.size());
 
+    else if (arg.substr(0, namePrefix.size()) == namePrefix) {
+      schemaName = arg.substr(namePrefix.size(), arg.size());
+    }
+
+    else if (arg.substr(0, nsPrefix.size()) == nsPrefix) {
+      ns = arg.substr(nsPrefix.size(), arg.size());
+    }
+
     else if (arg == std::string("-d")  ||  arg == std::string("-debug")  ||  arg == std::string("--debug"))
       debug = true;
 
     else if (arg.substr(0, badPrefix.size()) == badPrefix) {
-      std::cerr << "Recognized switches are: --start, --end, --mode, --codec, --debug, --help." << std::endl;
+      std::cerr << "Recognized switches are: --start, --end, --mode, --codec, --name, --ns, --debug, --help." << std::endl;
       return -1;
     }
 
@@ -114,6 +128,14 @@ int main(int argc, char **argv) {
 
   TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 
+  if (schemaName.size() == 0)
+    schemaName = std::string(reader->GetTree()->GetName());
+
+  if (mode == std::string("schema")) {
+    std::cout << generator->schema(0, schemaName, ns);
+    return 0;
+  }
+
   std::string codeToDeclare;
 
   codeToDeclare = std::string("TTreeReader *getReader();\n\n");
@@ -123,11 +145,12 @@ int main(int argc, char **argv) {
   codeToDeclare += generator->declarations() + std::string("\n");
   codeToDeclare += generator->init() + std::string("\n");
 
-  if (mode == std::string("json")) {
+  if (mode == std::string("avro"))
+    throw;
+  else if (mode == std::string("json"))
     codeToDeclare += generator->printJSON();
-  }
   else
-    std::cout << "FIXME" << std::endl;
+    throw;
 
   codeToDeclare += std::string("};\n");
 

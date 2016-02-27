@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-import sys
-import subprocess
-import json
 import glob
+import json
+import os
+import subprocess
+import sys
 from collections import OrderedDict as odict
 
 if len(sys.argv) == 1:
@@ -141,8 +142,10 @@ def same(one, two, eps):
         return all(same(one[key], two[key], eps) for key in one)
     elif isinstance(one, list) and isinstance(two, list) and len(one) == len(two):
         return all(same(x, y, eps) for x, y in zip(one, two))
+    elif isinstance(one, basestring) and isinstance(two, basestring):
+        return one == two
     elif isinstance(one, (int, long, float)) and isinstance(two, (int, long, float)):
-        return abs(one - two) < eps
+        return abs(one - two) <= eps
     elif one is True and two is True:
         return True
     elif one is False and two is False:
@@ -152,35 +155,56 @@ def same(one, two, eps):
     else:
         return False
 
+def dumpsPretty(x):
+    return json.dumps(x, sort_keys=True, indent=4, separators=(", ", ": "))
+
 for test in tests:
     print repr(test["treeType"]), "in", test["testFileName"] + "...",
     sys.stdout.flush()
     if "notes" in test:
         print test["notes"],
     try:
-        command = ["root", "-l"]
-        root = subprocess.Popen(command, stdin=subprocess.PIPE)
-        root.stdin.write("TFile *tfile = new TFile(\"build/test.root\", \"RECREATE\");\n")
-        root.stdin.write(test["fill"] + "\n")
-        root.stdin.write("tfile->Write();\n")
-        root.stdin.write("tfile->Close();\n")
-        root.stdin.write(".q\n")
-        if root.wait() != 0:
-            raise RuntimeError("root TTree filling failed with exit code %d" % root.returncode)
+        rootFile = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".root")
 
-        command = ["build/root2avro", "--mode=json", "file://build/test.root", "t"]
+        # build the root file if it doesn't exist or if it's older than the corresponding test
+        if not os.path.exists(rootFile) or os.path.getmtime(rootFile) < os.path.getmtime(test["testFileName"]):
+            command = ["root", "-l"]
+            root = subprocess.Popen(command, stdin=subprocess.PIPE)
+            root.stdin.write("TFile *tfile = new TFile(\"%s\", \"RECREATE\");\n" % rootFile)
+            root.stdin.write(test["fill"] + "\n")
+            root.stdin.write("tfile->Write();\n")
+            root.stdin.write("tfile->Close();\n")
+            root.stdin.write(".q\n")
+            if root.wait() != 0:
+                raise RuntimeError("root TTree filling failed with exit code %d" % root.returncode)
+
+        command = ["build/root2avro", "--mode=schema", "file://" + rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
         if root2avro.wait() != 0:
             raise RuntimeError("root2avro failed with exit code %d" % root.returncode)
-        result = root2avro.stdout.readlines()
+        schemaResult = root2avro.stdout.read()
 
         try:
-            resultJson = map(json.loads, result)
+            schemaResultJson = json.loads(schemaResult)
         except ValueError as err:
-            raise RuntimeError("root2avro produced bad JSON:\n\n%s" % result)
+            raise RuntimeError("root2avro --mode=schema produced bad JSON:\n\n%s" % schemaResult)
 
-        if not same(resultJson, test["json"], 1e-5):
-            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (json.dumps(resultJson, sort_keys=True, indent=4, separators=(", ", ": ")), json.dumps(test["json"], sort_keys=True, indent=4, separators=(", ", ": "))))
+        if not same(schemaResultJson, test["schema"], 0):
+            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (schemaResult, dumpsPretty(test["schema"])))
+
+        command = ["build/root2avro", "--mode=json", "file://" + rootFile, "t"]
+        root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
+        if root2avro.wait() != 0:
+            raise RuntimeError("root2avro --mode=json failed with exit code %d" % root.returncode)
+        dataResult = root2avro.stdout.readlines()
+
+        try:
+            dataResultJson = map(json.loads, dataResult)
+        except ValueError as err:
+            raise RuntimeError("root2avro produced bad JSON:\n\n%s" % dataResult)
+
+        if not same(dataResultJson, test["json"], 1e-5):
+            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsPretty(dataResultJson), dumpsPretty(test["json"])))
 
     except Exception as err:
         print "FAILURE"

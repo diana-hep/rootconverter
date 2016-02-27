@@ -10,7 +10,7 @@ t->Fill(5);
 """
 
 schema = {"type": "record",
-          "name": "TTree",
+          "name": "t",
           "fields": [{"name": "x", "type": "float"}]}
 
 json = [{"x": 1},
