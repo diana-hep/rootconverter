@@ -169,10 +169,12 @@ namespace scaffold {
       std::string out = indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \");\n");
       if (def_ != nullptr)
         out += indentation(indent) + rootDummy(name_) + std::string("->Get().printJSON();\n");
+      else if (type_ == std::string("bool"))
+        out += indentation(indent) + std::string("b(*(") + rootDummy(name_) + std::string("->Get()));\n");   // when you put vector<bool> into a tree, it comes out as vector<unsigned>
       else if (type_ == std::string("Bool_t"))
         out += indentation(indent) + std::string("b(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else if (type_ == std::string("Char_t"))
-        out += indentation(indent) + std::string("d(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer in Avro
+        out += indentation(indent) + std::string("d(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer for our purposes
       else if (type_ == std::string("Short_t"))
         out += indentation(indent) + std::string("hd(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else if (type_ == std::string("Int_t"))
@@ -190,7 +192,7 @@ namespace scaffold {
       else if (type_ == std::string("Double32_t"))
         out += indentation(indent) + std::string("g(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else if (type_ == std::string("UChar_t"))
-        out += indentation(indent) + std::string("u(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer in Avro
+        out += indentation(indent) + std::string("u(*(") + rootDummy(name_) + std::string("->Get()));\n");   // Char_t -> integer for our purposes
       else if (type_ == std::string("UShort_t"))
         out += indentation(indent) + std::string("hu(*(") + rootDummy(name_) + std::string("->Get()));\n");
       else if (type_ == std::string("UInt_t"))
@@ -208,6 +210,8 @@ namespace scaffold {
       out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ");
       if (def_ != nullptr)
         out += def_->schema(indent + 2, ns);
+      else if (type_ == std::string("bool"))
+        out += std::string("\"boolean\"}");
       else if (type_ == std::string("Bool_t"))
         out += std::string("\"boolean\"}");
       else if (type_ == std::string("Char_t"))
@@ -262,6 +266,31 @@ namespace scaffold {
     }
   };
 
+  class ReaderVectorBoolNode : public Node {   // see https://sft.its.cern.ch/jira/browse/ROOT-7467 for why we need this special case
+    std::string name_;
+  public:
+    ReaderVectorBoolNode(std::string name) : name_(name) { }
+    std::string declare(int indent) {
+      return indentation(indent) + std::string("TTreeReaderValue<std::vector<bool> > *") + rootDummy(name_) + std::string(";\n");
+    }
+    std::string init(int indent) {
+      return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderValue<std::vector<bool> >(*getReader(), \"") + name_ + std::string("\");\n");
+    }
+    std::string printJSON(int indent) {
+      return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
+             indentation(indent) + std::string("std::vector<bool> item_") + rootDummy(name_) + std::string(" = *(") + rootDummy(name_) + std::string("->Get());\n") +
+             indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = item_") + rootDummy(name_) + std::string(".size();\n") +
+             indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string("; i++) {\n") +
+             indentation(indent) + std::string("  if (i != 0) s(\", \");\n") +
+             indentation(indent) + std::string("  b(item_") + rootDummy(name_) + std::string("[i]);\n") +
+             indentation(indent) + std::string("}\n") +
+             indentation(indent) + std::string("s(\"]\");\n");
+    }
+    std::string schema(int indent, std::string ns) {
+      return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": {\"type\": \"array\", \"items\": \"boolean\"}}");
+    }
+  };
+
   class ReaderArrayNode : public Node {
     std::string type_;
     std::string name_;
@@ -280,10 +309,12 @@ namespace scaffold {
              indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string("; i++) {\n") +
              indentation(indent) + std::string("  if (i != 0) s(\", \");\n");
       
-      if (type_ == std::string("Bool_t"))
+      if (type_ == std::string("bool"))
+        out += indentation(indent) + std::string("  b((*") + rootDummy(name_) + std::string(")[i]);\n");   // when you put vector<bool> into a tree, it comes out as vector<unsigned>
+      else if (type_ == std::string("Bool_t"))
         out += indentation(indent) + std::string("  b((*") + rootDummy(name_) + std::string(")[i]);\n");
       else if (type_ == std::string("Char_t"))
-        out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer in Avro
+        out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer for our purposes
       else if (type_ == std::string("Short_t"))
         out += indentation(indent) + std::string("  hd((*") + rootDummy(name_) + std::string(")[i]);\n");
       else if (type_ == std::string("Int_t"))
@@ -301,7 +332,7 @@ namespace scaffold {
       else if (type_ == std::string("Double32_t"))
         out += indentation(indent) + std::string("  g((*") + rootDummy(name_) + std::string(")[i]);\n");
       else if (type_ == std::string("UChar_t"))
-        out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer in Avro
+        out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer for our purposes
       else if (type_ == std::string("UShort_t"))
         out += indentation(indent) + std::string("  hu((*") + rootDummy(name_) + std::string(")[i]);\n");
       else if (type_ == std::string("UInt_t"))
@@ -321,7 +352,9 @@ namespace scaffold {
     std::string schema(int indent, std::string ns) {
       std::string out;
       out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": {\"type\": \"array\", \"items\": ");
-      if (type_ == std::string("Bool_t"))
+      if (type_ == std::string("bool"))
+        out += std::string("\"boolean\"}}");
+      else if (type_ == std::string("Bool_t"))
         out += std::string("\"boolean\"}}");
       else if (type_ == std::string("Char_t"))
         out += std::string("\"int\"}}");

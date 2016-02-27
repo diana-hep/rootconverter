@@ -719,6 +719,7 @@ namespace ROOT {
     }
 
     void TTreeAvroGenerator::AnalyzeTree(TTree *tree)
+
     {
       // Analyze a TTree and its (potential) friends.
 
@@ -802,25 +803,32 @@ namespace ROOT {
               case EDataType::kBool_t:     { typeName = "Bool_t"; break; }
               case EDataType::kLong64_t:   { typeName = "Long64_t"; break; }
               case EDataType::kULong64_t:  { typeName = "ULong64_t"; break; }
-              case EDataType::kOther_t:    { typeName = "ULong64_t"; break; }
               case EDataType::kFloat16_t:  { typeName = "Float16_t"; break; }
               case EDataType::kCounter:    { typeName = "Int_t"; break; }
               case EDataType::kCharStar:   { typeName = "char*"; break; }
               case EDataType::kBits:       { typeName = "UInt_t"; break; }
               case EDataType::kVoid_t:     { typeName = "void*"; break; }
-              case EDataType::kNoType_t:
-              case EDataType::kDataTypeAliasUnsigned_t:
+              case EDataType::kDataTypeAliasUnsigned_t: {
+                // see https://sft.its.cern.ch/jira/browse/ROOT-7467 for why we need this special case
+                this->scaffold[scaffoldItem] = new scaffold::ReaderVectorBoolNode(std::string(branch->GetName()));
+                if (DEBUG)
+                  std::cout << "(F1) " << this->scaffold[scaffoldItem]->declare(0);
+                scaffoldItem += 1;
+                continue;
+              }
               case EDataType::kDataTypeAliasSignedChar_t:
+              case EDataType::kOther_t:
+              case EDataType::kNoType_t:
               default:
                 Error("AnalyzeTree", "Unrecognized EDataType in STL container %s.", branch->GetName());
               }
 
               this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()));
-              scaffoldItem += 1;
 
               if (DEBUG)
                 std::cout << "(F) " << this->scaffold[scaffoldItem]->declare(0);
 
+              scaffoldItem += 1;
               continue;
             }
           }
@@ -853,11 +861,15 @@ namespace ROOT {
               else
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
+              std::cout << "two" << std::endl;
+
               if (DEBUG)
                 std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
+
+              std::cout << "three" << std::endl;
 
               if (DEBUG)
                 std::cout << "(H) " << this->scaffold[scaffoldItem]->declare(0);
@@ -882,6 +894,8 @@ namespace ROOT {
 
           defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
           this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def);
+
+          std::cout << "four" << std::endl;
 
           if (DEBUG)
             std::cout << "(I) " << this->scaffold[scaffoldItem]->declare(0);
