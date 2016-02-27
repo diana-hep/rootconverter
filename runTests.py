@@ -163,6 +163,10 @@ for test in tests:
     sys.stdout.flush()
     if "notes" in test:
         print test["notes"],
+    if "skip" in test:
+        print "SKIPPED because " + test["skip"]
+        continue
+
     try:
         rootFile = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".root")
 

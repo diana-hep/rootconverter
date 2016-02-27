@@ -255,10 +255,10 @@ namespace scaffold {
       return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<Char_t >(*getReader(), \"") + name_ + std::string("\");\n");
     }
     std::string printJSON(int indent) {
-      return indentation(indent) + std::string("std::cout << \"\\\"") + name_ + std::string("\\\": \" << scaffold::quoteJSON(std::string((char*)") + rootDummy(name_) + std::string("->GetAddress()));\n");
+      return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \\\"\"); s(escapeJSON(std::string((char*)") + rootDummy(name_) + std::string("->GetAddress())).c_str()); s(\"\\\"\");\n");
     }
     std::string schema(int indent, std::string ns) {
-      return std::string("");
+      return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": \"string\"}");
     }
   };
 
@@ -394,7 +394,6 @@ namespace scaffold {
   std::string declarations(Node **scaffoldArray, int scaffoldSize);
   std::string init(Node **scaffoldArray, int scaffoldSize);
   std::string printJSON(Node **scaffoldArray, int scaffoldSize);
-  std::string quoteJSON(std::string string);
   std::string schema(int indent, std::string name, std::string ns, scaffold::Node **scaffoldArray, int scaffoldSize);
 }
 

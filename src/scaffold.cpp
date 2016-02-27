@@ -41,6 +41,10 @@ std::string scaffold::init(scaffold::Node **scaffoldArray, int scaffoldSize) {
 
 std::string scaffold::printJSON(scaffold::Node **scaffoldArray, int scaffoldSize) {
   std::string out;
+  out += std::string("  std::string escapeJSON(std::string string) {\n");
+  out += std::string("    return string;\n");   // TODO! Escape bad characters, especially '\n'
+  out += std::string("  }\n");
+  out += std::string("\n");
   out += std::string("  void s(const char *x) { fputs(x, stdout); }\n");
   out += std::string("  void c(char x) { printf(\"%c\", x); }\n");
   out += std::string("  void b(char x) { if (x == 0) fputs(\"false\", stdout); else fputs(\"true\", stdout); }\n");
@@ -65,10 +69,6 @@ std::string scaffold::printJSON(scaffold::Node **scaffoldArray, int scaffoldSize
   out += std::string("      s(\"}\\n\");\n");
   out += std::string("    }\n  }\n");
   return out;
-}
-
-std::string scaffold::quoteJSON(std::string string) {
-  return string;   // TODO! Escape bad characters, especially '\n'
 }
 
 std::string indentation(int indent) {

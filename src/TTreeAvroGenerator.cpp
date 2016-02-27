@@ -177,7 +177,7 @@ namespace ROOT {
       if (DEBUG) {
         for (int indent = 0;  indent < level;  indent++)
           std::cout << "    ";
-        std::cout << info->GetElements()->GetEntries() << std::endl;
+        std::cout << "(A) " << info->GetElements()->GetEntries() << std::endl;
       }
 
       {
@@ -559,9 +559,9 @@ namespace ROOT {
             for (int indent = 0;  indent < level;  indent++)
               std::cout << "    ";
             if (element->IsBase())
-              std::cout << "BASE " << dataMemberName << std::endl;
+              std::cout << "(B) " << "BASE " << dataMemberName << std::endl;
             else
-              std::cout << typeName << " " << dataMemberName << std::endl;
+              std::cout << "(C) " << typeName << " " << dataMemberName << std::endl;
           }
 
           if (element->IsBase())
@@ -649,12 +649,11 @@ namespace ROOT {
       //if (leafcount) {
       //   len = leafcount->GetMaximum();
       //}
-      if (dim == 0 && leaf->IsA() == TLeafC::Class()) {
-        // For C style strings.
-        dim = 1;
-        maxDim.push_back(leaf->GetMaximum());
-      }
-
+      // if (dim == 0 && leaf->IsA() == TLeafC::Class()) {
+      //   // For C style strings.
+      //   dim = 1;
+      //   maxDim.push_back(leaf->GetMaximum());
+      // }
 
       TString branchName = leaf->GetBranch()->GetName();
       TString dataMemberName = leaf->GetName();
@@ -677,7 +676,7 @@ namespace ROOT {
       }
 
       if (DEBUG)
-        std::cout << scaffoldArray[scaffoldItem]->declare(level * 4);
+        std::cout << "(D) " << scaffoldArray[scaffoldItem]->declare(level * 4);
 
       return 0;
     }
@@ -724,7 +723,7 @@ namespace ROOT {
       // Analyze a TTree and its (potential) friends.
 
       if (DEBUG)
-        std::cout << tree->GetListOfBranches()->GetEntries() << std::endl;
+        std::cout << "(E) " << tree->GetListOfBranches()->GetEntries() << std::endl;
 
       this->scaffoldSize = tree->GetListOfBranches()->GetEntries();
       this->scaffold = scaffold::newArray(this->scaffoldSize);
@@ -820,7 +819,7 @@ namespace ROOT {
               scaffoldItem += 1;
 
               if (DEBUG)
-                std::cout << this->scaffold[scaffoldItem]->declare(0);
+                std::cout << "(F) " << this->scaffold[scaffoldItem]->declare(0);
 
               continue;
             }
@@ -855,13 +854,13 @@ namespace ROOT {
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
 
               if (DEBUG)
-                std::cout << this->scaffold[scaffoldItem]->declare(0);
+                std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
 
               if (DEBUG)
-                std::cout << this->scaffold[scaffoldItem]->declare(0);
+                std::cout << "(H) " << this->scaffold[scaffoldItem]->declare(0);
             }
           } else {
             // We have a top level raw type.
@@ -885,7 +884,7 @@ namespace ROOT {
           this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def);
 
           if (DEBUG)
-            std::cout << this->scaffold[scaffoldItem]->declare(0);
+            std::cout << "(I) " << this->scaffold[scaffoldItem]->declare(0);
         } // if split or non split
 
         scaffoldItem += 1;
