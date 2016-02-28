@@ -665,7 +665,7 @@ namespace ROOT {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), nullptr);
       }
       else if (dim == 1) {
-        scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName));
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName), nullptr);
       }
       else {
         std::vector<int> fixedTail;
@@ -823,7 +823,7 @@ namespace ROOT {
                 Error("AnalyzeTree", "Unrecognized EDataType in STL container %s.", branch->GetName());
               }
 
-              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()));
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()), nullptr);
 
               if (DEBUG)
                 std::cout << "(F) " << this->scaffold[scaffoldItem]->declare(0);
@@ -856,10 +856,7 @@ namespace ROOT {
               type = desc->GetName();
               TString dataMemberName = branchname;
 
-              if (std::string(cl->GetName()) == std::string("string")  ||  std::string(cl->GetName()) == std::string("TString"))
-                this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName));
-              else
-                this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string("vector<") + std::string(cl->GetName()) + std::string(" >"), std::string(dataMemberName), nullptr);
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName), nullptr);
 
               if (DEBUG)
                 std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
