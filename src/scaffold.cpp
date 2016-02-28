@@ -136,7 +136,7 @@ namespace scaffold {
 
   ////////////////////////////////////// Type
 
-  Type::Type(std::string type, Kind kind, Def *def) {
+  Type::Type(std::string type, Kind kind, Def *def) : type_(type), kind_(kind), def_(def) {
     if (kind == array) {
       int i;
       for (i = 0;  i < type.size()  &&  type[i] != '[';  i++)
@@ -148,11 +148,7 @@ namespace scaffold {
           dims_.back() = 10 * dims_.back() + ((int)type[i] - (int)'0');
       }
     }
-    else
-      type_ = type;
-
-    kind_ = kind;
-    def_ = def;
+    setTemplatesInnerType(type_, templates_, innerType_);
   }
 
   std::string Type::typeName() { return type_; }
@@ -165,7 +161,13 @@ namespace scaffold {
   }
 
   std::string Type::printJSON(int indent, std::string item) {
-    return unrollTemplatesPrintJSON(indent, item, item, std::vector<Template>(), def_, typeName());
+    std::string out;
+    if (templates_.size() > 0  &&  templates_[0] == vectorOf)
+      out += std::string("s(\"[\");") + indentation(indent);
+    out += unrollTemplatesPrintJSON(indent, item, item, templates_, def_, innerType_);
+    if (templates_.size() > 0  &&  templates_[0] == vectorOf)
+      out += std::string(";\n") + indentation(indent) + std::string("s(\"]\");");
+    return out;
   }
 
   //// KEEP THIS until you reimplement the arrays
@@ -196,7 +198,7 @@ namespace scaffold {
   // }
 
   std::string Type::schema(int indent, std::string ns) {
-    return innerSchema(indent, ns, def_, typeName());
+    return unrollTemplatesSchema(indent, ns, templates_, def_, innerType_);
   }
 
   ////////////////////////////////////// Def
@@ -242,7 +244,8 @@ namespace scaffold {
         out += std::string("public ") + bases_[i];
       }
       out += std::string(" {\n") +
-             std::string("public:\n");
+             std::string("public:\n") +
+             std::string("  ") + typeName_ + std::string("() { }\n\n");
       for (int i = 0;  i < names_.size();  i++) {
         out += std::string("  ") + type(i).typeName() + std::string(" ") + name(i) + type(i).arrayBrackets() + std::string(";\n");
       }
@@ -254,7 +257,6 @@ namespace scaffold {
         if (i > 0) out += std::string("    s(\", \");\n");
         out += std::string("    s(\"\\\"") + name(i) + std::string("\\\": \");\n") +
                type(i).printJSON(4, name(i)) + std::string("\n");
-        // HERE
       }
 
       out += std::string("    s(\"}\");\n") +

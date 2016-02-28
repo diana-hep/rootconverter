@@ -33,6 +33,8 @@ namespace scaffold {
     Kind kind_;
     Def *def_;
     std::vector<int> dims_;
+    std::vector<Template> templates_;
+    std::string innerType_;
   public:
     Type(std::string type, Kind kind, Def *def);
     std::string typeName();
