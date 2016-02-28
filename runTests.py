@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 
+import argparse
 import glob
 import json
 import os
 import subprocess
 import sys
-from collections import OrderedDict as odict
 
-if len(sys.argv) == 1:
-    testFileNames = glob.glob("tests/*.py")
-else:
-    testFileNames = sys.argv[1:]
+parser = argparse.ArgumentParser(description="Test root2avro by generating ROOT files of different types and attempting to read them back.")
+parser.add_argument("tests", metavar="N", nargs="*", action="store", help="tests to run (if blank, run everything in tests/*.py)")
+parser.add_argument("--list", action="store_true", help="just list the tests without running them")
+args = parser.parse_args()
+
+if len(args.tests) == 0:
+    args.tests = glob.glob("tests/*.py")
 
 class TreeType:
     order = ["Primitive", "CharBrackets", "Array", "Vector", "Struct"]
@@ -129,7 +132,7 @@ class Struct:
             return cmp(self.tpes, other.tpes)
 
 tests = []
-for testFileName in testFileNames:
+for testFileName in args.tests:
     testEnv = dict(vars(), testFileName=testFileName)
     exec open(testFileName).read() in testEnv
     if "treeType" not in testEnv or "fill" not in testEnv or "schema" not in testEnv or "json" not in testEnv:
@@ -174,6 +177,10 @@ for test in tests:
 
     if "note" in test:
         print "(" + test["note"] + ")",
+
+    if args.list:
+        print
+        continue
 
     if "skip" in test:
         print TerminalColor.BOLD + TerminalColor.WARNING + "SKIPPED" + TerminalColor.ENDC + " because " + test["skip"]
