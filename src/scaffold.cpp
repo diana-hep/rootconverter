@@ -14,6 +14,21 @@ namespace scaffold {
     return out;
   }
 
+  void setTemplatesInnerType(std::string type, std::vector<Template> &templates, std::string &innerType) {
+    std::string vectorOfPrefix("vector<");
+    int start = 0;
+    while (true)
+      if (type.substr(start, vectorOfPrefix.size()) == vectorOfPrefix) {
+        templates.push_back(vectorOf);
+        start += vectorOfPrefix.size();
+      }
+      else
+        break;
+    int stop;
+    for (stop = start;  stop < type.size()  &&  type[stop] != '>';  stop++);
+    innerType = type.substr(start, stop - start);
+  }
+
   std::string innerPrintJSON(std::string item, Def *def, std::string innerType) {
     if (def != nullptr)
       return item + std::string(".printJSON()");
@@ -97,6 +112,8 @@ namespace scaffold {
       return std::string("\"long\"");
     else if (innerType == std::string("unsigned long")  ||  innerType == std::string("ULong_t")  ||  innerType == std::string("ULong64_t"))
       return std::string("\"double\"");
+    else if (innerType == std::string("string")  ||  innerType == std::string("TString"))
+      return std::string("\"string\"");
     else
       throw std::invalid_argument(std::string("unrecognized type (B): ") + innerType);
   }
@@ -236,18 +253,7 @@ namespace scaffold {
   ////////////////////////////////////// ReaderValueNode
 
   ReaderValueNode::ReaderValueNode(std::string type, std::string name, Def *def) : type_(type), name_(name), def_(def) {
-    std::string vectorOfPrefix("vector<");
-    int start = 0;
-    while (true)
-      if (type_.substr(start, vectorOfPrefix.size()) == vectorOfPrefix) {
-        templates_.push_back(vectorOf);
-        start += vectorOfPrefix.size();
-      }
-      else
-        break;
-    int stop;
-    for (stop = start;  stop < type_.size()  &&  type_[stop] != '>';  stop++);
-    innerType_ = type_.substr(start, stop - start);
+    setTemplatesInnerType(type_, templates_, innerType_);
   }
 
   std::string ReaderValueNode::declare(int indent) {
@@ -321,18 +327,7 @@ namespace scaffold {
   ////////////////////////////////////// ReaderArrayNode
 
   ReaderArrayNode::ReaderArrayNode(std::string type, std::string name, Def *def) : type_(type), name_(name), def_(def) {
-    std::string vectorOfPrefix("vector<");
-    int start = 0;
-    while (true)
-      if (type_.substr(start, vectorOfPrefix.size()) == vectorOfPrefix) {
-        templates_.push_back(vectorOf);
-        start += vectorOfPrefix.size();
-      }
-      else
-        break;
-    int stop;
-    for (stop = start;  stop < type_.size()  &&  type_[stop] != '>';  stop++);
-    innerType_ = type_.substr(start, stop - start);
+    setTemplatesInnerType(type_, templates_, innerType_);
   }
 
   std::string ReaderArrayNode::declare(int indent) {
@@ -344,60 +339,27 @@ namespace scaffold {
   }
 
   std::string ReaderArrayNode::printJSON(int indent) {
+    std::string out;
     std::string item = std::string("item_") + rootDummy(name_);
-    return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
+    out += indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
            indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
            indentation(indent) + std::string("for (int i = 0;  i < len_" ) + rootDummy(name_) + std::string(";  i++) {\n") +
            indentation(indent) + std::string("  if (i != 0) s(\", \");\n") +
-           indentation(indent) + std::string("  auto ") + item + std::string(" = (*") + rootDummy(name_) + std::string(")[i];\n") +
-           unrollTemplatesPrintJSON(indent + 2, item, rootDummy(name_), templates_, def_, innerType_) +
-           indentation(indent) + std::string("}\n") +
-           indentation(indent) + std::string("s(\"]\");\n");
+      indentation(indent) + std::string("  auto ") + item + std::string(" = (*") + rootDummy(name_) + std::string(")[i];\n");
 
-    // out += indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
-    //   indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
-    //   indentation(indent) + std::string("for (int i = 0;  i < len_") + rootDummy(name_) + std::string("; i++) {\n") +
-    //   indentation(indent) + std::string("  if (i != 0) s(\", \");\n");
-      
-    // if (type_ == std::string("Bool_t"))
-    //   out += indentation(indent) + std::string("  b((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Char_t"))
-    //   out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer for our purposes
-    // else if (type_ == std::string("Short_t"))
-    //   out += indentation(indent) + std::string("  hd((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Int_t"))
-    //   out += indentation(indent) + std::string("  d((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Long_t"))
-    //   out += indentation(indent) + std::string("  ld((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Long64_t"))
-    //   out += indentation(indent) + std::string("  ld((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Float_t"))
-    //   out += indentation(indent) + std::string("  fg((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Float16_t"))
-    //   out += indentation(indent) + std::string("  fg((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Double_t"))
-    //   out += indentation(indent) + std::string("  g((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("Double32_t"))
-    //   out += indentation(indent) + std::string("  g((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("UChar_t"))
-    //   out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");   // Char_t -> integer for our purposes
-    // else if (type_ == std::string("UShort_t"))
-    //   out += indentation(indent) + std::string("  hu((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("UInt_t"))
-    //   out += indentation(indent) + std::string("  u((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("ULong_t"))
-    //   out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("ULong64_t"))
-    //   out += indentation(indent) + std::string("  lu((*") + rootDummy(name_) + std::string(")[i]);\n");
-    // else if (type_ == std::string("string"))
-    //   out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON((*") + rootDummy(name_) + std::string(")[i]).c_str()); s(\"\\\"\");\n");
-    // else if (type_ == std::string("TString"))
-    //   out += indentation(indent) + std::string("  s(\"\\\"\"); s(escapeJSON(std::string((*") + rootDummy(name_) + std::string(")[i].Data())).c_str()); s(\"\\\"\");\n");
-    // else
-    //   throw std::invalid_argument(std::string("unrecognized type (C): ") + type_);
-    // out += indentation(indent) + std::string("};\n") +
-    //   indentation(indent) + std::string("s(\"]\");\n");
-    // return out;
+    if (templates_.size() > 0)
+      if (templates_[0] == vectorOf)
+        out += indentation(indent) + std::string("  s(\"[\");\n");
+
+    out += unrollTemplatesPrintJSON(indent + 2, item, rootDummy(name_), templates_, def_, innerType_);
+
+    if (templates_.size() > 0)
+      if (templates_[0] == vectorOf)
+        out += indentation(indent) + std::string("  s(\"]\");\n");
+
+    out += indentation(indent) + std::string("}\n") +
+           indentation(indent) + std::string("s(\"]\");\n");
+    return out;
   }
 
   std::string ReaderArrayNode::schema(int indent, std::string ns) {
@@ -406,46 +368,6 @@ namespace scaffold {
            unrollTemplatesSchema(indent + 2, ns, templates_, def_, innerType_) +
            std::string("}\n") +
            indentation(indent) + std::string("}");
-
-    // std::string out;
-    // out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": {\"type\": \"array\", \"items\": ");
-    // if (type_ == std::string("Bool_t"))
-    //   out += std::string("\"boolean\"}}");
-    // else if (type_ == std::string("Char_t"))
-    //   out += std::string("\"int\"}}");
-    // else if (type_ == std::string("Short_t"))
-    //   out += std::string("\"int\"}}");
-    // else if (type_ == std::string("Int_t"))
-    //   out += std::string("\"int\"}}");
-    // else if (type_ == std::string("Long_t"))
-    //   out += std::string("\"long\"}}");
-    // else if (type_ == std::string("Long64_t"))
-    //   out += std::string("\"long\"}}");
-    // else if (type_ == std::string("Float_t"))
-    //   out += std::string("\"float\"}}");
-    // else if (type_ == std::string("Float16_t"))
-    //   out += std::string("\"float\"}}");
-    // else if (type_ == std::string("Double_t"))
-    //   out += std::string("\"double\"}}");
-    // else if (type_ == std::string("Double32_t"))
-    //   out += std::string("\"double\"}}");
-    // else if (type_ == std::string("UChar_t"))
-    //   out += std::string("\"int\"}}");
-    // else if (type_ == std::string("UShort_t"))
-    //   out += std::string("\"int\"}}");
-    // else if (type_ == std::string("UInt_t"))
-    //   out += std::string("\"long\"}}");
-    // else if (type_ == std::string("ULong_t"))
-    //   out += std::string("\"double\"}}");
-    // else if (type_ == std::string("ULong64_t"))
-    //   out += std::string("\"double\"}}");
-    // else if (type_ == std::string("string"))
-    //   out += std::string("\"string\"}}");
-    // else if (type_ == std::string("TString"))
-    //   out += std::string("\"string\"}}");
-    // else
-    //   throw std::invalid_argument(std::string("unrecognized type (D): ") + type_);
-    // return out;
   }
 
   ////////////////////////////////////// ReaderNestedArrayNode

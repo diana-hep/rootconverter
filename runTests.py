@@ -159,18 +159,29 @@ def same(one, two, eps):
 def dumpsPretty(x):
     return json.dumps(x, sort_keys=True, indent=4, separators=(", ", ": "))
 
+class TerminalColor:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    ENDC = "\033[0m"
+
 for test in tests:
-    print repr(test["treeType"]), "in", test["testFileName"] + "...",
+    print TerminalColor.OKGREEN + repr(test["treeType"]) + TerminalColor.ENDC, "in", test["testFileName"],
 
     if "note" in test:
         print "(" + test["note"] + ")",
 
     if "skip" in test:
-        print "SKIPPED because " + test["skip"]
+        print TerminalColor.BOLD + TerminalColor.WARNING + "SKIPPED" + TerminalColor.ENDC + " because " + test["skip"]
         sys.stdout.flush()
         continue
-    else:
-        sys.stdout.flush()
+
+    print "...",
+    sys.stdout.flush()
 
     try:
         rootFile = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".root")
@@ -210,17 +221,17 @@ for test in tests:
         try:
             dataResultJson = map(json.loads, dataResult)
         except ValueError as err:
-            raise RuntimeError("root2avro produced bad JSON:\n\n%s" % dataResult)
+            raise RuntimeError("root2avro produced bad JSON:\n\n%s" % "".join(dataResult))
 
         if not same(dataResultJson, test["json"], 1e-5):
             raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsPretty(dataResultJson), dumpsPretty(test["json"])))
 
     except Exception as err:
-        print "FAILURE"
+        print TerminalColor.BOLD + TerminalColor.FAIL + "FAILURE" + TerminalColor.ENDC
         print >> sys.stderr
         print >> sys.stderr, "File:      ", test["testFileName"]
         print >> sys.stderr, "Command:   ", " ".join(command)
         print >> sys.stderr
         raise
     else:
-        print "SUCCESS"
+        print TerminalColor.BOLD + TerminalColor.OKBLUE + "SUCCESS" + TerminalColor.ENDC

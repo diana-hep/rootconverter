@@ -19,6 +19,7 @@ namespace scaffold {
 
   std::string rootDummy(std::string fieldName);
   std::string indentation(int indent);
+  void setTemplatesInnerType(std::string type, std::vector<Template> &templates, std::string &innerType);
   std::string innerPrintJSON(std::string item, Def *def, std::string innerType);
   std::string unrollTemplatesPrintJSON(int indent, std::string item, std::string dummy, std::vector<Template> templates, Def *def, std::string innerType);
   std::string innerSchema(int indent, std::string ns, Def *def, std::string innerType);
