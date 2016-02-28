@@ -27,6 +27,7 @@ namespace scaffold {
 
   /////////////////////////////////////////////////////////////////////////////////// classes
 
+  // FIXME: Type needs to handle template unrolling and Defs
   class Type {
     std::string type_;
     Kind kind_;
@@ -35,7 +36,8 @@ namespace scaffold {
     Type(std::string type, Kind kind);
     std::string typeName();
     std::string arrayBrackets();
-    std::string printJSON(int indent);
+    std::string printJSON(int indent, std::string item);
+    std::string schema(int indent, std::string ns);
   };
 
   class Def {
@@ -95,26 +97,6 @@ namespace scaffold {
     std::string schema(int indent, std::string ns);
   };
 
-  class ReaderStringNode : public Node {
-    std::string name_;
-  public:
-    ReaderStringNode(std::string name);
-    std::string declare(int indent);
-    std::string init(int indent);
-    std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
-  };
-
-  class ReaderVectorBoolNode : public Node {   // see https://sft.its.cern.ch/jira/browse/ROOT-7467 for why we need this special case
-    std::string name_;
-  public:
-    ReaderVectorBoolNode(std::string name);
-    std::string declare(int indent);
-    std::string init(int indent);
-    std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
-  };
-
   class ReaderArrayNode : public Node {
     std::string type_;
     std::string name_;
@@ -129,6 +111,29 @@ namespace scaffold {
     std::string schema(int indent, std::string ns);
   };
 
+  // specifically, the char* special case (not really an array; it's a string)
+  class ReaderStringNode : public Node {
+    std::string name_;
+  public:
+    ReaderStringNode(std::string name);
+    std::string declare(int indent);
+    std::string init(int indent);
+    std::string printJSON(int indent);
+    std::string schema(int indent, std::string ns);
+  };
+
+  // see https://sft.its.cern.ch/jira/browse/ROOT-7467 for why we need this special case
+  class ReaderVectorBoolNode : public Node {
+    std::string name_;
+  public:
+    ReaderVectorBoolNode(std::string name);
+    std::string declare(int indent);
+    std::string init(int indent);
+    std::string printJSON(int indent);
+    std::string schema(int indent, std::string ns);
+  };
+
+  // to preserve structure in nested sequences that end with fixed-sized arrays
   class ReaderNestedArrayNode : public Node {
     std::string type_;
     std::string name_;
@@ -141,6 +146,7 @@ namespace scaffold {
     std::string schema(int indent, std::string ns);
   };
 
+  // handle cases that can't be accessed through TTreeReader (use the original SetBranchAddress method)
   class RawNode : public Node {
     std::string type_;
     std::string name_;

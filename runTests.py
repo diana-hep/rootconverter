@@ -178,13 +178,13 @@ for test in tests:
     if "note" in test:
         print "(" + test["note"] + ")",
 
-    if args.list:
-        print
-        continue
-
     if "skip" in test:
         print TerminalColor.BOLD + TerminalColor.WARNING + "SKIPPED" + TerminalColor.ENDC + " because " + test["skip"]
         sys.stdout.flush()
+        continue
+
+    if args.list:
+        print
         continue
 
     print "...",

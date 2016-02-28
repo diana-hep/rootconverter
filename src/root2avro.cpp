@@ -139,9 +139,9 @@ int main(int argc, char **argv) {
   std::string codeToDeclare;
 
   codeToDeclare = std::string("TTreeReader *getReader();\n\n");
+  codeToDeclare += generator->definitions() + std::string("\n");
   codeToDeclare += std::string("class Root2Avro {\n");
   codeToDeclare += std::string("public:\n");
-  codeToDeclare += generator->definitions() + std::string("\n");
   codeToDeclare += generator->declarations() + std::string("\n");
   codeToDeclare += generator->init() + std::string("\n");
 
