@@ -136,7 +136,7 @@ namespace scaffold {
 
   ////////////////////////////////////// Type
 
-  Type::Type(std::string type, Kind kind) {
+  Type::Type(std::string type, Kind kind, Def *def) {
     if (kind == array) {
       int i;
       for (i = 0;  i < type.size()  &&  type[i] != '[';  i++)
@@ -150,7 +150,9 @@ namespace scaffold {
     }
     else
       type_ = type;
+
     kind_ = kind;
+    def_ = def;
   }
 
   std::string Type::typeName() { return type_; }
@@ -163,7 +165,7 @@ namespace scaffold {
   }
 
   std::string Type::printJSON(int indent, std::string item) {
-    return unrollTemplatesPrintJSON(indent, item, item, std::vector<Template>(), nullptr, typeName());
+    return unrollTemplatesPrintJSON(indent, item, item, std::vector<Template>(), def_, typeName());
   }
 
   //// KEEP THIS until you reimplement the arrays
@@ -194,7 +196,7 @@ namespace scaffold {
   // }
 
   std::string Type::schema(int indent, std::string ns) {
-    return innerSchema(indent, ns, nullptr, typeName());
+    return innerSchema(indent, ns, def_, typeName());
   }
 
   ////////////////////////////////////// Def

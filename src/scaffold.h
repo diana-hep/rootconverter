@@ -31,9 +31,10 @@ namespace scaffold {
   class Type {
     std::string type_;
     Kind kind_;
+    Def *def_;
     std::vector<int> dims_;
   public:
-    Type(std::string type, Kind kind);
+    Type(std::string type, Kind kind, Def *def);
     std::string typeName();
     std::string arrayBrackets();
     std::string printJSON(int indent, std::string item);

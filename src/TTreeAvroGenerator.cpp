@@ -16,10 +16,10 @@
 
 #include "TTreeAvroGenerator.h"
 
+#define DEBUG false
+
 namespace ROOT {
   namespace Internal {
-
-    bool DEBUG = false;
 
     TString GetArrayType(TStreamerElement *element, const char *subtype,
                          TTreeAvroGenerator::EContainer container)
@@ -274,6 +274,8 @@ namespace ROOT {
             }
           }
 
+          scaffold::Def *nested = nullptr;
+
           Bool_t ispointer = false;
           switch(element->GetType()) {
 
@@ -357,10 +359,14 @@ namespace ROOT {
             R__ASSERT(cl);
 
             typeName = cl->GetName();
-            defTypeName = typeName(typeName.Last('<') + 1, typeName.Length());
-            defTypeName = defTypeName(0, defTypeName.First('>'));
-            if (element->GetType() == TVirtualStreamerInfo::kSTL)
-              fieldKind = scaffold::vector;
+            if (typeName.Last('<') >= 0  &&  typeName.First('>') >= 0) {
+              defTypeName = typeName(typeName.Last('<') + 1, typeName.Length());
+              defTypeName = defTypeName(0, defTypeName.First('>'));
+              if (element->GetType() == TVirtualStreamerInfo::kSTL)
+                fieldKind = scaffold::vector;
+            }
+            else
+              defTypeName = typeName;
 
             // proxyTypeName = Form("T%sObjProxy<%s >", middle.Data(), cl->GetName());
             TString cname = cl->GetName();
@@ -500,7 +506,7 @@ namespace ROOT {
                                                            isclones, branch->GetSplitLevel(),
                                                            containerName);
 
-                  scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
+                  nested = new scaffold::Def(std::string(defTypeName));
                   fieldKind = scaffold::structure;
 
                   lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem, nested);
@@ -532,7 +538,7 @@ namespace ROOT {
                 usedBranch = kFALSE;
                 skipped = kTRUE;
 
-                scaffold::Def *nested = new scaffold::Def(std::string(defTypeName));
+                nested = new scaffold::Def(std::string(defTypeName));
                 fieldKind = scaffold::structure;
 
                 lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem, nested);
@@ -567,7 +573,7 @@ namespace ROOT {
           if (element->IsBase())
             def->addBase(std::string(dataMemberName));
           else
-            def->addField(scaffold::Type(std::string(typeName), fieldKind), std::string(dataMemberName));
+            def->addField(scaffold::Type(std::string(typeName), fieldKind, nested), std::string(dataMemberName));
 
 
 

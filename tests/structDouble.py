@@ -8,7 +8,6 @@ struct wrapper {
 TTree *t = new TTree("t", "");
 wrapper wrap_x;
 
-double x;
 t->Branch("wrap_x", &wrap_x);
 wrap_x.x = 1;
 t->Fill();
