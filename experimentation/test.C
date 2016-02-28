@@ -107,7 +107,7 @@ void test() {
   TTreeReaderValue<Double_t> scalar(reader3, "scalar");
   TTreeReaderArray<Double_t> vekkktor(reader3, "vekkktor");
   TTreeReaderArray<std::string> vekkktor2(reader3, "vekkktor2");
-  TTreeReaderArray<std::vector<double> > tensor(reader3, "tensor");
+  TTreeReaderValue<std::vector<std::vector<double> > > tensor(reader3, "tensor");
   while (reader3.Next()) {
     std::cout << *(scalar.Get()) << std::endl;
     for (int i = 0;  i < vekkktor.GetSize();  i++) {
@@ -118,9 +118,10 @@ void test() {
       std::cout << vekkktor2[i] << " ";
     }
     std::cout << std::endl;
-    for (int i = 0;  i < tensor.GetSize();  i++) {
-      for (int j = 0;  j < tensor[i].size();  j++) {
-        std::cout << tensor[i][j] << " ";
+    std::vector<std::vector<double> > item = *(tensor.Get());
+    for (int i = 0;  i < item.size();  i++) {
+      for (int j = 0;  j < item[i].size();  j++) {
+        std::cout << item[i][j] << " ";
       }
     }
     std::cout << std::endl;

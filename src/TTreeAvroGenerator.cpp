@@ -859,17 +859,13 @@ namespace ROOT {
               if (std::string(cl->GetName()) == std::string("string")  ||  std::string(cl->GetName()) == std::string("TString"))
                 this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName));
               else
-                this->scaffold[scaffoldItem] = new scaffold::ReaderArrayArrayNode(std::string(cl->GetName()), std::string(dataMemberName), 1);
-
-              // HERE
+                this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(cl->GetName()), std::string(dataMemberName), nullptr);
 
               if (DEBUG)
                 std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
             }
             else {
               this->scaffold[scaffoldItem] = new scaffold::RawNode(std::string(classname), std::string(branchname));
-
-              // AND THERE
 
               if (DEBUG)
                 std::cout << "(H) " << this->scaffold[scaffoldItem]->declare(0);
