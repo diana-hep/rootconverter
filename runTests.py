@@ -175,7 +175,7 @@ def same(one, two, eps):
         return False
 
 def dumpsExpanded(x):
-    return json.dumps(x, sort_keys=True, indent=4, separators=(", ", ": "))
+    return json.dumps(x, sort_keys=True, indent=2, separators=(", ", ": "))
 
 def dumpsOneLevel(x):
     return "\n".join(map(json.dumps, x))

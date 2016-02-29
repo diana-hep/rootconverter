@@ -837,6 +837,7 @@ namespace ROOT {
               continue;
             }
           }
+
           if (cl) {
             if (NeedToEmulate(cl,0) || branchname[strlen(branchname)-1] == '.' || branch->GetSplitLevel()) {
               TBranchElement *be = dynamic_cast<TBranchElement*>(branch);

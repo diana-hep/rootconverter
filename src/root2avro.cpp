@@ -143,6 +143,7 @@ int main(int argc, char **argv) {
   codeToDeclare += std::string("class Root2Avro {\n");
   codeToDeclare += std::string("public:\n");
   codeToDeclare += generator->declarations() + std::string("\n");
+  codeToDeclare += std::string("  void run() {\n");
   codeToDeclare += generator->init() + std::string("\n");
 
   if (mode == std::string("avro"))
@@ -152,6 +153,7 @@ int main(int argc, char **argv) {
   else
     throw;
 
+  codeToDeclare += std::string("  }\n");
   codeToDeclare += std::string("};\n");
 
   if (debug)

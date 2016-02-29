@@ -24,9 +24,14 @@ namespace scaffold {
       }
       else
         break;
+
     int stop;
     for (stop = start;  stop < type.size()  &&  type[stop] != '>';  stop++);
-    innerType = type.substr(start, stop - start);
+
+    if (start == stop)
+      innerType = type;
+    else
+      innerType = type.substr(start, stop - start);
   }
 
   std::string innerPrintJSON(std::string item, Def *def, std::string innerType) {
@@ -78,13 +83,16 @@ namespace scaffold {
           out += indentation(indent + 2*i) + std::string("  s(\"[\");\n");
         item = newitem;
       }
+
     out += indentation(indent + 2*templates.size()) + innerPrintJSON(item, def, innerType) + std::string(";\n");
+
     for (int i = templates.size() - 1;  i >= 0;  i--)
       if (templates[i] == vectorOf) {
         if (i < templates.size() - 1)
           out += indentation(indent + 2*i) + std::string("  s(\"]\");\n");
         out += indentation(indent + 2*i) + std::string("}\n");
       }
+
     return out;
   }
 
@@ -144,7 +152,7 @@ namespace scaffold {
 
   ////////////////////////////////////// Type
 
-  Type::Type(std::string type, Kind kind, Def *def) : type_(type), kind_(kind), def_(def) {
+  Type::Type(std::string type, Kind kind, Def *def) : type_(), kind_(kind), def_(def) {
     if (kind == array) {
       int i;
       for (i = 0;  i < type.size()  &&  type[i] != '[';  i++)
@@ -156,6 +164,8 @@ namespace scaffold {
           dims_.back() = 10 * dims_.back() + ((int)type[i] - (int)'0');
       }
     }
+    else
+      type_ = type;
     setTemplatesInnerType(type_, templates_, innerType_);
   }
 
@@ -177,43 +187,61 @@ namespace scaffold {
 
   std::string Type::printJSON(int indent, std::string item) {
     std::string out;
+    std::string unrolledArray = item;
+
+    int dimsSize = dims_.size();
+    std::string innerType = innerType_;
+    if (dimsSize > 0  &&  (innerType_ == std::string("Char_t")  ||  innerType_ == std::string("char"))) {
+      dimsSize -= 1;
+      innerType = "string";
+    }
+
+    for (int i = 0;  i < dimsSize;  i++) {
+      std::string index = std::string("I") + std::to_string(i);
+      out += indentation(indent + 2*i) + std::string("s(\"[\");\n") +
+             indentation(indent + 2*i) + std::string("for (int ") + index + std::string(" = 0;  ") + index + std::string(" < ") + std::to_string(dims_[i]) + std::string(";  ") + index + std::string("++) {\n") +
+             indentation(indent + 2*i) + std::string("  if (") + index + std::string(" > 0) s(\", \");\n");
+      unrolledArray += std::string("[") + index + std::string("]");
+    }
+
     if (templates_.size() > 0  &&  templates_[0] == vectorOf)
-      out += indentation(indent) + std::string("s(\"[\");\n");
-    out += unrollTemplatesPrintJSON(indent, item, item, templates_, def_, innerType_);
+      out += indentation(indent + 2*dimsSize) + std::string("s(\"[\");\n");
+
+    out += unrollTemplatesPrintJSON(indent + 2*dimsSize, unrolledArray, item, templates_, def_, innerType);
+
     if (templates_.size() > 0  &&  templates_[0] == vectorOf)
-      out += indentation(indent) + std::string("s(\"]\");");
+      out += indentation(indent + 2*dimsSize) + std::string("s(\"]\");");
+
+    for (int i = dimsSize - 1;  i >= 0;  i--)
+      out += indentation(indent + 2*i) + std::string("}\n") +
+             indentation(indent + 2*i) + std::string("s(\"]\");\n");
+
     return out;
   }
 
-  //// KEEP THIS until you reimplement the arrays
-  ////
-  // std::string loop(std::string name) {
-  //   if (kind_ == scalar)
-  //     return name + std::string(" << std::endl;\n");
-  //   else if (kind_ == array  ||  kind_ == vector) {
-  //     std::string out;
-  //     for (int n = 0;  n < dims_.size();  n++) {
-  //       std::string var = std::string("i") + std::to_string(n);
-  //       for (int i = 0;  i < n;  i++)
-  //         out += std::string("  ");
-  //       out += std::string("for (int ") + var + std::string(" = 0;  ") + var + std::string(" < ") + std::to_string(dims_[n]) + std::string(";  ") + var + std::string("++)\n");
-  //     }
-  //     for (int i = 0;  i < dims_.size();  i++)
-  //       out += std::string("  ");
-  //     out += std::string("std::cout << \" \" << ") + name;
-  //     for (int n = 0;  n < dims_.size();  n++) {
-  //       std::string var = std::string("i") + std::to_string(n);
-  //       out += std::string("[") + var + std::string("]");
-  //     }
-  //     out += std::string(";\n");
-  //     out += std::string("  std::cout << std::endl;\n");
-  //   }
-  //   else if (kind_ == structure) {
-  //   }
-  // }
-
   std::string Type::schema(int indent, std::string ns, std::set<std::string> &memo) {
-    return unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo);
+    if (kind_ == array) {
+      std::string out;
+
+      int dimsSize = dims_.size();
+      std::string innerType = innerType_;
+      if (dimsSize > 0  &&  (innerType_ == std::string("Char_t")  ||  innerType_ == std::string("char"))) {
+        dimsSize -= 1;
+        innerType = "string";
+      }
+
+      for (int i = 0;  i < dimsSize;  i++)
+        out += std::string("\n") + indentation(indent + 2*i + 2) + std::string("{\"type\": \"array\", \"items\": ");
+
+      out += unrollTemplatesSchema(indent, ns, templates_, def_, innerType, memo);
+
+      for (int i = dimsSize - 1;  i >= 0;  i--)
+        out += std::string("}\n") + indentation(indent + 2*i);
+
+      return out;
+    }
+    else
+      return unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo);
   }
 
   ////////////////////////////////////// Def
@@ -539,17 +567,13 @@ namespace scaffold {
 
   std::string init(Node **scaffoldArray, int scaffoldSize) {
     std::string out;
-    out += std::string("  void init() {\n");
     for (int i = 0;  i < scaffoldSize;  i++)
       out += scaffoldArray[i]->init(4);
-    out += std::string("  }\n");
     return out;
   }
 
   std::string printJSON(Node **scaffoldArray, int scaffoldSize) {
     std::string out;
-    out += std::string("  void run() {\n");
-    out += std::string("    init();\n");
     out += std::string("    while (getReader()->Next()) {\n");
     out += std::string("      s(\"{\");\n");
     for (int i = 0;  i < scaffoldSize;  i++) {
@@ -558,7 +582,7 @@ namespace scaffold {
       out += std::string("\n") + scaffoldArray[i]->printJSON(6);
     }
     out += std::string("      s(\"}\\n\");\n");
-    out += std::string("    }\n  }\n");
+    out += std::string("    }\n");
     return out;
   }
 
