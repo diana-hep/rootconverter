@@ -16,7 +16,7 @@ if len(args.tests) == 0:
     args.tests = glob.glob("tests/*.py")
 
 class TreeType:
-    order = ["Primitive", "CharBrackets", "Array", "Vector", "Struct"]
+    order = ["Primitive", "CharBrackets", "Array", "Vector", "Struct", "Class"]
     @staticmethod
     def index(instance):
         return TreeType.order.index(instance.__class__.__name__)
@@ -131,6 +131,21 @@ class Struct:
         else:
             return cmp(self.tpes, other.tpes)
 
+class Class:
+    def __init__(self, *tpes):
+        self.tpes = sorted(tpes)
+    def __repr__(self):
+        return "Class(" + ", ".join(map(repr, self.tpes)) + ")"
+    def __eq__(self, other):
+        return isinstance(other, Class) and self.tpes == other.tpes
+    def __cmp__(self, other):
+        if self == other:
+            return 0
+        elif not isinstance(other, Class):
+            return -1 if TreeType.index(self) < TreeType.index(other) else 1
+        else:
+            return cmp(self.tpes, other.tpes)
+
 tests = []
 for testFileName in args.tests:
     testEnv = dict(vars(), testFileName=testFileName)
@@ -239,7 +254,8 @@ for test in tests:
     except Exception as err:
         print TerminalColor.BOLD + TerminalColor.FAIL + "FAILURE" + TerminalColor.ENDC
         print >> sys.stderr
-        print >> sys.stderr, "File:      ", test["testFileName"]
+        print >> sys.stderr, "Script:    ", test["testFileName"]
+        print >> sys.stderr, "Dataset:   ", rootFile
         print >> sys.stderr, "Command:   ", " ".join(command)
         print >> sys.stderr
         raise
