@@ -246,7 +246,7 @@ namespace scaffold {
 
   ////////////////////////////////////// Def
 
-  Def::Def(std::string typeName) : typeName_(typeName) { }
+  Def::Def(std::string typeName, bool skipUnknownTypes) : typeName_(typeName), skipUnknownTypes_(skipUnknownTypes) { }
 
   std::string Def::typeName() { return typeName_; }
 
@@ -305,9 +305,19 @@ namespace scaffold {
              std::string("  void printJSON() {\n") +
              std::string("    s(\"{\");\n\n");
       for (int i = 0;  i < names_.size();  i++) {
-        if (i > 0) out += std::string("    s(\", \");\n");
-        out += std::string("    s(\"\\\"") + name(i) + std::string("\\\": \");\n") +
-               type(i)->printJSON(4, name(i)) + std::string("\n");
+        std::string out2;
+        try {
+          if (i > 0) out2 += std::string("    s(\", \");\n");
+          out2 += std::string("    s(\"\\\"") + name(i) + std::string("\\\": \");\n") +
+                  type(i)->printJSON(4, name(i)) + std::string("\n");
+        }
+        catch (std::invalid_argument &err) {
+          if (skipUnknownTypes_)
+            continue;
+          else
+            throw err;
+        }
+        out += out2;
       }
 
       out += std::string("    s(\"}\");\n") +
@@ -328,18 +338,28 @@ namespace scaffold {
     out += indentation(indent + 4) + std::string("\"fields\": [\n");
 
     for (int i = 0;  i < names_.size();  i++) {
-      out += indentation(indent + 6) + std::string("{\"name\": \"") + name(i) + std::string("\", \"type\": ") + type(i)->schema(indent + 6, ns, memo) + std::string("}");
-      if (i != names_.size() - 1)
-        out += std::string(",\n");
-      else
-        out += std::string("\n") + indentation(indent + 4) + std::string("]\n") + indentation(indent + 3) + std::string("}\n") + indentation(indent);
+      std::string out2;
+      try {
+        out2 += indentation(indent + 6) + std::string("{\"name\": \"") + name(i) + std::string("\", \"type\": ") + type(i)->schema(indent + 6, ns, memo) + std::string("}");
+        if (i != names_.size() - 1)
+          out2 += std::string(",\n");
+        else
+          out2 += std::string("\n") + indentation(indent + 4) + std::string("]\n") + indentation(indent + 3) + std::string("}\n") + indentation(indent);
+      }
+      catch (std::invalid_argument &err) {
+        if (skipUnknownTypes_)
+          continue;
+        else
+          throw err;
+      }
+      out += out2;
     }
     return out;
   }
 
   ////////////////////////////////////// ReaderValueNode
 
-  ReaderValueNode::ReaderValueNode(std::string type, std::string name, Def *def) : type_(type), name_(name), def_(def) {
+  ReaderValueNode::ReaderValueNode(std::string type, std::string name, Def *def, bool skipUnknownTypes) : type_(type), name_(name), def_(def), skipUnknownTypes_(skipUnknownTypes) {
     setTemplatesInnerType(type_, templates_, innerType_);
   }
 
@@ -352,21 +372,37 @@ namespace scaffold {
   }
 
   std::string ReaderValueNode::printJSON(int indent) {
-    std::string item = std::string("item_") + rootDummy(name_);
-    return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \");\n") +
-           indentation(indent) + std::string("auto ") + item + std::string(" = *(") + rootDummy(name_) + std::string("->Get());\n") +
-           unrollTemplatesPrintJSON(indent, item, rootDummy(name_), templates_, def_, innerType_);
+    try {
+      std::string item = std::string("item_") + rootDummy(name_);
+      return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \");\n") +
+             indentation(indent) + std::string("auto ") + item + std::string(" = *(") + rootDummy(name_) + std::string("->Get());\n") +
+             unrollTemplatesPrintJSON(indent, item, rootDummy(name_), templates_, def_, innerType_);
+    }
+    catch (std::invalid_argument &err) {
+      if (skipUnknownTypes_)
+        return std::string();
+      else
+        throw err;
+    }
   }
 
   std::string ReaderValueNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
-    return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ") +
-           unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo) +
-           std::string("}");
+    try {
+      return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ") +
+             unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo) +
+             std::string("}");
+    }
+    catch (std::invalid_argument &err) {
+      if (skipUnknownTypes_)
+        return std::string();
+      else
+        throw err;
+    }
   }
 
   ////////////////////////////////////// ReaderArrayNode
 
-  ReaderArrayNode::ReaderArrayNode(std::string type, std::string name, Def *def) : type_(type), name_(name), def_(def) {
+  ReaderArrayNode::ReaderArrayNode(std::string type, std::string name, Def *def, bool skipUnknownTypes) : type_(type), name_(name), def_(def), skipUnknownTypes_(skipUnknownTypes) {
     setTemplatesInnerType(type_, templates_, innerType_);
   }
 
@@ -379,35 +415,51 @@ namespace scaffold {
   }
 
   std::string ReaderArrayNode::printJSON(int indent) {
-    std::string out;
-    std::string item = std::string("item_") + rootDummy(name_);
-    out += indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
-           indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
-           indentation(indent) + std::string("for (int i = 0;  i < len_" ) + rootDummy(name_) + std::string(";  i++) {\n") +
-           indentation(indent) + std::string("  if (i != 0) s(\", \");\n") +
-      indentation(indent) + std::string("  auto ") + item + std::string(" = (*") + rootDummy(name_) + std::string(")[i];\n");
+    try {
+      std::string out;
+      std::string item = std::string("item_") + rootDummy(name_);
+      out += indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": [\");\n") +
+             indentation(indent) + std::string("int len_") + rootDummy(name_) + std::string(" = ") + rootDummy(name_) + std::string("->GetSize();\n") +
+             indentation(indent) + std::string("for (int i = 0;  i < len_" ) + rootDummy(name_) + std::string(";  i++) {\n") +
+             indentation(indent) + std::string("  if (i != 0) s(\", \");\n") +
+        indentation(indent) + std::string("  auto ") + item + std::string(" = (*") + rootDummy(name_) + std::string(")[i];\n");
 
-    if (templates_.size() > 0)
-      if (templates_[0] == vectorOf)
-        out += indentation(indent) + std::string("  s(\"[\");\n");
+      if (templates_.size() > 0)
+        if (templates_[0] == vectorOf)
+          out += indentation(indent) + std::string("  s(\"[\");\n");
 
-    out += unrollTemplatesPrintJSON(indent + 2, item, rootDummy(name_), templates_, def_, innerType_);
+      out += unrollTemplatesPrintJSON(indent + 2, item, rootDummy(name_), templates_, def_, innerType_);
 
-    if (templates_.size() > 0)
-      if (templates_[0] == vectorOf)
-        out += indentation(indent) + std::string("  s(\"]\");\n");
+      if (templates_.size() > 0)
+        if (templates_[0] == vectorOf)
+          out += indentation(indent) + std::string("  s(\"]\");\n");
 
-    out += indentation(indent) + std::string("}\n") +
-           indentation(indent) + std::string("s(\"]\");\n");
-    return out;
+      out += indentation(indent) + std::string("}\n") +
+             indentation(indent) + std::string("s(\"]\");\n");
+      return out;
+    }
+    catch (std::invalid_argument &err) {
+      if (skipUnknownTypes_)
+        return std::string();
+      else
+        throw err;
+    }
   }
 
   std::string ReaderArrayNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
-    return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\":\n") +
-           indentation(indent + 2) + std::string("{\"type\": \"array\", \"items\": ") +
-           unrollTemplatesSchema(indent + 2, ns, templates_, def_, innerType_, memo) +
-           std::string("}\n") +
-           indentation(indent) + std::string("}");
+    try {
+      return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\":\n") +
+             indentation(indent + 2) + std::string("{\"type\": \"array\", \"items\": ") +
+             unrollTemplatesSchema(indent + 2, ns, templates_, def_, innerType_, memo) +
+             std::string("}\n") +
+             indentation(indent) + std::string("}");
+    }
+    catch (std::invalid_argument &err) {
+      if (skipUnknownTypes_)
+        return std::string();
+      else
+        throw err;
+    }
   }
 
   ////////////////////////////////////// ReaderStringNode
@@ -470,11 +522,11 @@ namespace scaffold {
   }
 
   std::string ReaderNestedArrayNode::printJSON(int indent) {
-    throw "not implemented";
+    throw std::invalid_argument("not implemented");
   }
 
   std::string ReaderNestedArrayNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
-    throw "not implemented";
+    throw std::invalid_argument("not implemented");
   }
 
   ////////////////////////////////////// RawNode

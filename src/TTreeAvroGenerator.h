@@ -19,8 +19,9 @@ namespace ROOT {
     {
     public:
       enum EContainer { kNone, kClones, kSTL };
-      TTreeAvroGenerator(TTree* tree);
+      TTreeAvroGenerator(TTree* tree, bool skipUnknownTypes);
 
+      bool skipUnknownTypes;
       int scaffoldSize;
       scaffold::Node **scaffold;
       std::map<const std::string, scaffold::Def*> defs;

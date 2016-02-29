@@ -104,7 +104,7 @@ namespace ROOT {
       */
     }
 
-    TTreeAvroGenerator::TTreeAvroGenerator(TTree* tree) : TTreeGeneratorBase(tree, "")
+    TTreeAvroGenerator::TTreeAvroGenerator(TTree* tree, bool skipUnknownTypes) : TTreeGeneratorBase(tree, ""), skipUnknownTypes(skipUnknownTypes)
     {
       AnalyzeTree(fTree);
     }
@@ -493,7 +493,7 @@ namespace ROOT {
                                                            isclones, branch->GetSplitLevel(),
                                                            containerName);
 
-                  nested = new scaffold::Def(std::string(defTypeName));
+                  nested = new scaffold::Def(std::string(defTypeName), skipUnknownTypes);
                   fieldKind = scaffold::structure;
 
                   lookedAt += AnalyzeBranches( level+1, cldesc, branch, objInfo, scaffoldArray, scaffoldItem, nested);
@@ -525,7 +525,7 @@ namespace ROOT {
                 usedBranch = kFALSE;
                 skipped = kTRUE;
 
-                nested = new scaffold::Def(std::string(defTypeName));
+                nested = new scaffold::Def(std::string(defTypeName), skipUnknownTypes);
                 fieldKind = scaffold::structure;
 
                 lookedAt += AnalyzeBranches( level + 1, cldesc, branches, objInfo, scaffoldArray, scaffoldItem, nested);
@@ -667,10 +667,10 @@ namespace ROOT {
         scaffoldArray[scaffoldItem] = new scaffold::ReaderStringNode(std::string(dataMemberName));
       }
       else if (dim == 0) {
-        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), nullptr);
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderValueNode(std::string(leafTypeName), std::string(dataMemberName), nullptr, skipUnknownTypes);
       }
       else if (dim == 1) {
-        scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName), nullptr);
+        scaffoldArray[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(leafTypeName), std::string(dataMemberName), nullptr, skipUnknownTypes);
       }
       else {
         std::vector<int> fixedTail;
@@ -828,7 +828,7 @@ namespace ROOT {
                 Error("AnalyzeTree", "Unrecognized EDataType in STL container %s.", branch->GetName());
               }
 
-              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()), nullptr);
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(typeName), std::string(branch->GetName()), nullptr, skipUnknownTypes);
 
               if (DEBUG)
                 std::cout << "(F) " << this->scaffold[scaffoldItem]->declare(0);
@@ -862,7 +862,7 @@ namespace ROOT {
               type = desc->GetName();
               TString dataMemberName = branchname;
 
-              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName), nullptr);
+              this->scaffold[scaffoldItem] = new scaffold::ReaderArrayNode(std::string(cl->GetName()), std::string(dataMemberName), nullptr, skipUnknownTypes);
 
               if (DEBUG)
                 std::cout << "(G) " << this->scaffold[scaffoldItem]->declare(0);
@@ -881,7 +881,7 @@ namespace ROOT {
         } else {
           // We have a split object
 
-          scaffold::Def *def = new scaffold::Def(classname);
+          scaffold::Def *def = new scaffold::Def(classname, skipUnknownTypes);
 
           TIter subnext( branch->GetListOfBranches() );
           if (desc) {
@@ -892,7 +892,7 @@ namespace ROOT {
           }
 
           defs.insert(std::pair<const std::string, scaffold::Def*>(def->typeName(), def));
-          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def);
+          this->scaffold[scaffoldItem] = new scaffold::ReaderValueNode(std::string(classname), std::string(branchname), def, skipUnknownTypes);
 
           if (DEBUG)
             std::cout << "(I) " << this->scaffold[scaffoldItem]->declare(0);

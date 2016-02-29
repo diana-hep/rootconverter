@@ -50,8 +50,9 @@ namespace scaffold {
     std::vector<std::string> bases_;
     std::vector<std::string> names_;
     std::vector<Type*> types_;
+    bool skipUnknownTypes_;
   public:
-    Def(std::string typeName);
+    Def(std::string typeName, bool skipUnknownTypes);
     std::string typeName();
     std::string avroName(std::string ns);
     std::string name(int i);
@@ -95,8 +96,9 @@ namespace scaffold {
     Def *def_;
     std::vector<Template> templates_;
     std::string innerType_;
+    bool skipUnknownTypes_;
   public:
-    ReaderValueNode(std::string type, std::string name, Def *def);
+    ReaderValueNode(std::string type, std::string name, Def *def, bool skipUnknownTypes);
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
@@ -109,8 +111,9 @@ namespace scaffold {
     Def *def_;
     std::vector<Template> templates_;
     std::string innerType_;
+    bool skipUnknownTypes_;
   public:
-    ReaderArrayNode(std::string type, std::string name, Def *def);
+    ReaderArrayNode(std::string type, std::string name, Def *def, bool skipUnknownTypes);
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);

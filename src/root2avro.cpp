@@ -24,6 +24,7 @@ std::string              mode = "avro";
 std::string              codec = "null";
 std::string              schemaName = "";
 std::string              ns = "";
+bool                     skipUnknownTypes = false;
 bool                     debug = false;
 
 TFile                   *file = nullptr;
@@ -44,6 +45,7 @@ void help() {
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
             << "  --ns=NAMESPACE         Namespace for schema (blank if not provided)." << std::endl
+            << "  --skipUnknownTypes     If supplied, skip over fields whose types cannot be determined (default: throw exception)" << std::endl
             << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
 }
@@ -98,6 +100,9 @@ int main(int argc, char **argv) {
       ns = arg.substr(nsPrefix.size(), arg.size());
     }
 
+    else if (arg == std::string("--skipUnknownTypes"))
+      skipUnknownTypes = true;
+
     else if (arg == std::string("-d")  ||  arg == std::string("-debug")  ||  arg == std::string("--debug"))
       debug = true;
 
@@ -126,7 +131,7 @@ int main(int argc, char **argv) {
   file = TFile::Open(fileLocations[0].c_str());
   reader = new TTreeReader(treeLocation.c_str(), file);
 
-  TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
+  TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree(), skipUnknownTypes);
 
   if (schemaName.size() == 0)
     schemaName = std::string(reader->GetTree()->GetName());
