@@ -160,14 +160,16 @@ int main(int argc, char **argv) {
     // declare the new class
     gInterpreter->Declare(codeToDeclare.c_str());
 
-    // and run it
-    ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
-    TString methodName = "run";
-    CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
-    Long_t offset = -1;
-    gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
-    void *instance = gInterpreter->ClassInfo_New(classInfo);
-    gInterpreter->CallFunc_Exec(callFunc, instance);
+    // // and run it
+    // ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
+    // TString methodName = "run";
+    // CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
+    // Long_t offset = -1;
+    // gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
+    // void *instance = gInterpreter->ClassInfo_New(classInfo);
+    // gInterpreter->CallFunc_Exec(callFunc, instance);
+
+    gInterpreter->ProcessLineSynch("(new Root2Avro)->run();");
   }
 
   file->Close();

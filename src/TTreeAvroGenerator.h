@@ -24,6 +24,7 @@ namespace ROOT {
       int scaffoldSize;
       scaffold::Node **scaffold;
       std::map<const std::string, scaffold::Def*> defs;
+      std::vector<scaffold::Type*> types;
       std::string definitions() { return scaffold::definitions(defs); }
       std::string declarations() { return scaffold::declarations(scaffold, scaffoldSize); }
       std::string init() { return scaffold::init(scaffold, scaffoldSize); }

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <stdexcept>
 
 namespace scaffold {
@@ -22,8 +23,8 @@ namespace scaffold {
   void setTemplatesInnerType(std::string type, std::vector<Template> &templates, std::string &innerType);
   std::string innerPrintJSON(std::string item, Def *def, std::string innerType);
   std::string unrollTemplatesPrintJSON(int indent, std::string item, std::string dummy, std::vector<Template> templates, Def *def, std::string innerType);
-  std::string innerSchema(int indent, std::string ns, Def *def, std::string innerType);
-  std::string unrollTemplatesSchema(int indent, std::string ns, std::vector<Template> templates, Def *def, std::string innerType);
+  std::string innerSchema(int indent, std::string ns, Def *def, std::string innerType, std::set<std::string> &memo);
+  std::string unrollTemplatesSchema(int indent, std::string ns, std::vector<Template> templates, Def *def, std::string innerType, std::set<std::string> &memo);
 
   /////////////////////////////////////////////////////////////////////////////////// classes
 
@@ -37,29 +38,31 @@ namespace scaffold {
     std::string innerType_;
   public:
     Type(std::string type, Kind kind, Def *def);
+    void checkForDelayed(std::map<const std::string, Def*> defs);
     std::string typeName();
     std::string arrayBrackets();
     std::string printJSON(int indent, std::string item);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   class Def {
     std::string typeName_;
     std::vector<std::string> bases_;
     std::vector<std::string> names_;
-    std::vector<Type> types_;
+    std::vector<Type*> types_;
   public:
     Def(std::string typeName);
     std::string typeName();
+    std::string avroName(std::string ns);
     std::string name(int i);
-    Type type(int i);
+    Type *type(int i);
     void addBase(std::string base);
-    void addField(Type type, std::string name);
+    void addField(Type *type, std::string name);
     bool empty();
     std::string forward();
     std::string def();
     std::string ref();
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   class Node {
@@ -67,7 +70,7 @@ namespace scaffold {
     virtual std::string declare(int indent) = 0;
     virtual std::string init(int indent) = 0;
     virtual std::string printJSON(int indent) = 0;
-    virtual std::string schema(int indent, std::string ns) = 0;
+    virtual std::string schema(int indent, std::string ns, std::set<std::string> &memo) = 0;
   };
 
   class InertNode : public Node {
@@ -81,7 +84,7 @@ namespace scaffold {
     std::string printJSON(int indent) {
       return std::string("");
     }
-    std::string schema(int indent, std::string ns) {
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo) {
       return std::string("");
     }
   };
@@ -97,7 +100,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   class ReaderArrayNode : public Node {
@@ -111,7 +114,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   // specifically, the char* special case (not really an array; it's a string)
@@ -122,7 +125,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   // see https://sft.its.cern.ch/jira/browse/ROOT-7467 for why we need this special case
@@ -133,7 +136,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   // to preserve structure in nested sequences that end with fixed-sized arrays
@@ -146,7 +149,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   // handle cases that can't be accessed through TTreeReader (use the original SetBranchAddress method)
@@ -158,7 +161,7 @@ namespace scaffold {
     std::string declare(int indent);
     std::string init(int indent);
     std::string printJSON(int indent);
-    std::string schema(int indent, std::string ns);
+    std::string schema(int indent, std::string ns, std::set<std::string> &memo);
   };
 
   /////////////////////////////////////////////////////////////////////////////////// public access functions

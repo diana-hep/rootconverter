@@ -359,6 +359,7 @@ namespace ROOT {
             R__ASSERT(cl);
 
             typeName = cl->GetName();
+
             if (typeName.Last('<') >= 0  &&  typeName.First('>') >= 0) {
               defTypeName = typeName(typeName.Last('<') + 1, typeName.Length());
               defTypeName = defTypeName(0, defTypeName.First('>'));
@@ -475,22 +476,8 @@ namespace ROOT {
                 if (branch->GetListOfBranches()->GetEntries() == 0) {
                   // The branch contains a non-split object that we are unfolding!
 
-                  // See AnalyzeTree for similar code!
-                  TBranchProxyClassDescriptor *local_cldesc = 0;
-
-                  TVirtualStreamerInfo *binfo = branch->GetInfo();
-                  if (strcmp(cl->GetName(),binfo->GetName())!=0) {
-                    binfo = cl->GetStreamerInfo(); // might be the wrong version
-                  }
-                  local_cldesc = new TBranchProxyClassDescriptor(cl->GetName(), binfo,
-                                                                 branch->GetName(),
-                                                                 isclones, 0 /* unsplit object */,
-                                                                 containerName);
-
-                  TStreamerElement *elem = 0;
-
                   if (NeedToEmulate(cl,0)) {
-                    typeName = local_cldesc->GetName();
+                    typeName = cl->GetName();
                   }
 
                 } else {
@@ -566,15 +553,27 @@ namespace ROOT {
               std::cout << "    ";
             if (element->IsBase())
               std::cout << "(B) " << "BASE " << dataMemberName << std::endl;
-            else
-              std::cout << "(C) " << typeName << " " << dataMemberName << std::endl;
+            else {
+              std::cout << "(C) " << typeName << " " << dataMemberName << " ";
+              if (fieldKind == scaffold::scalar)
+                std::cout << "(scalar)";
+              else if (fieldKind == scaffold::array)
+                std::cout << "(array)";
+              else if (fieldKind == scaffold::vector)
+                std::cout << "(vector)";
+              else if (fieldKind == scaffold::structure)
+                std::cout << "(structure)";
+              std::cout << std::endl;
+            }
           }
 
           if (element->IsBase())
             def->addBase(std::string(dataMemberName));
-          else
-            def->addField(scaffold::Type(std::string(typeName), fieldKind, nested), std::string(dataMemberName));
-
+          else {
+            scaffold::Type *t = new scaffold::Type(std::string(typeName), fieldKind, nested);
+            types.push_back(t);
+            def->addField(t, std::string(dataMemberName));
+          }
 
 
           if (usedBranch) {
@@ -900,6 +899,10 @@ namespace ROOT {
 
         scaffoldItem += 1;
       }
+
+      for (int i = 0;  i < types.size();  i++)
+        types[i]->checkForDelayed(defs);
+
     }
 
   }

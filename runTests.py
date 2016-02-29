@@ -159,8 +159,11 @@ def same(one, two, eps):
     else:
         return False
 
-def dumpsPretty(x):
+def dumpsExpanded(x):
     return json.dumps(x, sort_keys=True, indent=4, separators=(", ", ": "))
+
+def dumpsOneLevel(x):
+    return "\n".join(map(json.dumps, x))
 
 class TerminalColor:
     HEADER = "\033[95m"
@@ -217,7 +220,7 @@ for test in tests:
             raise RuntimeError("root2avro --mode=schema produced bad JSON:\n\n%s" % schemaResult)
 
         if not same(schemaResultJson, test["schema"], 0):
-            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (schemaResult, dumpsPretty(test["schema"])))
+            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (schemaResult, dumpsExpanded(test["schema"])))
 
         command = ["build/root2avro", "--mode=json", "file://" + rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
@@ -231,7 +234,7 @@ for test in tests:
             raise RuntimeError("root2avro produced bad JSON:\n\n%s" % "".join(dataResult))
 
         if not same(dataResultJson, test["json"], 1e-5):
-            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsPretty(dataResultJson), dumpsPretty(test["json"])))
+            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsOneLevel(dataResultJson), dumpsOneLevel(test["json"])))
 
     except Exception as err:
         print TerminalColor.BOLD + TerminalColor.FAIL + "FAILURE" + TerminalColor.ENDC

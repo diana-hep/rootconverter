@@ -69,6 +69,7 @@ namespace scaffold {
         std::string len = std::string("len") + std::to_string(i) + std::string("_") + dummy;
         std::string index = std::string("i") + std::to_string(i);
         std::string newitem = std::string("item") + std::to_string(i) + std::string("_") + dummy;
+        
         out += indentation(indent + 2*i) + std::string("int ") + len + std::string(" = ") + item + std::string(".size();\n") +
                indentation(indent + 2*i) + std::string("for (int ") + index + std::string(" = 0;  ") + index + std::string(" < ") + len + std::string(";  ") + index + std::string("++) {\n") +
                indentation(indent + 2*i) + std::string("  auto ") + newitem + std::string(" = ") + item + std::string("[") + index + std::string("];\n") +
@@ -87,9 +88,16 @@ namespace scaffold {
     return out;
   }
 
-  std::string innerSchema(int indent, std::string ns, Def *def, std::string innerType) {
-    if (def != nullptr)
-      return def->schema(indent, ns);
+  std::string innerSchema(int indent, std::string ns, Def *def, std::string innerType, std::set<std::string> &memo) {
+    if (def != nullptr) {
+      std::string defAvroName = def->avroName(ns);
+      if (memo.find(defAvroName) == memo.end()) {
+        memo.insert(defAvroName);
+        return def->schema(indent, ns, memo);
+      }
+      else
+        return std::string("\"") + defAvroName + std::string("\"");
+    }
     else if (innerType == std::string("bool")  ||  innerType == std::string("Bool_t"))
       return std::string("\"boolean\"");
     else if (innerType == std::string("char")  ||  innerType == std::string("Char_t"))
@@ -118,13 +126,13 @@ namespace scaffold {
       throw std::invalid_argument(std::string("unrecognized type (B): ") + innerType);
   }
 
-  std::string unrollTemplatesSchema(int indent, std::string ns, std::vector<Template> templates, Def *def, std::string innerType) {
+  std::string unrollTemplatesSchema(int indent, std::string ns, std::vector<Template> templates, Def *def, std::string innerType, std::set<std::string> &memo) {
     std::string out;
     for (int i = 0;  i < templates.size();  i++)
       if (templates[i] == vectorOf) {
         out += std::string("\n") + indentation(indent + 2*i + 2) + std::string("{\"type\": \"array\", \"items\": ");
       }
-    out += innerSchema(indent + 2*templates.size(), ns, def, innerType);
+    out += innerSchema(indent + 2*templates.size(), ns, def, innerType, memo);
     for (int i = templates.size() - 1;  i >= 0;  i--)
       if (templates[i] == vectorOf) {
         out += std::string("}\n") + indentation(indent + 2*i);
@@ -151,6 +159,13 @@ namespace scaffold {
     setTemplatesInnerType(type_, templates_, innerType_);
   }
 
+  void Type::checkForDelayed(std::map<const std::string, scaffold::Def*> defs) {
+    if (defs.count(innerType_) > 0) {
+      kind_ = structure;
+      def_ = defs.at(innerType_);
+    }
+  }
+
   std::string Type::typeName() { return type_; }
 
   std::string Type::arrayBrackets() {
@@ -163,10 +178,10 @@ namespace scaffold {
   std::string Type::printJSON(int indent, std::string item) {
     std::string out;
     if (templates_.size() > 0  &&  templates_[0] == vectorOf)
-      out += std::string("s(\"[\");") + indentation(indent);
+      out += indentation(indent) + std::string("s(\"[\");\n");
     out += unrollTemplatesPrintJSON(indent, item, item, templates_, def_, innerType_);
     if (templates_.size() > 0  &&  templates_[0] == vectorOf)
-      out += std::string(";\n") + indentation(indent) + std::string("s(\"]\");");
+      out += indentation(indent) + std::string("s(\"]\");");
     return out;
   }
 
@@ -197,8 +212,8 @@ namespace scaffold {
   //   }
   // }
 
-  std::string Type::schema(int indent, std::string ns) {
-    return unrollTemplatesSchema(indent, ns, templates_, def_, innerType_);
+  std::string Type::schema(int indent, std::string ns, std::set<std::string> &memo) {
+    return unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo);
   }
 
   ////////////////////////////////////// Def
@@ -207,15 +222,23 @@ namespace scaffold {
 
   std::string Def::typeName() { return typeName_; }
 
+  std::string Def::avroName(std::string ns) {
+    std::string out;
+    if (ns.size() > 0)
+      out += ns + std::string(".");
+    out += typeName_;
+    return out;
+  }
+
   std::string Def::name(int i) { return names_[i]; }
 
-  Type Def::type(int i) { return types_[i]; }
+  Type *Def::type(int i) { return types_[i]; }
 
   void Def::addBase(std::string base) {
     bases_.push_back(base);
   }
 
-  void Def::addField(Type type, std::string name) {
+  void Def::addField(Type *type, std::string name) {
     names_.push_back(name);
     types_.push_back(type);
   }
@@ -247,7 +270,7 @@ namespace scaffold {
              std::string("public:\n") +
              std::string("  ") + typeName_ + std::string("() { }\n\n");
       for (int i = 0;  i < names_.size();  i++) {
-        out += std::string("  ") + type(i).typeName() + std::string(" ") + name(i) + type(i).arrayBrackets() + std::string(";\n");
+        out += std::string("  ") + type(i)->typeName() + std::string(" ") + name(i) + type(i)->arrayBrackets() + std::string(";\n");
       }
 
       out += std::string("\n") +
@@ -256,7 +279,7 @@ namespace scaffold {
       for (int i = 0;  i < names_.size();  i++) {
         if (i > 0) out += std::string("    s(\", \");\n");
         out += std::string("    s(\"\\\"") + name(i) + std::string("\\\": \");\n") +
-               type(i).printJSON(4, name(i)) + std::string("\n");
+               type(i)->printJSON(4, name(i)) + std::string("\n");
       }
 
       out += std::string("    s(\"}\");\n") +
@@ -268,22 +291,21 @@ namespace scaffold {
 
   std::string Def::ref() { return typeName_; }
 
-  std::string Def::schema(int indent, std::string ns) {
+  std::string Def::schema(int indent, std::string ns, std::set<std::string> &memo) {
     std::string out;
     out += std::string("\n") + indentation(indent + 3) + std::string("{\"type\": \"record\",\n") +
-           indentation(indent + 4) + std::string("\"name\": \"") + typeName() + std::string("\",\n");
+      indentation(indent + 4) + std::string("\"name\": \"") + typeName() + std::string("\",\n");
     if (ns.size() > 0)
       out += indentation(indent + 4) + std::string("\"namespace\": \"") + ns + std::string("\",\n");
     out += indentation(indent + 4) + std::string("\"fields\": [\n");
 
     for (int i = 0;  i < names_.size();  i++) {
-      out += indentation(indent + 6) + std::string("{\"name\": \"") + name(i) + std::string("\", \"type\": ") + type(i).schema(indent + 6, ns) + std::string("}");
+      out += indentation(indent + 6) + std::string("{\"name\": \"") + name(i) + std::string("\", \"type\": ") + type(i)->schema(indent + 6, ns, memo) + std::string("}");
       if (i != names_.size() - 1)
         out += std::string(",\n");
       else
         out += std::string("\n") + indentation(indent + 4) + std::string("]\n") + indentation(indent + 3) + std::string("}\n") + indentation(indent);
     }
-
     return out;
   }
 
@@ -308,9 +330,9 @@ namespace scaffold {
            unrollTemplatesPrintJSON(indent, item, rootDummy(name_), templates_, def_, innerType_);
   }
 
-  std::string ReaderValueNode::schema(int indent, std::string ns) {
+  std::string ReaderValueNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
     return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ") +
-           unrollTemplatesSchema(indent, ns, templates_, def_, innerType_) +
+           unrollTemplatesSchema(indent, ns, templates_, def_, innerType_, memo) +
            std::string("}");
   }
 
@@ -352,10 +374,10 @@ namespace scaffold {
     return out;
   }
 
-  std::string ReaderArrayNode::schema(int indent, std::string ns) {
+  std::string ReaderArrayNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
     return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\":\n") +
            indentation(indent + 2) + std::string("{\"type\": \"array\", \"items\": ") +
-           unrollTemplatesSchema(indent + 2, ns, templates_, def_, innerType_) +
+           unrollTemplatesSchema(indent + 2, ns, templates_, def_, innerType_, memo) +
            std::string("}\n") +
            indentation(indent) + std::string("}");
   }
@@ -376,7 +398,7 @@ namespace scaffold {
     return indentation(indent) + std::string("s(\"\\\"") + name_ + std::string("\\\": \\\"\"); s(escapeJSON(std::string((char*)") + rootDummy(name_) + std::string("->GetAddress())).c_str()); s(\"\\\"\");\n");
   }
 
-  std::string ReaderStringNode::schema(int indent, std::string ns) {
+  std::string ReaderStringNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
     return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": \"string\"}");
   }
 
@@ -403,7 +425,7 @@ namespace scaffold {
            indentation(indent) + std::string("s(\"]\");\n");
   }
 
-  std::string ReaderVectorBoolNode::schema(int indent, std::string ns) {
+  std::string ReaderVectorBoolNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
     return indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": {\"type\": \"array\", \"items\": \"boolean\"}}");
   }
 
@@ -428,8 +450,8 @@ namespace scaffold {
   //          indentation(indent) + std::string("std::cout << std::endl;\n");
   // }
 
-  std::string ReaderNestedArrayNode::schema(int indent, std::string ns) {
-    return std::string("");
+  std::string ReaderNestedArrayNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
+    return std::string("");  // FIXME
   }
 
   ////////////////////////////////////// RawNode
@@ -459,7 +481,7 @@ namespace scaffold {
     return out;
   }
 
-  std::string RawNode::schema(int indent, std::string ns) {
+  std::string RawNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
     std::string out;
     out += indentation(indent) + std::string("{\"name\": \"") + name_ + std::string("\", \"type\": ");
     if (type_ == std::string("string"))
@@ -541,6 +563,7 @@ namespace scaffold {
   }
 
   std::string schema(int indent, std::string name, std::string ns, Node **scaffoldArray, int scaffoldSize) {
+    std::set<std::string> memo;
     std::string out;
     out += indentation(indent) + std::string("{\"type\": \"record\",\n");
     out += indentation(indent) + std::string(" \"name\": \"") + name + std::string("\",\n");
@@ -548,7 +571,7 @@ namespace scaffold {
       out += indentation(indent) + std::string(" \"namespace\": \"") + ns + std::string("\",\n");
     out += indentation(indent) + std::string(" \"fields\": [\n");
     for (int i = 0;  i < scaffoldSize;  i++) {
-      out += scaffoldArray[i]->schema(3, ns);
+      out += scaffoldArray[i]->schema(3, ns, memo);
       if (i < scaffoldSize - 1)
         out += std::string(",\n");
       else
