@@ -469,17 +469,12 @@ namespace scaffold {
     return indentation(indent) + rootDummy(name_) + " = new " + std::string("TTreeReaderArray<") + type_ + std::string(" >(*getReader(), \"") + name_ + std::string("\");\n");
   }
 
-  std::string ReaderNestedArrayNode::printJSON(int indent) { return std::string(); }
-
-  // std::string loop(int indent) {
-  //   return indentation(indent) + std::string("std::cout << \"") + name_ + std::string(": \";\n") +
-  //          indentation(indent) + std::string("for (int i = 0;  i < ") + rootDummy(name_) + std::string("->GetSize(); i++)\n") +
-  //          indentation(indent + 2) + std::string("std::cout << (*") + rootDummy(name_) + std::string(")[i] << \" \";\n") +
-  //          indentation(indent) + std::string("std::cout << std::endl;\n");
-  // }
+  std::string ReaderNestedArrayNode::printJSON(int indent) {
+    throw "not implemented";
+  }
 
   std::string ReaderNestedArrayNode::schema(int indent, std::string ns, std::set<std::string> &memo) {
-    return std::string("");  // FIXME
+    throw "not implemented";
   }
 
   ////////////////////////////////////// RawNode
