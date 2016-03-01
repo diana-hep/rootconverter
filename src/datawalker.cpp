@@ -413,13 +413,41 @@ void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
 StdVectorWalker::StdVectorWalker(std::string fieldName, FieldWalker *walker) :
-  FieldWalker(fieldName, "vector"), walker(walker) { }
+  FieldWalker(fieldName, "vector"), walker(walker)
+{
+  std::string codeToDeclare = std::string("class Get_") + fieldName + std::string(" : public StdVectorInterface {\n") +
+                              std::string("public:\n") +
+                              std::string("  std::vector<") + typeName + std::string("> *vector;\n") +
+                              std::string("  std::vector<") + typeName + std::string(">::iterator iter;\n") +
+                              std::string("  void start(void *v) {\n") +
+                              std::string("    vector = (std::vector<") + typeName + std::string(">*)v;\n") +
+                              std::string("    iter = vector->begin();\n") +
+                              std::string("  }\n") +
+                              std::string("  void *next() {\n") +
+                              std::string("    if (iter == vector->end())\n") +
+                              std::string("      return nullptr;\n") +
+                              std::string("    std::vector<") + typeName + std::string(">::iterator out = iter;\n") +
+                              std::string("    ++iter;\n") +
+                              std::string("    return (void*)&(*out);\n") +
+                              std::string("  };\n") +
+                              std::string("};\n");
+
+  gInterpreter->Declare(codeToDeclare.c_str());
+
+  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Get_") + fieldName).c_str());
+  extractorInstance = (StdVectorInterface*)gInterpreter->ClassInfo_New(classInfo);  
+}
 
 bool StdVectorWalker::empty() { return false; }
 
 bool StdVectorWalker::resolved() { return walker->resolved(); }
 
-void StdVectorWalker::resolve(void *address) { walker->resolve(address); }
+void StdVectorWalker::resolve(void *address) {
+  extractorInstance->start(address);
+  void *ptr = extractorInstance->next();
+  if (ptr != nullptr)
+    walker->resolve(ptr);
+}
 
 std::string StdVectorWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("{\"std::vector\": ") + walker->repr(indent, memo) + std::string("}");
@@ -427,7 +455,13 @@ std::string StdVectorWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string StdVectorWalker::avroTypeName() { return "array"; }
 
-void StdVectorWalker::printJSON(void *address) { std::cout << "STD-VECTOR"; }   // stub
+void StdVectorWalker::printJSON(void *address) {
+  std::cout << "[";
+  extractorInstance->start(address);
+  for (void *ptr = extractorInstance->next();  ptr != nullptr;  ptr = extractorInstance->next())
+    walker->printJSON(address);
+  std::cout << "]";
+}
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
@@ -473,6 +507,7 @@ void TObjArrayWalker::resolve(void *address) {
     classToAssert = TClass::GetClass(array->First()->ClassName());
     walker = new ClassWalker(fieldName, classToAssert, avroNamespace, defs);
     ((ClassWalker*)walker)->fill();
+    walker->resolve(array->First());
   }
 }
 
@@ -526,11 +561,14 @@ TClonesArrayWalker::TClonesArrayWalker(std::string fieldName, std::string avroNa
 
 bool TClonesArrayWalker::empty() { return resolved() ? walker->empty() : false; }
 
-bool TClonesArrayWalker::resolved() { return walker != nullptr; }   // stub
+bool TClonesArrayWalker::resolved() { return walker != nullptr; }
 
 void TClonesArrayWalker::resolve(void *address) {
-  walker = new ClassWalker(fieldName, ((TClonesArray*)address)->GetClass(), avroNamespace, defs);
+  TClonesArray *array = (TClonesArray*)address;
+  walker = new ClassWalker(fieldName, array->GetClass(), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
+  if (!array->IsEmpty())
+    walker->resolve(array->First());
 }
 
 std::string TClonesArrayWalker::repr(int indent, std::set<std::string> &memo) {
@@ -695,7 +733,12 @@ void *ReaderArrayWalker::getAddress() { return nullptr; }
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
 TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
-  std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
+  std::string codeToDeclare = std::string("class StdVectorInterface {\n") +
+                              std::string("public:\n") +
+                              std::string("  virtual void start(void *vector) = 0;\n") +
+                              std::string("  virtual void *next() = 0;\n") +
+                              std::string("};\n") +
+                              std::string("class ExtractorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  virtual void *getAddress() = 0;\n") +
                               std::string("};\n") +

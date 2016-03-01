@@ -217,9 +217,16 @@ public:
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
+class StdVectorInterface {
+public:
+  virtual void start(void *vector) = 0;
+  virtual void *next() = 0;
+};
+
 class StdVectorWalker : public FieldWalker {
 public:
   FieldWalker *walker;
+  StdVectorInterface *extractorInstance;
 
   StdVectorWalker(std::string fieldName, FieldWalker *walker);
   bool empty();
