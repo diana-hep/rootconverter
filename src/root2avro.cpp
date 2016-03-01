@@ -146,8 +146,11 @@ int main(int argc, char **argv) {
   reader = new TTreeReader(treeLocation.c_str(), file);
     
   std::cout << "BEGIN" << std::endl;
-  new TreeWalker(reader->GetTree());
+  TreeWalker treeWalker(reader->GetTree());
   std::cout << "END" << std::endl;
+  reader->Next();
+  treeWalker.printJSON();
+  std::cout << "END END" << std::endl;
 
   // TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 

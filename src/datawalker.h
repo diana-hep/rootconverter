@@ -10,6 +10,7 @@
 #include <TLeaf.h>
 #include <TClass.h>
 #include <TDataMember.h>
+#include <TInterpreter.h>
 
 class ClassWalker;
 
@@ -141,30 +142,47 @@ public:
   std::vector<MemberWalker*> members;
 };
 
-class LeafWalker : public FieldWalker {
+class ExtractorInterface {
+public:
+  virtual void *getAddress() = 0;
+};
+
+class ExtractableWalker : public FieldWalker {
+public:
+  ExtractableWalker(std::string fieldName, std::string typeName) : FieldWalker(fieldName, typeName) { }
+  virtual void *getAddress() = 0;
+};
+
+class LeafWalker : public ExtractableWalker {
 public:
   LeafWalker(TLeaf *tleaf, TTree *ttree);
   std::vector<int> dims;
   std::string determineType(TLeaf *tleaf);
   FieldWalker *walker;
+  void *getAddress() { return nullptr; }
 };
 
-class ReaderValueWalker : public FieldWalker {
+class ReaderValueWalker : public ExtractableWalker {
 public:
   ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes);
   FieldWalker *walker;
+  CallFunc_t *extractorMethod;
+  ExtractorInterface *extractorInstance;
+  void *getAddress();
 };
 
-class ReaderArrayWalker : public FieldWalker {
+class ReaderArrayWalker : public ExtractableWalker {
 public:
   ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes);
   FieldWalker *walker;
+  void *getAddress() { return nullptr; }
 };
 
 class TreeWalker {
 public:
   TreeWalker(TTree *ttree);
-  std::vector<FieldWalker*> fields;
+  std::vector<ExtractableWalker*> fields;
+  void printJSON();
 };
 
 #endif // DATAWALKER_H

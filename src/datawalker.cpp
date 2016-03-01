@@ -17,10 +17,7 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, 
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset())
 {
-  std::cout << "MemberWalker " << fieldName << "\t\t" << typeName << "\t\t" << offset << std::endl;
-
   walker = specializedWalker(fieldName, typeName, classes);
-
   for (int i = dataMember->GetArrayDim() - 1;  i >= 0;  i--)
     walker = new ArrayWalker(fieldName, dataMember->GetMaxIndex(i));
 }
@@ -97,18 +94,13 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
 }
 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tclass->GetName()) {
-  std::cout << "     ClassWalker " << typeName << std::endl;
-
   TIter next = tclass->GetListOfDataMembers();
   for (TDataMember *dataMember = (TDataMember*)next();  dataMember != nullptr;  dataMember = (TDataMember*)next())
     if (dataMember->GetOffset() > 0)
       members.push_back(new MemberWalker(dataMember, classes));
-  std::cout << "     ClassWalker " << typeName << " DONE" << std::endl;
 }
 
-LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : FieldWalker(tleaf->GetName(), determineType(tleaf)) {
-  std::cout << "LeafWalker " << fieldName << " " << typeName << std::endl;
-}
+LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
 
 std::string LeafWalker::determineType(TLeaf *tleaf) {
   if (tleaf->IsA() == TLeafO::Class()) {
@@ -167,14 +159,34 @@ std::string LeafWalker::determineType(TLeaf *tleaf) {
     throw std::invalid_argument(std::string(tleaf->IsA()->GetName()) + std::string(" not handled"));
 }
 
-ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tbranch->GetClassName()) {
-  std::cout << "ReaderValueWalker " << fieldName << std::endl;
+ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
   walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), classes);
+
+  std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
+                              std::string("public:\n") +
+                              std::string("  virtual void *getAddress() = 0;\n") +
+                              std::string("};\n") +
+                              std::string("TTreeReader *getReader();\n") +
+                              std::string("class Get_") + fieldName + std::string(" : public ExtractorInterface {\n") +
+                              std::string("public:\n") +
+                              std::string("  TTreeReaderValue<") + typeName + std::string("> value;\n") +
+                              std::string("  Get_") + fieldName + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
+                              std::string("  void *getAddress() { printf(\"getting %ld \", (long)value.GetAddress()); return value.GetAddress();; }\n") +
+                              std::string("};\n");
+
+  gInterpreter->Declare(codeToDeclare.c_str());
+
+  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Get_") + fieldName).c_str());
+  extractorInstance = (ExtractorInterface*)gInterpreter->ClassInfo_New(classInfo);  
 }
 
-ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tbranch->GetClassName()) {
-  std::cout << "ReaderArrayWalker " << fieldName << std::endl;
+void *ReaderValueWalker::getAddress() {
+  void *out = extractorInstance->getAddress();
+  printf("got %ld\n", (long)out);
+  return out;
 }
+
+ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
 
 TreeWalker::TreeWalker(TTree *ttree) {
   std::map<const std::string, ClassWalker*> classes;
@@ -190,4 +202,12 @@ TreeWalker::TreeWalker(TTree *ttree) {
     else
       fields.push_back(new ReaderValueWalker(branchName, tbranch, classes));
   }
+}
+
+void TreeWalker::printJSON() {
+  void *out = fields[0]->getAddress();
+
+  std::cout << "HERE " << ((Event*)out)->GetType() << " " << ((Event*)out)->GetNtrack() << std::endl;
+
+
 }
