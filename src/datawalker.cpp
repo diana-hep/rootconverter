@@ -931,6 +931,9 @@ std::string TreeWalker::repr() {
 std::string TreeWalker::avroSchema() {
   std::set<std::string> memo;
   std::string out;
+
+  // FIXME: need to wrap this up in an Avro record block!
+
   out += std::string("{");
   bool first = true;
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
