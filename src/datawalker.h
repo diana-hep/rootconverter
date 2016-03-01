@@ -109,7 +109,20 @@ public:
 
 class ArrayWalker : public FieldWalker {
 public:
-  ArrayWalker(std::string fieldName, int maxIndex) : FieldWalker(fieldName, "[]"), walker(walker), maxIndex(maxIndex) { }
+  ArrayWalker(std::string fieldName, int maxIndex) : FieldWalker(fieldName, "[]"), walker(walker) { }
+  FieldWalker *walker;
+};
+
+class TObjArrayWalker : public FieldWalker {
+public:
+  TObjArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TObjArray"), classes(classes) { }
+  std::map<const std::string, ClassWalker*> &classes;
+};
+
+class TClonesArrayWalker : public FieldWalker {
+public:
+  TClonesArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TClonesArray"), classes(classes), walker(nullptr), maxIndex(0) { }
+  std::map<const std::string, ClassWalker*> &classes;
   FieldWalker *walker;
   int maxIndex;
 };

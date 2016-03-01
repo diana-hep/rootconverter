@@ -9,6 +9,7 @@
 #include <TLeafC.h>
 #include <TLeafElement.h>
 #include <TLeafObject.h>
+#include <TClonesArray.h>
 
 #include "datawalker.h"
 
@@ -43,6 +44,12 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
     return new StdVectorWalker(fieldName, specializedWalker(fieldName, tn, classes));
   }
 
+  else if (tn == std::string("TObjArray"))
+    return new TObjArrayWalker(fieldName, classes);
+
+  else if (tn == std::string("TClonesArray"))
+    return new TClonesArrayWalker(fieldName, classes);
+
   else {
     if (tn == std::string("bool")  ||  tn == std::string("Bool_t"))
       return new BoolWalker(fieldName);
@@ -70,6 +77,7 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
       return new StdStringWalker(fieldName);
     else if (tn == std::string("TString"))
       return new TStringWalker(fieldName);
+
     else {
       TClass *tclass = TClass::GetClass(tn.c_str());
       if (tclass != nullptr) {
@@ -89,12 +97,13 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
 }
 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tclass->GetName()) {
-  std::cout << "ClassWalker " << fieldName << " " << typeName << std::endl;
+  std::cout << "     ClassWalker " << typeName << std::endl;
 
   TIter next = tclass->GetListOfDataMembers();
   for (TDataMember *dataMember = (TDataMember*)next();  dataMember != nullptr;  dataMember = (TDataMember*)next())
     if (dataMember->GetOffset() > 0)
       members.push_back(new MemberWalker(dataMember, classes));
+  std::cout << "     ClassWalker " << typeName << " DONE" << std::endl;
 }
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : FieldWalker(tleaf->GetName(), determineType(tleaf)) {
