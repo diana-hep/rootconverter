@@ -7,8 +7,6 @@
 #include <TFile.h>
 #include <TTreeReader.h>
 
-#include "TTreeAvroGenerator.h"
-
 #include <avro.h>
 
 #define NA ((uint64_t)(-1))
@@ -20,11 +18,11 @@ std::vector<std::string> fileLocations;
 std::string              treeLocation;
 uint64_t                 start = NA;
 uint64_t                 end = NA;
+std::vector<std::string> libs;
 std::string              mode = "avro";
 std::string              codec = "null";
 std::string              schemaName = "";
 std::string              ns = "";
-bool                     skipUnknownTypes = false;
 bool                     debug = false;
 
 TFile                   *file = nullptr;
@@ -40,14 +38,23 @@ void help() {
             << "Options:" << std::endl
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
+            << "  --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm)." << std::endl
             << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
             << "  --ns=NAMESPACE         Namespace for schema (blank if not provided)." << std::endl
-            << "  --skipUnknownTypes     If supplied, skip over fields whose types cannot be determined (default: throw exception)" << std::endl
             << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
             << "  -h, -help, --help      Print this message and exit." << std::endl;
+}
+
+std::vector<std::string> splitByComma(std::string in) {
+  std::vector<std::string> out;
+  std::stringstream ss(in);
+  std::string item;
+  while (std::getline(ss, item, ','))
+    out.push_back(item);
+  return out;
 }
 
 void analyzeTree(TTree *tree);
@@ -66,6 +73,7 @@ int main(int argc, char **argv) {
 
   std::string startPrefix("--start=");
   std::string endPrefix("--end=");
+  std::string libsPrefix("--libs=");
   std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
   std::string namePrefix("--name=");
@@ -85,6 +93,10 @@ int main(int argc, char **argv) {
       end = strtoul(value.c_str(), nullptr, 10);
     }
 
+    else if (arg.substr(0, libsPrefix.size()) == libsPrefix) {
+      libs = splitByComma(arg.substr(libsPrefix.size(), arg.size()));
+    }
+
     else if (arg.substr(0, modePrefix.size()) == modePrefix) {
       mode = arg.substr(modePrefix.size(), arg.size());
     }
@@ -99,9 +111,6 @@ int main(int argc, char **argv) {
     else if (arg.substr(0, nsPrefix.size()) == nsPrefix) {
       ns = arg.substr(nsPrefix.size(), arg.size());
     }
-
-    else if (arg == std::string("--skipUnknownTypes"))
-      skipUnknownTypes = true;
 
     else if (arg == std::string("-d")  ||  arg == std::string("-debug")  ||  arg == std::string("--debug"))
       debug = true;
@@ -131,120 +140,53 @@ int main(int argc, char **argv) {
   file = TFile::Open(fileLocations[0].c_str());
   reader = new TTreeReader(treeLocation.c_str(), file);
 
-  TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree(), skipUnknownTypes);
+  // TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 
-  if (schemaName.size() == 0)
-    schemaName = std::string(reader->GetTree()->GetName());
+  // if (schemaName.size() == 0)
+  //   schemaName = std::string(reader->GetTree()->GetName());
 
-  if (mode == std::string("schema")) {
-    std::cout << generator->schema(0, schemaName, ns);
-    return 0;
-  }
+  // if (mode == std::string("schema")) {
+  //   std::cout << generator->schema(0, schemaName, ns);
+  //   return 0;
+  // }
 
-  std::string codeToDeclare;
+  // std::string codeToDeclare;
 
-  codeToDeclare = std::string("TTreeReader *getReader();\n\n");
-  codeToDeclare += generator->definitions() + std::string("\n");
-  codeToDeclare += std::string("class Root2Avro {\n");
-  codeToDeclare += std::string("public:\n");
-  codeToDeclare += generator->declarations() + std::string("\n");
-  codeToDeclare += std::string("  void run() {\n");
-  codeToDeclare += generator->init() + std::string("\n");
+  // codeToDeclare = std::string("TTreeReader *getReader();\n\n");
+  // codeToDeclare += generator->definitions() + std::string("\n");
+  // codeToDeclare += std::string("class Root2Avro {\n");
+  // codeToDeclare += std::string("public:\n");
+  // codeToDeclare += generator->declarations() + std::string("\n");
+  // codeToDeclare += std::string("  void run() {\n");
+  // codeToDeclare += generator->init() + std::string("\n");
 
-  if (mode == std::string("avro"))
-    throw;
-  else if (mode == std::string("json"))
-    codeToDeclare += generator->printJSON();
-  else
-    throw;
+  // if (mode == std::string("avro"))
+  //   throw;
+  // else if (mode == std::string("json"))
+  //   codeToDeclare += generator->printJSON();
+  // else
+  //   throw;
 
-  codeToDeclare += std::string("  }\n");
-  codeToDeclare += std::string("};\n");
+  // codeToDeclare += std::string("  }\n");
+  // codeToDeclare += std::string("};\n");
 
-  if (debug)
-    std::cout << codeToDeclare << std::endl;
-  else {
-    // declare the new class
-    gInterpreter->Declare(codeToDeclare.c_str());
+  // if (debug)
+  //   std::cout << codeToDeclare << std::endl;
+  // else {
+  //   // declare the new class
+  //   gInterpreter->Declare(codeToDeclare.c_str());
 
-    // // and run it
-    // ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
-    // TString methodName = "run";
-    // CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
-    // Long_t offset = -1;
-    // gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
-    // void *instance = gInterpreter->ClassInfo_New(classInfo);
-    // gInterpreter->CallFunc_Exec(callFunc, instance);
+  //   // and run it
+  //   ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
+  //   TString methodName = "run";
+  //   CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
+  //   Long_t offset = -1;
+  //   gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
+  //   void *instance = gInterpreter->ClassInfo_New(classInfo);
+  //   gInterpreter->CallFunc_Exec(callFunc, instance);
+  // }
 
-    gInterpreter->ProcessLineSynch("(new Root2Avro)->run();");
-  }
-
-  file->Close();
+  // file->Close();
 
   return 0;
 }
-
-
-
-
-// reminder of how to do Avro, when we get to it...
-
-// avro_schema_t            schema;
-// avro_schema_error_t      schemaError;
-// bool                     schemaDefined = false;
-// avro_file_writer_t       avroWriter;
-// avro_value_iface_t       *avroInterface;
-// avro_value_t             avroValue;
-
-  // std::string schemastr("{\"type\": \"record\", \"name\": \"Stuff\", \"fields\": [{\"name\": \"one\", \"type\": \"int\"}, {\"name\": \"two\", \"type\": \"double\"}, {\"name\": \"three\", \"type\": \"string\"}]}");
-
-  // if (avro_schema_from_json(schemastr.c_str(), schemastr.size(), &schema, &schemaError) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-  // schemaDefined = true;
-
-  // avroInterface = avro_generic_class_from_schema(schema);
-  // if (avroInterface == nullptr) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // if (avro_generic_value_new(avroInterface, &avroValue) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // avro_value_t one;
-  // avro_value_t two;
-  // avro_value_t three;
-
-  // if (avro_value_get_by_name(&avroValue, "one", &one, nullptr) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // if (avro_value_get_by_name(&avroValue, "two", &two, nullptr) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // if (avro_value_get_by_name(&avroValue, "three", &three, nullptr) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // std::string path;
-  // if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), 0) != 0) {
-  //   std::cerr << avro_strerror() << std::endl;
-  //   return -1;
-  // }
-
-  // for (int i = 0;  i < 10;  i++) {
-  //   avro_value_set_int(&one, i);
-  //   avro_value_set_double(&two, i + i/10.0);
-  //   avro_value_set_string(&three, std::to_string(i).c_str());
-  //   avro_file_writer_append_value(avroWriter, &avroValue);
-  // }
-
-  // avro_file_writer_close(avroWriter);
