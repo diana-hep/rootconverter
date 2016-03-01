@@ -25,7 +25,7 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, 
   else {
     walker = specializedWalker(fieldName, typeName, classes);
     for (int i = arrayDim - 1;  i >= 0;  i--)
-      walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i));
+      walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i), dataMember->GetUnitSize());
   }
 }
 

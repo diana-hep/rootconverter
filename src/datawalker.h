@@ -152,12 +152,23 @@ public:
 
 class ArrayWalker : public FieldWalker {
 public:
-  ArrayWalker(std::string fieldName, FieldWalker *walker, int maxIndex) : FieldWalker(fieldName, "[]"), walker(walker), maxIndex(maxIndex) { }
-  int maxIndex;
+  ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems, size_t byteWidth) : FieldWalker(fieldName, "[]"), walker(walker), numItems(numItems), byteWidth(byteWidth) { }
   FieldWalker *walker;
+  int numItems;
+  size_t byteWidth;
   bool empty() { return false; };
-  std::string repr(int indent) { return std::string("{\"[]\": {\"type\": ") + walker->repr(indent) + std::string(", \"size\": ") + std::to_string(maxIndex) + std::string("}}"); }
-  void printJSON(void *address) { std::cout << "ARRAY"; }   // stub
+  std::string repr(int indent) { return std::string("{\"[]\": {\"numItems\": ") + std::to_string(numItems) + std::string(", \"byteWidth\": ") + std::to_string(byteWidth) + std::string(", \"type\": ") + walker->repr(indent) + std::string("}}"); }
+  void printJSON(void *address) {
+    std::cout << "[";
+    void *ptr = address;
+    bool first = true;
+    for (int i = 0;  i < numItems;  i++) {
+      if (first) first = false; else std::cout << ", ";
+      walker->printJSON(ptr);
+      ptr = (void*)((size_t)ptr + byteWidth);
+    }
+    std::cout << "]";
+  }
 };
 
 class TObjArrayWalker : public FieldWalker {
@@ -182,12 +193,12 @@ public:
 
 class TClonesArrayWalker : public FieldWalker {
 public:
-  TClonesArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TClonesArray"), classes(classes), walker(nullptr), maxIndex(-1) { }
+  TClonesArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TClonesArray"), classes(classes), walker(nullptr), numItems(-1) { }
   std::map<const std::string, ClassWalker*> &classes;
   FieldWalker *walker;
-  int maxIndex;
+  int numItems;
   bool empty() { return false; };
-  std::string repr(int indent) { return std::string("{\"TClonesArray\": {\"type\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string(", \"size\": ") + (maxIndex >= 0 ? std::to_string(maxIndex) : std::string("\"?\"")) + std::string("}}"); }
+  std::string repr(int indent) { return std::string("{\"TClonesArray\": {\"numItems\": ") + (numItems >= 0 ? std::to_string(numItems) : std::string("\"?\"")) + std::string(", \"type\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string("}}"); }
   void printJSON(void *address) { std::cout << "TCLONESARRAY"; }   // stub
 };
 
