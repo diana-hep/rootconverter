@@ -9,6 +9,8 @@
 
 #include <avro.h>
 
+#include "datawalker.h"
+
 #define NA ((uint64_t)(-1))
 
 using namespace ROOT::Internal;
@@ -136,9 +138,16 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  for (int i = 0;  i < libs.size();  i++)
+    gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
+
   // FIXME: handle TChains
   file = TFile::Open(fileLocations[0].c_str());
   reader = new TTreeReader(treeLocation.c_str(), file);
+    
+  std::cout << "BEGIN" << std::endl;
+  new TreeWalker(reader->GetTree());
+  std::cout << "END" << std::endl;
 
   // TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
 
