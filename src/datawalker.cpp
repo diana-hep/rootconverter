@@ -35,6 +35,8 @@ std::string PrimitiveWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + typeName + std::string("\"");
 }
 
+//// BoolWalker
+
 BoolWalker::BoolWalker(std::string fieldName) : PrimitiveWalker(fieldName, "bool") { }
 
 std::string BoolWalker::avroTypeName() { return "boolean"; }
@@ -42,6 +44,8 @@ std::string BoolWalker::avroTypeName() { return "boolean"; }
 void BoolWalker::printJSON(void *address) {
   if (*((bool*)address)) std::cout << "true"; else std::cout << "false";
 }
+
+//// CharWalker
 
 CharWalker::CharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "char") { }
 
@@ -51,6 +55,8 @@ void CharWalker::printJSON(void *address) {
   std::cout << (int)(*((char*)address));
 }
 
+//// UCharWalker
+
 UCharWalker::UCharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned char") { }
 
 std::string UCharWalker::avroTypeName() { return "int"; }
@@ -58,6 +64,8 @@ std::string UCharWalker::avroTypeName() { return "int"; }
 void UCharWalker::printJSON(void *address) {
   std::cout << (int)(*((unsigned char*)address));
 }
+
+//// ShortWalker
 
 ShortWalker::ShortWalker(std::string fieldName) : PrimitiveWalker(fieldName, "short") { }
 
@@ -67,6 +75,8 @@ void ShortWalker::printJSON(void *address) {
   std::cout << *((short*)address);
 }
 
+//// UShortWalker
+
 UShortWalker::UShortWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned short") { }
 
 std::string UShortWalker::avroTypeName() { return "int"; }
@@ -74,6 +84,8 @@ std::string UShortWalker::avroTypeName() { return "int"; }
 void UShortWalker::printJSON(void *address) {
   std::cout << *((unsigned short*)address);
 }
+
+//// IntWalker
 
 IntWalker::IntWalker(std::string fieldName) : PrimitiveWalker(fieldName, "int") { }
 
@@ -83,6 +95,8 @@ void IntWalker::printJSON(void *address) {
   std::cout << *((int*)address);
 }
 
+//// UIntWalker
+
 UIntWalker::UIntWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned int") { }
 
 std::string UIntWalker::avroTypeName() { return "long"; }
@@ -90,6 +104,8 @@ std::string UIntWalker::avroTypeName() { return "long"; }
 void UIntWalker::printJSON(void *address) {
   std::cout << *((unsigned int*)address);
 }
+
+//// LongWalker
 
 LongWalker::LongWalker(std::string fieldName) : PrimitiveWalker(fieldName, "long") { }
 
@@ -99,6 +115,8 @@ void LongWalker::printJSON(void *address) {
   std::cout << *((long*)address);
 }
 
+//// ULongWalker
+
 ULongWalker::ULongWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned long") { }
 
 std::string ULongWalker::avroTypeName() { return "double"; }
@@ -106,6 +124,8 @@ std::string ULongWalker::avroTypeName() { return "double"; }
 void ULongWalker::printJSON(void *address) {
   std::cout << *((unsigned long*)address);
 }
+
+//// FloatWalker
 
 FloatWalker::FloatWalker(std::string fieldName) : PrimitiveWalker(fieldName, "float") { }
 
@@ -115,6 +135,8 @@ void FloatWalker::printJSON(void *address) {
   std::cout << *((float*)address);
 }
 
+//// DoubleWalker
+
 DoubleWalker::DoubleWalker(std::string fieldName) : PrimitiveWalker(fieldName, "double") { }
 
 std::string DoubleWalker::avroTypeName() { return "double"; }
@@ -122,8 +144,6 @@ std::string DoubleWalker::avroTypeName() { return "double"; }
 void DoubleWalker::printJSON(void *address) {
   std::cout << *((double*)address);
 } 
-
-
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
 
@@ -218,6 +238,25 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
   }
 }
 
+bool MemberWalker::empty() { return walker->empty(); }
+
+bool MemberWalker::resolved() { return walker->resolved(); }
+
+void MemberWalker::resolve(void *address) {
+    walker->resolve((void*)((size_t)address + offset));
+  }
+
+std::string MemberWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": ") + walker->repr(indent, memo);
+}
+
+std::string MemberWalker::avroTypeName() { return walker->avroTypeName(); }
+
+void MemberWalker::printJSON(void *address) {
+  std::cout << "\"" << fieldName << "\": ";
+  walker->printJSON((void*)((size_t)address + offset));
+}
+
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -233,27 +272,272 @@ void ClassWalker::fill() {
     }
 }
 
+bool ClassWalker::empty() { return members.empty(); }
+
+bool ClassWalker::resolved() {
+  for (auto iter = members.begin();  iter != members.end();  ++iter)
+    if (!(*iter)->resolved())
+      return false;
+  return true;
+}
+
+void ClassWalker::resolve(void *address) {
+  for (auto iter = members.begin();  iter != members.end();  ++iter)
+    (*iter)->resolve(address);
+}
+
+std::string ClassWalker::repr(int indent, std::set<std::string> &memo) {
+  if (memo.find(typeName) != memo.end())
+    return std::string("\"") + typeName + std::string("\"");
+  else {
+    memo.insert(typeName);
+    std::string out;
+    out += std::string("{\"") + typeName + std::string("\": {\n") + std::string(indent + 2, ' ');
+    bool first = true;
+    for (auto iter = members.begin();  iter != members.end();  ++iter) {
+      if (first) first = false; else out += std::string(",\n") + std::string(indent + 2, ' ');
+      out += (*iter)->repr(indent + 2, memo);
+    }
+    out += std::string("\n") + std::string(indent, ' ') + std::string("}}");
+    return out;
+  }
+}
+
+std::string ClassWalker::avroTypeName() {
+  std::string out;
+  if (!avroNamespace.empty())
+    out += avroNamespace + std::string(".");
+  out += typeName;
+  return out;
+}
+
+void ClassWalker::printJSON(void *address) {
+  std::cout << "{";
+  bool first = true;
+  for (auto iter = members.begin();  iter != members.end();  ++iter) {
+    if (first) first = false; else std::cout << ", ";    
+    (*iter)->printJSON(address);
+  }
+  std::cout << "}";
+}
+
 ///////////////////////////////////////////////////////////////////// AnyStringWalkers
+
+AnyStringWalker::AnyStringWalker(std::string fieldName, std::string typeName) :
+  FieldWalker(fieldName, typeName) { }
+
+bool AnyStringWalker::empty() { return false; }
+
+bool AnyStringWalker::resolved() { return true; }
+
+void AnyStringWalker::resolve(void *address) { }
+
+std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + typeName + std::string("\"");
+}
+std::string AnyStringWalker::escapeJSON(std::string string) { return string; }
+
+std::string AnyStringWalker::avroTypeName() { return "string"; }
+
+//// CStringWalker
+
+CStringWalker::CStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "char*") { }
+
+void CStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON((char*)address) << "\"";
+}
+
+//// StdStringWalker
+
+StdStringWalker::StdStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "string") { }
+
+void StdStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON(*((std::string*)address)) << "\"";
+}
+
+//// TStringWalker
+
+TStringWalker::TStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "TString") { }
+
+void TStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON(((TString*)address)->Data()) << "\"";
+}
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
+PointerWalker::PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker) { }
+
+bool PointerWalker::empty() { return walker->empty(); }
+
+bool PointerWalker::resolved() { return walker->resolved(); }
+
+void PointerWalker::resolve(void *address) { walker->resolve(*((void**)address)); }
+
+std::string PointerWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"*\": ") + walker->repr(indent, memo) + std::string("}");
+}
+
+std::string PointerWalker::avroTypeName() { return "union"; }
+
+void PointerWalker::printJSON(void *address) {
+  void *dereferenced = *((void**)address);
+  if (dereferenced == nullptr)
+    std::cout << "null";
+  else {
+    std::cout << "{\"" << walker->avroTypeName() << "\": ";
+    walker->printJSON(dereferenced);
+    std::cout << "\"}";
+  }
+}
+
 ///////////////////////////////////////////////////////////////////// TRefWalker
+
+TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "*"), walker(nullptr) { }
+
+bool TRefWalker::empty() { return false; }
+
+bool TRefWalker::resolved() { return false; }   // stub
+
+void TRefWalker::resolve(void *address) { }   // stub
+
+std::string TRefWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"TRef\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+}
+
+std::string TRefWalker::avroTypeName() { return "string"; }   // FIXME: can the reference be missing?
+
+void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }   // stub
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
+StdVectorWalker::StdVectorWalker(std::string fieldName, FieldWalker *walker) :
+  FieldWalker(fieldName, "vector"), walker(walker) { }
+
+bool StdVectorWalker::empty() { return false; }
+
+bool StdVectorWalker::resolved() { return walker->resolved(); }
+
+void StdVectorWalker::resolve(void *address) { walker->resolve(address); }
+
+std::string StdVectorWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"std::vector\": ") + walker->repr(indent, memo) + std::string("}");
+}
+
+std::string StdVectorWalker::avroTypeName() { return "array"; }
+
+void StdVectorWalker::printJSON(void *address) { std::cout << "STD-VECTOR"; }   // stub
+
 ///////////////////////////////////////////////////////////////////// ArrayWalker
+
+ArrayWalker::ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems, size_t byteWidth) :
+  FieldWalker(fieldName, "[]"), walker(walker), numItems(numItems), byteWidth(byteWidth) { }
+
+bool ArrayWalker::empty() { return false; }
+
+bool ArrayWalker::resolved() { return walker->resolved(); }
+
+void ArrayWalker::resolve(void *address) { walker->resolve(address); }
+
+std::string ArrayWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"[]\": {\"numItems\": ") + std::to_string(numItems) + std::string(", \"byteWidth\": ") + std::to_string(byteWidth) + std::string(", \"type\": ") + walker->repr(indent, memo) + std::string("}}");
+}
+
+std::string ArrayWalker::avroTypeName() { return "array"; }
+
+void ArrayWalker::printJSON(void *address) {
+  std::cout << "[";
+  void *ptr = address;
+  bool first = true;
+  for (int i = 0;  i < numItems;  i++) {
+    if (first) first = false; else std::cout << ", ";
+    walker->printJSON(ptr);
+    ptr = (void*)((size_t)ptr + byteWidth);
+  }
+  std::cout << "]";
+}
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
+TObjArrayWalker::TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
+
+bool TObjArrayWalker::empty() { return false; }
+
+bool TObjArrayWalker::resolved() { return false; }   // stub
+
+void TObjArrayWalker::resolve(void *address) { }   // stub
+
+std::string TObjArrayWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"TObjArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+}
+std::string TObjArrayWalker::avroTypeName() { return "array"; }
+
+void TObjArrayWalker::printJSON(void *address) { std::cout << "TOBJARRAY"; }   // stub
+
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
+
+TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "TRefArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
+
+bool TRefArrayWalker::empty() { return false; }
+
+bool TRefArrayWalker::resolved() { return false; }   // stub
+
+void TRefArrayWalker::resolve(void *address) { }   // stub
+
+std::string TRefArrayWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"TRefArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+}
+
+std::string TRefArrayWalker::avroTypeName() { return "array"; }
+
+void TRefArrayWalker::printJSON(void *address) { std::cout << "TREFARRAY"; }   // stub
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
+TClonesArrayWalker::TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "TClonesArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
+
+bool TClonesArrayWalker::empty() { return resolved() ? walker->empty() : false; }
+
+bool TClonesArrayWalker::resolved() { return walker != nullptr; }   // stub
+
+void TClonesArrayWalker::resolve(void *address) {
+  walker = new ClassWalker(fieldName, ((TClonesArray*)address)->GetClass(), avroNamespace, defs);
+  ((ClassWalker*)walker)->fill();
+}
+
+std::string TClonesArrayWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"TClonesArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+}
+
+std::string TClonesArrayWalker::avroTypeName() { return "array"; }
+
+void TClonesArrayWalker::printJSON(void *address) {
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+  std::cout << "[";
+  TIter nextItem = (TClonesArray*)address;
+  bool first = true;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
+    if (first) first = false; else std::cout << ", ";
+    walker->printJSON(item);
+  }
+  std::cout << "]";
+}
+
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
+
+ExtractableWalker::ExtractableWalker(std::string fieldName, std::string typeName) :
+  FieldWalker(fieldName, typeName) { }
+
+bool ExtractableWalker::empty() { return false; }
 
 ///////////////////////////////////////////////////////////////////// LeafWalker
 
-LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
+LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
+  ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
 
 std::string LeafWalker::determineType(TLeaf *tleaf) {
   if (tleaf->IsA() == TLeafO::Class()) {
@@ -312,6 +596,20 @@ std::string LeafWalker::determineType(TLeaf *tleaf) {
     throw std::invalid_argument(std::string(tleaf->IsA()->GetName()) + std::string(" not handled"));
 }
 
+bool LeafWalker::resolved() { return true; }
+
+void LeafWalker::resolve(void *address) { }
+
+std::string LeafWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+}
+
+std::string LeafWalker::avroTypeName() { return walker->avroTypeName(); }
+
+void LeafWalker::printJSON(void *address) { }   // stub
+
+void *LeafWalker::getAddress() { return nullptr; }
+
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
@@ -331,18 +629,43 @@ ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, st
   extractorInstance = (ExtractorInterface*)gInterpreter->ClassInfo_New(classInfo);  
 }
 
-void *ReaderValueWalker::getAddress() {
-  return extractorInstance->getAddress();
+bool ReaderValueWalker::resolved() { return walker->resolved(); }
+
+void ReaderValueWalker::resolve(void *address) { walker->resolve(address); }
+
+std::string ReaderValueWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderValue\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
 }
+
+std::string ReaderValueWalker::avroTypeName() { return walker->avroTypeName(); }
 
 void ReaderValueWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   walker->printJSON(address);
 }
 
+void *ReaderValueWalker::getAddress() {
+  return extractorInstance->getAddress();
+}
+
 ///////////////////////////////////////////////////////////////////// ReaderArrayWalker
 
-ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
+ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  ExtractableWalker(fieldName, tbranch->GetClassName()) { }
+
+bool ReaderArrayWalker::resolved() { return walker->resolved(); }
+
+void ReaderArrayWalker::resolve(void *address) { walker->resolve(address); }
+
+std::string ReaderArrayWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+}
+
+std::string ReaderArrayWalker::avroTypeName() { return "array"; }
+
+void ReaderArrayWalker::printJSON(void *address) { }   // stub
+
+void *ReaderArrayWalker::getAddress() { return nullptr; }
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
@@ -365,4 +688,39 @@ TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
     else
       fields.push_back(new ReaderValueWalker(branchName, tbranch, avroNamespace, defs));
   }
+}
+
+bool TreeWalker::resolved() {
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+    if (!(*iter)->resolved())
+      return false;
+  return true;
+}
+
+void TreeWalker::resolve() {
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+    (*iter)->resolve((*iter)->getAddress());
+}
+
+std::string TreeWalker::repr() {
+  std::set<std::string> memo;
+  std::string out;
+  out += std::string("{");
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
+    out += (*iter)->repr(1, memo);
+  }
+  out += std::string("}");
+  return out;
+}
+
+void TreeWalker::printJSON() {
+  std::cout << "{";
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else std::cout << ", ";
+    (*iter)->printJSON((*iter)->getAddress());
+  }
+  std::cout << "}" << std::endl;
 }
