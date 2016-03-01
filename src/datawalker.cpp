@@ -1,3 +1,6 @@
+#include "datawalker.h"
+
+// more ROOT includes
 #include <TList.h>
 #include <TLeafO.h>
 #include <TLeafB.h>
@@ -10,10 +13,6 @@
 #include <TLeafElement.h>
 #include <TLeafObject.h>
 #include <TClonesArray.h>
-
-#include "datawalker.h"
-
-#include "../test_Event/Event.h"
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
@@ -412,10 +411,12 @@ void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
+static int StdVectorExtractorNumber = 0;
+
 StdVectorWalker::StdVectorWalker(std::string fieldName, FieldWalker *walker) :
   FieldWalker(fieldName, "vector"), walker(walker)
 {
-  std::string codeToDeclare = std::string("class Get_") + fieldName + std::string(" : public StdVectorInterface {\n") +
+  std::string codeToDeclare = std::string("class StdVectorExtractor_") + std::to_string(StdVectorExtractorNumber) + std::string(" : public StdVectorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  std::vector<") + typeName + std::string("> *vector;\n") +
                               std::string("  std::vector<") + typeName + std::string(">::iterator iter;\n") +
@@ -434,8 +435,10 @@ StdVectorWalker::StdVectorWalker(std::string fieldName, FieldWalker *walker) :
 
   gInterpreter->Declare(codeToDeclare.c_str());
 
-  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Get_") + fieldName).c_str());
+  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("StdVectorExtractor_") + std::to_string(StdVectorExtractorNumber)).c_str());
   extractorInstance = (StdVectorInterface*)gInterpreter->ClassInfo_New(classInfo);  
+
+  StdVectorExtractorNumber += 1;
 }
 
 bool StdVectorWalker::empty() { return false; }
@@ -675,21 +678,25 @@ void *LeafWalker::getAddress() { return nullptr; }
 
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
+static int ExtractorInterfaceNumber = 0;
+
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
   walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
 
-  std::string codeToDeclare = std::string("class Get_") + fieldName + std::string(" : public ExtractorInterface {\n") +
+  std::string codeToDeclare = std::string("class Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string(" : public ExtractorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  TTreeReaderValue<") + typeName + std::string("> value;\n") +
-                              std::string("  Get_") + fieldName + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
+                              std::string("  Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
                               std::string("  void *getAddress() { return value.GetAddress(); }\n") +
                               std::string("};\n");
 
   gInterpreter->Declare(codeToDeclare.c_str());
 
-  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Get_") + fieldName).c_str());
+  ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Extractor_") + std::to_string(ExtractorInterfaceNumber)).c_str());
   extractorInstance = (ExtractorInterface*)gInterpreter->ClassInfo_New(classInfo);  
+
+  ExtractorInterfaceNumber += 1;
 }
 
 bool ReaderValueWalker::resolved() { return walker->resolved(); }
