@@ -15,7 +15,7 @@
 
 #include "../test_Event/Event.h"
 
-MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, ClassWalker*> &defs) :
+MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset())
 {
@@ -23,13 +23,13 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, 
   if (arrayDim > 0  &&  (typeName == std::string("char")  ||  typeName == std::string("const char")  ||  typeName == std::string("Char_t")  ||  typeName == std::string("const Char_t")))
     walker = new CStringWalker(fieldName);
   else {
-    walker = specializedWalker(fieldName, typeName, defs);
+    walker = specializedWalker(fieldName, typeName, avroNamespace, defs);
     for (int i = arrayDim - 1;  i >= 0;  i--)
       walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i), dataMember->GetUnitSize());
   }
 }
 
-FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string tn, std::map<const std::string, ClassWalker*> &defs) {
+FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string tn, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) {
   std::string vectorPrefix("vector<");
   std::string constPrefix("const ");
 
@@ -40,25 +40,25 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
     return new PointerWalker(fieldName, new CStringWalker(fieldName));
 
   else if (!tn.empty()  &&  tn.back() == '*')
-    return new PointerWalker(fieldName, specializedWalker(fieldName, tn.substr(0, tn.size() - 1), defs));
+    return new PointerWalker(fieldName, specializedWalker(fieldName, tn.substr(0, tn.size() - 1), avroNamespace, defs));
 
   else if (tn == std::string("TRef"))
-    return new TRefWalker(fieldName, defs);
+    return new TRefWalker(fieldName, avroNamespace, defs);
 
   else if (tn.substr(0, vectorPrefix.size()) == vectorPrefix  &&  tn.back() == '>') {
     tn = tn.substr(vectorPrefix.size(), tn.size() - vectorPrefix.size() - 1);
     while (!tn.empty()  &&  tn.back() == ' ') tn.pop_back();
-    return new StdVectorWalker(fieldName, specializedWalker(fieldName, tn, defs));
+    return new StdVectorWalker(fieldName, specializedWalker(fieldName, tn, avroNamespace, defs));
   }
 
   else if (tn == std::string("TObjArray"))
-    return new TObjArrayWalker(fieldName, defs);
+    return new TObjArrayWalker(fieldName, avroNamespace, defs);
 
   else if (tn == std::string("TRefArray"))
-    return new TRefArrayWalker(fieldName, defs);
+    return new TRefArrayWalker(fieldName, avroNamespace, defs);
 
   else if (tn == std::string("TClonesArray"))
-    return new TClonesArrayWalker(fieldName, defs);
+    return new TClonesArrayWalker(fieldName, avroNamespace, defs);
 
   else {
     if (tn == std::string("bool")  ||  tn == std::string("Bool_t"))
@@ -94,7 +94,7 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
         if (defs.count(tn) > 0)
           return defs.at(tn);
         else {
-          ClassWalker *out = new ClassWalker(fieldName, tclass, defs);
+          ClassWalker *out = new ClassWalker(fieldName, tclass, avroNamespace, defs);
           defs.insert(std::pair<const std::string, ClassWalker*>(tn, out));
           out->fill();
           return out;
@@ -106,13 +106,14 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
   }
 }
 
-ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &defs) : FieldWalker(fieldName, tclass->GetName()), tclass(tclass), defs(defs) { }
+ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, tclass->GetName()), tclass(tclass), avroNamespace(avroNamespace), defs(defs) { }
 
 void ClassWalker::fill() {
-  TIter next = tclass->GetListOfDataMembers();
-  for (TDataMember *dataMember = (TDataMember*)next();  dataMember != nullptr;  dataMember = (TDataMember*)next())
+  TIter nextMember = tclass->GetListOfDataMembers();
+  for (TDataMember *dataMember = (TDataMember*)nextMember();  dataMember != nullptr;  dataMember = (TDataMember*)nextMember())
     if (dataMember->GetOffset() > 0) {
-      MemberWalker *member = new MemberWalker(dataMember, defs);
+      MemberWalker *member = new MemberWalker(dataMember, avroNamespace, defs);
       if (!member->empty())
         members.push_back(member);
     }
@@ -177,8 +178,8 @@ std::string LeafWalker::determineType(TLeaf *tleaf) {
     throw std::invalid_argument(std::string(tleaf->IsA()->GetName()) + std::string(" not handled"));
 }
 
-ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
-  walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), defs);
+ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
+  walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
 
   std::string codeToDeclare = std::string("class Get_") + fieldName + std::string(" : public ExtractorInterface {\n") +
@@ -203,9 +204,9 @@ void ReaderValueWalker::printJSON(void *address) {
   walker->printJSON(address);
 }
 
-ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
+ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
 
-TreeWalker::TreeWalker(TTree *ttree) {
+TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
   std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  virtual void *getAddress() = 0;\n") +
@@ -222,6 +223,6 @@ TreeWalker::TreeWalker(TTree *ttree) {
         fields.push_back(new LeafWalker(tleaf, ttree));
     }
     else
-      fields.push_back(new ReaderValueWalker(branchName, tbranch, defs));
+      fields.push_back(new ReaderValueWalker(branchName, tbranch, avroNamespace, defs));
   }
 }
