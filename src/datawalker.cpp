@@ -461,20 +461,43 @@ void ArrayWalker::printJSON(void *address) {
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
 TObjArrayWalker::TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
+  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), classToAssert(nullptr) { }
 
-bool TObjArrayWalker::empty() { return false; }
+bool TObjArrayWalker::empty() { return resolved() ? walker->empty() : false; }
 
-bool TObjArrayWalker::resolved() { return false; }   // stub
+bool TObjArrayWalker::resolved() { return walker != nullptr; }
 
-void TObjArrayWalker::resolve(void *address) { }   // stub
+void TObjArrayWalker::resolve(void *address) {
+  TObjArray *array = (TObjArray*)address;
+  if (!array->IsEmpty()) {
+    classToAssert = TClass::GetClass(array->First()->ClassName());
+    walker = new ClassWalker(fieldName, classToAssert, avroNamespace, defs);
+    ((ClassWalker*)walker)->fill();
+  }
+}
 
 std::string TObjArrayWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("{\"TObjArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
 }
+
 std::string TObjArrayWalker::avroTypeName() { return "array"; }
 
-void TObjArrayWalker::printJSON(void *address) { std::cout << "TOBJARRAY"; }   // stub
+void TObjArrayWalker::printJSON(void *address) {
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+  TObjArray *array = (TObjArray*)address;
+  if (!array->AssertClass(classToAssert))
+    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+
+  std::cout << "[";
+  TIter nextItem = (TClonesArray*)address;
+  bool first = true;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
+    if (first) first = false; else std::cout << ", ";
+    walker->printJSON(item);
+  }
+  std::cout << "]";
+}
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
 

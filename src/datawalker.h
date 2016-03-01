@@ -254,6 +254,7 @@ public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
   FieldWalker *walker;
+  TClass *classToAssert;
 
   TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   bool empty();
