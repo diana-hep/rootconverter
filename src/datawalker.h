@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <set>
 
 #include <TTree.h>
 #include <TLeaf.h>
@@ -22,7 +23,7 @@ public:
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
   virtual void resolve(void *address) = 0;
-  virtual std::string repr(int indent) = 0;
+  virtual std::string repr(int indent, std::set<std::string> &memo) = 0;
   virtual void printJSON(void *address) = 0;
 };
 
@@ -32,7 +33,7 @@ public:
   bool empty() { return false; }
   bool resolved() { return true; }
   void resolve(void *address) { }
-  std::string repr(int indent) { return std::string("\"") + typeName + std::string("\""); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("\"") + typeName + std::string("\""); }
 };
 
 class BoolWalker : public PrimitiveWalker {
@@ -112,7 +113,7 @@ public:
   void resolve(void *address) {
     walker->resolve((void*)((size_t)address + offset));
   }
-  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": ") + walker->repr(indent); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("\"") + fieldName + std::string("\": ") + walker->repr(indent, memo); }
   void printJSON(void *address) {
     std::cout << "\"" << fieldName << "\": ";
     walker->printJSON((void*)((size_t)address + offset));
@@ -137,16 +138,21 @@ public:
     for (auto iter = members.begin();  iter != members.end();  ++iter)
       (*iter)->resolve(address);
   }
-  std::string repr(int indent) {
-    std::string out;
-    out += std::string("{\n") + std::string(indent + 2, ' ');
-    bool first = true;
-    for (auto iter = members.begin();  iter != members.end();  ++iter) {
-      if (first) first = false; else out += std::string(",\n") + std::string(indent + 2, ' ');
-      out += (*iter)->repr(indent + 2);
+  std::string repr(int indent, std::set<std::string> &memo) {
+    if (memo.find(typeName) != memo.end())
+      return std::string("\"") + typeName + std::string("\"");
+    else {
+      memo.insert(typeName);
+      std::string out;
+      out += std::string("{\"") + typeName + std::string("\": {\n") + std::string(indent + 2, ' ');
+      bool first = true;
+      for (auto iter = members.begin();  iter != members.end();  ++iter) {
+        if (first) first = false; else out += std::string(",\n") + std::string(indent + 2, ' ');
+        out += (*iter)->repr(indent + 2, memo);
+      }
+      out += std::string("\n") + std::string(indent, ' ') + std::string("}}");
+      return out;
     }
-    out += std::string("\n") + std::string(indent, ' ') + std::string("}");
-    return out;
   }
   void printJSON(void *address) {
     std::cout << "{";
@@ -165,7 +171,7 @@ public:
   bool empty() { return false; }
   bool resolved() { return true; }
   void resolve(void *address) { }
-  std::string repr(int indent) { return std::string("\"") + typeName + std::string("\""); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("\"") + typeName + std::string("\""); }
   std::string escapeJSON(std::string string) { return string; }
 };
 
@@ -194,7 +200,7 @@ public:
   bool empty() { return walker->empty(); }
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(*((void**)address)); }
-  std::string repr(int indent) { return std::string("{\"*\": ") + walker->repr(indent) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("{\"*\": ") + walker->repr(indent, memo) + std::string("}"); }
   void printJSON(void *address) { walker->printJSON(*((void**)address)); }
 };
 
@@ -205,7 +211,7 @@ public:
   bool empty() { return false; }
   bool resolved() { return false; }   // stub
   void resolve(void *address) { }   // stub
-  std::string repr(int indent) { return std::string("{\"TRef\": ") + (resolved() ? walker->repr(indent) : std::string("\"?\"")) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("{\"TRef\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}"); }
   void printJSON(void *address) { std::cout << "TREF"; }   // stub
 };
 
@@ -216,7 +222,7 @@ public:
   bool empty() { return false; }
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(address); }
-  std::string repr(int indent) { return std::string("{\"std::vector\": ") + walker->repr(indent) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) { return std::string("{\"std::vector\": ") + walker->repr(indent, memo) + std::string("}"); }
   void printJSON(void *address) { std::cout << "STD-VECTOR"; }   // stub
 };
 
@@ -229,7 +235,9 @@ public:
   bool empty() { return false; }
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(address); }
-  std::string repr(int indent) { return std::string("{\"[]\": {\"numItems\": ") + std::to_string(numItems) + std::string(", \"byteWidth\": ") + std::to_string(byteWidth) + std::string(", \"type\": ") + walker->repr(indent) + std::string("}}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("{\"[]\": {\"numItems\": ") + std::to_string(numItems) + std::string(", \"byteWidth\": ") + std::to_string(byteWidth) + std::string(", \"type\": ") + walker->repr(indent, memo) + std::string("}}");
+  }
   void printJSON(void *address) {
     std::cout << "[";
     void *ptr = address;
@@ -251,7 +259,9 @@ public:
   bool empty() { return false; }
   bool resolved() { return false; }   // stub
   void resolve(void *address) { }   // stub
-  std::string repr(int indent) { return std::string("{\"TObjArray\": ") + (resolved() ? walker->repr(indent) : std::string("\"?\"")) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("{\"TObjArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+  }
   void printJSON(void *address) { std::cout << "TOBJARRAY"; }   // stub
 };
 
@@ -263,7 +273,9 @@ public:
   bool empty() { return false; }
   bool resolved() { return false; }   // stub
   void resolve(void *address) { }   // stub
-  std::string repr(int indent) { return std::string("{\"TRefArray\": ") + (resolved() ? walker->repr(indent) : std::string("\"?\"")) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("{\"TRefArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+  }
   void printJSON(void *address) { std::cout << "TREFARRAY"; }   // stub
 };
 
@@ -275,14 +287,12 @@ public:
   bool empty() { return resolved() ? walker->empty() : false; }
   bool resolved() { return walker != nullptr; }   // stub
   void resolve(void *address) {
-    TClonesArray *obj = (TClonesArray*)address;
-    std::cout << "resolving " << obj << " " << defs.size() << std::endl;
-    TClass *tclass = obj->GetClass();
-    std::cout << "class " << tclass->GetName() << std::endl;
-    walker = new ClassWalker(fieldName, tclass, defs);
+    walker = new ClassWalker(fieldName, ((TClonesArray*)address)->GetClass(), defs);
     ((ClassWalker*)walker)->fill();
   }
-  std::string repr(int indent) { return std::string("{\"TClonesArray\": ") + (resolved() ? walker->repr(indent) : std::string("\"?\"")) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("{\"TClonesArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+  }
   void printJSON(void *address) { std::cout << "TCLONESARRAY"; }   // stub
 };
 
@@ -306,7 +316,9 @@ public:
   FieldWalker *walker;
   bool resolved() { return true; }
   void resolve(void *address) { }
-  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"type\": ") + walker->repr(indent) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+  }
   void printJSON(void *address) { }   // stub
   void *getAddress() { return nullptr; }
 };
@@ -319,7 +331,9 @@ public:
   ExtractorInterface *extractorInstance;
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(address); }
-  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderValue\", \"type\": ") + walker->repr(indent) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderValue\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+  }
   void printJSON(void *address);
   void *getAddress();
 };
@@ -330,7 +344,9 @@ public:
   FieldWalker *walker;
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(address); }
-  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent) + std::string("}"); }
+  std::string repr(int indent, std::set<std::string> &memo) {
+    return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+  }
   void printJSON(void *address) { }   // stub
   void *getAddress() { return nullptr; }
 };
@@ -351,12 +367,13 @@ public:
       (*iter)->resolve((*iter)->getAddress());
   }
   std::string repr() {
+    std::set<std::string> memo;
     std::string out;
     out += std::string("{");
     bool first = true;
     for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
       if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
-      out += (*iter)->repr(1);
+      out += (*iter)->repr(1, memo);
     }
     out += std::string("}");
     return out;

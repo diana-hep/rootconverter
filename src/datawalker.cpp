@@ -19,23 +19,14 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, 
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset())
 {
-  std::cout << "MemberWalker " << fieldName << " " << typeName << " " << walker << std::endl;
-
   int arrayDim = dataMember->GetArrayDim();
-  if (arrayDim > 0  &&  (typeName == std::string("char")  ||  typeName == std::string("const char")  ||  typeName == std::string("Char_t")  ||  typeName == std::string("const Char_t"))) {
+  if (arrayDim > 0  &&  (typeName == std::string("char")  ||  typeName == std::string("const char")  ||  typeName == std::string("Char_t")  ||  typeName == std::string("const Char_t")))
     walker = new CStringWalker(fieldName);
-    std::cout << "    CStringWalker " << walker << std::endl;
-  }
   else {
     walker = specializedWalker(fieldName, typeName, defs);
-    std::cout << "    specializedWalker " << walker << std::endl;
-    for (int i = arrayDim - 1;  i >= 0;  i--) {
-      std::cout << "        overload with array " << walker << std::endl;
+    for (int i = arrayDim - 1;  i >= 0;  i--)
       walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i), dataMember->GetUnitSize());
-    }
   }
-
-  std::cout << "MemberWalker exit " << walker << std::endl;
 }
 
 FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string tn, std::map<const std::string, ClassWalker*> &defs) {
@@ -100,10 +91,8 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
     else {
       TClass *tclass = TClass::GetClass(tn.c_str());
       if (tclass != nullptr) {
-        if (defs.count(tn) > 0) {
-          std::cout << "reusing " << defs.at(tn) << std::endl;
+        if (defs.count(tn) > 0)
           return defs.at(tn);
-        }
         else {
           ClassWalker *out = new ClassWalker(fieldName, tclass, defs);
           defs.insert(std::pair<const std::string, ClassWalker*>(tn, out));
@@ -120,27 +109,13 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &defs) : FieldWalker(fieldName, tclass->GetName()), tclass(tclass), defs(defs) { }
 
 void ClassWalker::fill() {
-  std::cout << "ClassWalker " << fieldName << " " << typeName << std::endl;
-
   TIter next = tclass->GetListOfDataMembers();
   for (TDataMember *dataMember = (TDataMember*)next();  dataMember != nullptr;  dataMember = (TDataMember*)next())
     if (dataMember->GetOffset() > 0) {
-      std::cout << "before" << std::endl;
-
       MemberWalker *member = new MemberWalker(dataMember, defs);
-
-      std::cout << "betwixt " << member << std::endl;
-
-      if (!member->empty()) {
-        std::cout << "puzzling" << std::endl;
-
+      if (!member->empty())
         members.push_back(member);
-      }
-
-      std::cout << "after" << std::endl;
     }
-
-  std::cout << "ClassWalker exit" << std::endl;
 }
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
