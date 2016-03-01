@@ -19,12 +19,16 @@ public:
   FieldWalker(std::string fieldName, std::string typeName) : fieldName(fieldName), typeName(typeName) { }
   std::string fieldName;
   std::string typeName;
+  virtual bool empty() = 0;
+  virtual std::string repr(int indent) = 0;
   virtual void printJSON(void *address) = 0;
 };
 
 class PrimitiveWalker : public FieldWalker {
 public:
   PrimitiveWalker(std::string fieldName, std::string typeName) : FieldWalker(fieldName, typeName) { }
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("\"") + typeName + std::string("\""); }
 };
 
 class BoolWalker : public PrimitiveWalker {
@@ -96,6 +100,8 @@ public:
 class AnyStringWalker : public FieldWalker {
 public:
   AnyStringWalker(std::string fieldName, std::string typeName) : FieldWalker(fieldName, typeName) { }
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("\"") + typeName + std::string("\""); }
   std::string escapeJSON(std::string string) { return string; }
 };
 
@@ -121,13 +127,17 @@ class PointerWalker : public FieldWalker {
 public:
   PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker) { }
   FieldWalker *walker;
+  bool empty() { return walker->empty(); }
+  std::string repr(int indent) { return std::string("{\"*\": ") + walker->repr(indent) + std::string("}"); }
   void printJSON(void *address) { walker->printJSON(*((void**)address)); }
 };
 
 class TRefWalker : public FieldWalker {
 public:
-  TRefWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "*"), walker(walker) { }
+  TRefWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "*"), walker(nullptr) { }
   FieldWalker *walker;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"TRef\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string("}"); }
   void printJSON(void *address) { std::cout << "TREF"; }   // stub
 };
 
@@ -135,36 +145,49 @@ class StdVectorWalker : public FieldWalker {
 public:
   StdVectorWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "vector"), walker(walker) { }
   FieldWalker *walker;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"std::vector\": ") + walker->repr(indent) + std::string("}"); }
   void printJSON(void *address) { std::cout << "STD-VECTOR"; }   // stub
 };
 
 class ArrayWalker : public FieldWalker {
 public:
-  ArrayWalker(std::string fieldName, int maxIndex) : FieldWalker(fieldName, "[]"), walker(walker) { }
+  ArrayWalker(std::string fieldName, FieldWalker *walker, int maxIndex) : FieldWalker(fieldName, "[]"), walker(walker), maxIndex(maxIndex) { }
+  int maxIndex;
   FieldWalker *walker;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"[]\": {\"type\": ") + walker->repr(indent) + std::string(", \"size\": ") + std::to_string(maxIndex) + std::string("}}"); }
   void printJSON(void *address) { std::cout << "ARRAY"; }   // stub
 };
 
 class TObjArrayWalker : public FieldWalker {
 public:
-  TObjArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TObjArray"), classes(classes) { }
+  TObjArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TObjArray"), classes(classes), walker(nullptr) { }
   std::map<const std::string, ClassWalker*> &classes;
+  FieldWalker *walker;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"TObjArray\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string("}"); }
   void printJSON(void *address) { std::cout << "TOBJARRAY"; }   // stub
 };
 
 class TRefArrayWalker : public FieldWalker {
 public:
-  TRefArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TRefArray"), classes(classes) { }
+  TRefArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TRefArray"), classes(classes), walker(nullptr) { }
   std::map<const std::string, ClassWalker*> &classes;
+  FieldWalker *walker;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"TRefArray\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string("}"); }
   void printJSON(void *address) { std::cout << "TREFARRAY"; }   // stub
 };
 
 class TClonesArrayWalker : public FieldWalker {
 public:
-  TClonesArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TClonesArray"), classes(classes), walker(nullptr), maxIndex(0) { }
+  TClonesArrayWalker(std::string fieldName, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, "TClonesArray"), classes(classes), walker(nullptr), maxIndex(-1) { }
   std::map<const std::string, ClassWalker*> &classes;
   FieldWalker *walker;
   int maxIndex;
+  bool empty() { return false; };
+  std::string repr(int indent) { return std::string("{\"TClonesArray\": {\"type\": ") + (walker == nullptr ? std::string("\"?\"") : walker->repr(indent)) + std::string(", \"size\": ") + (maxIndex >= 0 ? std::to_string(maxIndex) : std::string("\"?\"")) + std::string("}}"); }
   void printJSON(void *address) { std::cout << "TCLONESARRAY"; }   // stub
 };
 
@@ -174,13 +197,28 @@ public:
   size_t offset;
   FieldWalker *walker;
   FieldWalker *specializedWalker(std::string fieldName, std::string innerTypeName, std::map<const std::string, ClassWalker*> &classes);
+  bool empty() { return walker->empty(); };
+  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": ") + walker->repr(indent); }
   void printJSON(void *address);
 };
 
 class ClassWalker : public FieldWalker {
 public:
   ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &classes);
+  TClass *tclass;
   std::vector<MemberWalker*> members;
+  bool empty() { return members.empty(); }
+  std::string repr(int indent) {
+    std::string out;
+    out += std::string("{\n") + std::string(indent + 2, ' ');
+    bool first = true;
+    for (auto iter = members.begin();  iter != members.end();  ++iter) {
+      if (first) first = false; else out += std::string(",\n") + std::string(indent + 2, ' ');
+      out += (*iter)->repr(indent + 2);
+    }
+    out += std::string("\n") + std::string(indent, ' ') + std::string("}");
+    return out;
+  }
   void printJSON(void *address);
 };
 
@@ -192,6 +230,7 @@ public:
 class ExtractableWalker : public FieldWalker {
 public:
   ExtractableWalker(std::string fieldName, std::string typeName) : FieldWalker(fieldName, typeName) { }
+  bool empty() { return false; };
   virtual void *getAddress() = 0;
 };
 
@@ -201,6 +240,7 @@ public:
   std::vector<int> dims;
   std::string determineType(TLeaf *tleaf);
   FieldWalker *walker;
+  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"type\": ") + walker->repr(indent) + std::string("}"); }
   void printJSON(void *address) { }   // stub
   void *getAddress() { return nullptr; }
 };
@@ -211,6 +251,7 @@ public:
   FieldWalker *walker;
   CallFunc_t *extractorMethod;
   ExtractorInterface *extractorInstance;
+  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderValue\", \"type\": ") + walker->repr(indent) + std::string("}"); }
   void printJSON(void *address);
   void *getAddress();
 };
@@ -219,6 +260,7 @@ class ReaderArrayWalker : public ExtractableWalker {
 public:
   ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes);
   FieldWalker *walker;
+  std::string repr(int indent) { return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent) + std::string("}"); }
   void printJSON(void *address) { }   // stub
   void *getAddress() { return nullptr; }
 };
@@ -227,6 +269,17 @@ class TreeWalker {
 public:
   TreeWalker(TTree *ttree);
   std::vector<ExtractableWalker*> fields;
+  std::string repr() {
+    std::string out;
+    out += std::string("{");
+    bool first = true;
+    for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+      if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
+      out += (*iter)->repr(1);
+    }
+    out += std::string("}");
+    return out;
+  }
   void printJSON();
 };
 

@@ -25,7 +25,7 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, 
   else {
     walker = specializedWalker(fieldName, typeName, classes);
     for (int i = arrayDim - 1;  i >= 0;  i--)
-      walker = new ArrayWalker(fieldName, dataMember->GetMaxIndex(i));
+      walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i));
   }
 }
 
@@ -111,26 +111,24 @@ void MemberWalker::printJSON(void *address) {
   walker->printJSON((void*)((size_t)address + offset));
 }
 
-ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tclass->GetName()) {
+ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::map<const std::string, ClassWalker*> &classes) : FieldWalker(fieldName, tclass->GetName()), tclass(tclass) {
   TIter next = tclass->GetListOfDataMembers();
   for (TDataMember *dataMember = (TDataMember*)next();  dataMember != nullptr;  dataMember = (TDataMember*)next())
     if (dataMember->GetOffset() > 0) {
       MemberWalker *member = new MemberWalker(dataMember, classes);
-      if (member->walker != nullptr)
+      if (!member->empty())
         members.push_back(member);
     }
 }
 
 void ClassWalker::printJSON(void *address) {
-  if (!members.empty()) {
-    std::cout << "{";
-    bool first = true;
-    for (auto iter = members.begin();  iter != members.end();  ++iter) {
-      if (first) first = false; else std::cout << ", ";    
-      (*iter)->printJSON(address);
-    }
-    std::cout << "}";
+  std::cout << "{";
+  bool first = true;
+  for (auto iter = members.begin();  iter != members.end();  ++iter) {
+    if (first) first = false; else std::cout << ", ";    
+    (*iter)->printJSON(address);
   }
+  std::cout << "}";
 }
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
