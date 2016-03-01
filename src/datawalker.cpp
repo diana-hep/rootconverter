@@ -395,19 +395,20 @@ void PointerWalker::printJSON(void *address) {
 TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, "*"), walker(nullptr) { }
 
-bool TRefWalker::empty() { return false; }
+// we won't support TRefs, so report it as empty and let it be culled
+bool TRefWalker::empty() { return true; }
 
-bool TRefWalker::resolved() { return false; }   // stub
+bool TRefWalker::resolved() { return true; }
 
-void TRefWalker::resolve(void *address) { }   // stub
+void TRefWalker::resolve(void *address) { }
 
 std::string TRefWalker::repr(int indent, std::set<std::string> &memo) {
-  return std::string("{\"TRef\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+  return std::string("\"TREF\"");
 }
 
-std::string TRefWalker::avroTypeName() { return "string"; }   // FIXME: can the reference be missing?
+std::string TRefWalker::avroTypeName() { return "TREF"; }
 
-void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }   // stub
+void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
@@ -480,19 +481,20 @@ void TObjArrayWalker::printJSON(void *address) { std::cout << "TOBJARRAY"; }   /
 TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, "TRefArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
 
-bool TRefArrayWalker::empty() { return false; }
+// we won't support TRefArrays, so report it as empty and let it be culled
+bool TRefArrayWalker::empty() { return true; }
 
-bool TRefArrayWalker::resolved() { return false; }   // stub
+bool TRefArrayWalker::resolved() { return true; }
 
-void TRefArrayWalker::resolve(void *address) { }   // stub
+void TRefArrayWalker::resolve(void *address) { }
 
 std::string TRefArrayWalker::repr(int indent, std::set<std::string> &memo) {
-  return std::string("{\"TRefArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
+  return std::string("\"TREFARRAY\"");
 }
 
-std::string TRefArrayWalker::avroTypeName() { return "array"; }
+std::string TRefArrayWalker::avroTypeName() { return "TREFARRAY"; }
 
-void TRefArrayWalker::printJSON(void *address) { std::cout << "TREFARRAY"; }   // stub
+void TRefArrayWalker::printJSON(void *address) { std::cout << "TREFARRAY"; }
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
