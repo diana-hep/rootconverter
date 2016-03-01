@@ -15,6 +15,118 @@
 
 #include "../test_Event/Event.h"
 
+///////////////////////////////////////////////////////////////////// FieldWalker
+
+FieldWalker::FieldWalker(std::string fieldName, std::string typeName) :
+  fieldName(fieldName), typeName(typeName) { }
+
+///////////////////////////////////////////////////////////////////// PrimitiveWalkers
+
+PrimitiveWalker::PrimitiveWalker(std::string fieldName, std::string typeName) :
+  FieldWalker(fieldName, typeName) { }
+
+bool PrimitiveWalker::empty() { return false; }
+
+bool PrimitiveWalker::resolved() { return true; }
+
+void PrimitiveWalker::resolve(void *address) { }
+
+std::string PrimitiveWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + typeName + std::string("\"");
+}
+
+BoolWalker::BoolWalker(std::string fieldName) : PrimitiveWalker(fieldName, "bool") { }
+
+std::string BoolWalker::avroTypeName() { return "boolean"; }
+
+void BoolWalker::printJSON(void *address) {
+  if (*((bool*)address)) std::cout << "true"; else std::cout << "false";
+}
+
+CharWalker::CharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "char") { }
+
+std::string CharWalker::avroTypeName() { return "int"; }
+
+void CharWalker::printJSON(void *address) {
+  std::cout << (int)(*((char*)address));
+}
+
+UCharWalker::UCharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned char") { }
+
+std::string UCharWalker::avroTypeName() { return "int"; }
+
+void UCharWalker::printJSON(void *address) {
+  std::cout << (int)(*((unsigned char*)address));
+}
+
+ShortWalker::ShortWalker(std::string fieldName) : PrimitiveWalker(fieldName, "short") { }
+
+std::string ShortWalker::avroTypeName() { return "int"; }
+
+void ShortWalker::printJSON(void *address) {
+  std::cout << *((short*)address);
+}
+
+UShortWalker::UShortWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned short") { }
+
+std::string UShortWalker::avroTypeName() { return "int"; }
+
+void UShortWalker::printJSON(void *address) {
+  std::cout << *((unsigned short*)address);
+}
+
+IntWalker::IntWalker(std::string fieldName) : PrimitiveWalker(fieldName, "int") { }
+
+std::string IntWalker::avroTypeName() { return "int"; }
+
+void IntWalker::printJSON(void *address) {
+  std::cout << *((int*)address);
+}
+
+UIntWalker::UIntWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned int") { }
+
+std::string UIntWalker::avroTypeName() { return "long"; }
+
+void UIntWalker::printJSON(void *address) {
+  std::cout << *((unsigned int*)address);
+}
+
+LongWalker::LongWalker(std::string fieldName) : PrimitiveWalker(fieldName, "long") { }
+
+std::string LongWalker::avroTypeName() { return "long"; }
+
+void LongWalker::printJSON(void *address) {
+  std::cout << *((long*)address);
+}
+
+ULongWalker::ULongWalker(std::string fieldName) : PrimitiveWalker(fieldName, "unsigned long") { }
+
+std::string ULongWalker::avroTypeName() { return "double"; }
+
+void ULongWalker::printJSON(void *address) {
+  std::cout << *((unsigned long*)address);
+}
+
+FloatWalker::FloatWalker(std::string fieldName) : PrimitiveWalker(fieldName, "float") { }
+
+std::string FloatWalker::avroTypeName() { return "float"; }
+
+void FloatWalker::printJSON(void *address) {
+  std::cout << *((float*)address);
+}
+
+DoubleWalker::DoubleWalker(std::string fieldName) : PrimitiveWalker(fieldName, "double") { }
+
+std::string DoubleWalker::avroTypeName() { return "double"; }
+
+void DoubleWalker::printJSON(void *address) {
+  std::cout << *((double*)address);
+} 
+
+
+
+///////////////////////////////////////////////////////////////////// MemberWalker
+
 MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset())
@@ -106,6 +218,8 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
   }
 }
 
+///////////////////////////////////////////////////////////////////// ClassWalker
+
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, tclass->GetName()), tclass(tclass), avroNamespace(avroNamespace), defs(defs) { }
 
@@ -118,6 +232,26 @@ void ClassWalker::fill() {
         members.push_back(member);
     }
 }
+
+///////////////////////////////////////////////////////////////////// AnyStringWalkers
+
+///////////////////////////////////////////////////////////////////// PointerWalker
+
+///////////////////////////////////////////////////////////////////// TRefWalker
+
+///////////////////////////////////////////////////////////////////// StdVectorWalker
+
+///////////////////////////////////////////////////////////////////// ArrayWalker
+
+///////////////////////////////////////////////////////////////////// TObjArrayWalker
+
+///////////////////////////////////////////////////////////////////// TRefArrayWalker
+
+///////////////////////////////////////////////////////////////////// TClonesArrayWalker
+
+///////////////////////////////////////////////////////////////////// ExtractableWalker
+
+///////////////////////////////////////////////////////////////////// LeafWalker
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
 
@@ -178,6 +312,8 @@ std::string LeafWalker::determineType(TLeaf *tleaf) {
     throw std::invalid_argument(std::string(tleaf->IsA()->GetName()) + std::string(" not handled"));
 }
 
+///////////////////////////////////////////////////////////////////// ReaderValueWalker
+
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
   walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
@@ -204,7 +340,11 @@ void ReaderValueWalker::printJSON(void *address) {
   walker->printJSON(address);
 }
 
+///////////////////////////////////////////////////////////////////// ReaderArrayWalker
+
 ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
+
+///////////////////////////////////////////////////////////////////// TreeWalker
 
 TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
   std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
