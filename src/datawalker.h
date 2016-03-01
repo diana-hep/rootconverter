@@ -30,6 +30,7 @@ public:
   virtual void resolve(void *address) = 0;
   virtual std::string repr(int indent, std::set<std::string> &memo) = 0;
   virtual std::string avroTypeName() = 0;
+  virtual std::string avroSchema(int indent, std::set<std::string> &memo) = 0;
   virtual void printJSON(void *address) = 0;
 };
 
@@ -42,6 +43,7 @@ public:
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
+  std::string avroSchema(int indent, std::set<std::string> &memo);
 };
 
 class BoolWalker : public PrimitiveWalker {
@@ -135,6 +137,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -154,6 +157,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -168,6 +172,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string escapeJSON(std::string string);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
 };
 
 class CStringWalker : public AnyStringWalker {
@@ -200,6 +205,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -215,6 +221,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -237,6 +244,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -254,6 +262,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -272,6 +281,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -289,6 +299,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -306,6 +317,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
 };
 
@@ -336,6 +348,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
   void *getAddress();
 };
@@ -353,6 +366,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
   void *getAddress();
 };
@@ -368,6 +382,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
   void *getAddress();
 };
@@ -383,6 +398,7 @@ public:
   bool resolved();
   void resolve();
   std::string repr();
+  std::string avroSchema();
   void printJSON();
 };
 

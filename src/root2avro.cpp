@@ -152,9 +152,14 @@ int main(int argc, char **argv) {
   std::cout << treeWalker.repr() << std::endl;
   reader->Next();
   treeWalker.resolve();
+
+  std::cout << "RESOLVED? " << treeWalker.resolved() << std::endl;
+
   std::cout << treeWalker.repr() << std::endl;
 
-  treeWalker.printJSON();
+  std::cout << treeWalker.avroSchema() << std::endl;
+
+  // treeWalker.printJSON();
 
   // while (reader->Next())
   //   treeWalker.printJSON();

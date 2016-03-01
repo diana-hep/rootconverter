@@ -34,6 +34,10 @@ std::string PrimitiveWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + typeName + std::string("\"");
 }
 
+std::string PrimitiveWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + avroTypeName() + std::string("\"");
+}
+
 //// BoolWalker
 
 BoolWalker::BoolWalker(std::string fieldName) : PrimitiveWalker(fieldName, "bool") { }
@@ -251,6 +255,10 @@ std::string MemberWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string MemberWalker::avroTypeName() { return walker->avroTypeName(); }
 
+std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
+
 void MemberWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   walker->printJSON((void*)((size_t)address + offset));
@@ -302,6 +310,28 @@ std::string ClassWalker::repr(int indent, std::set<std::string> &memo) {
   }
 }
 
+std::string ClassWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  if (memo.find(avroTypeName()) != memo.end())
+    return std::string("\"") + avroTypeName() + std::string("\"");
+  else {
+    memo.insert(avroTypeName());
+    std::string out;
+    out += std::string("{\"type\": \"record\",\n") + std::string(indent, ' ') +
+           std::string(" \"name\": \"") + typeName + std::string("\",\n") + std::string(indent, ' ');
+    if (!avroNamespace.empty())
+      out += std::string(" \"namespace\": \"") + avroNamespace + std::string("\",\n") + std::string(indent, ' ');
+    out += std::string(" \"fields\": [\n") + std::string(indent + 3, ' ');
+
+    bool first = true;
+    for (auto iter = members.begin();  iter != members.end();  ++iter) {
+      if (first) first = false; else out += std::string(",\n") + std::string(indent + 3,  ' ');
+      out += (*iter)->avroSchema(indent + 3, memo);
+    }
+    out += std::string("\n") + std::string(indent, ' ') + std::string(" ]\n") + std::string(indent, ' ') + std::string("}");
+    return out;
+  }
+}
+
 std::string ClassWalker::avroTypeName() {
   std::string out;
   if (!avroNamespace.empty())
@@ -337,6 +367,8 @@ std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
 std::string AnyStringWalker::escapeJSON(std::string string) { return string; }
 
 std::string AnyStringWalker::avroTypeName() { return "string"; }
+
+std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
 
 //// CStringWalker
 
@@ -378,6 +410,10 @@ std::string PointerWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string PointerWalker::avroTypeName() { return "union"; }
 
+std::string PointerWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("[\"null\", ") + walker->avroSchema(indent, memo) + std::string("]");
+}
+
 void PointerWalker::printJSON(void *address) {
   void *dereferenced = *((void**)address);
   if (dereferenced == nullptr)
@@ -406,6 +442,8 @@ std::string TRefWalker::repr(int indent, std::set<std::string> &memo) {
 }
 
 std::string TRefWalker::avroTypeName() { return "TREF"; }
+
+std::string TRefWalker::avroSchema(int indent, std::set<std::string> &memo) { return "TREF"; }
 
 void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 
@@ -458,6 +496,10 @@ std::string StdVectorWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string StdVectorWalker::avroTypeName() { return "array"; }
 
+std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
+
 void StdVectorWalker::printJSON(void *address) {
   std::cout << "[";
   extractorInstance->start(address);
@@ -482,6 +524,10 @@ std::string ArrayWalker::repr(int indent, std::set<std::string> &memo) {
 }
 
 std::string ArrayWalker::avroTypeName() { return "array"; }
+
+std::string ArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
 
 void ArrayWalker::printJSON(void *address) {
   std::cout << "[";
@@ -520,6 +566,12 @@ std::string TObjArrayWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string TObjArrayWalker::avroTypeName() { return "array"; }
 
+std::string TObjArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  if (!resolved())
+    throw std::invalid_argument(std::string("resolve TObjArray before attempting to generate Avro schema"));
+  return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
+
 void TObjArrayWalker::printJSON(void *address) {
   if (!resolved()) resolve(address);
   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
@@ -555,6 +607,8 @@ std::string TRefArrayWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string TRefArrayWalker::avroTypeName() { return "TREFARRAY"; }
 
+std::string TRefArrayWalker::avroSchema(int indent, std::set<std::string> &memo) { return "TREFARRAY"; }
+
 void TRefArrayWalker::printJSON(void *address) { std::cout << "TREFARRAY"; }
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
@@ -579,6 +633,12 @@ std::string TClonesArrayWalker::repr(int indent, std::set<std::string> &memo) {
 }
 
 std::string TClonesArrayWalker::avroTypeName() { return "array"; }
+
+std::string TClonesArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  if (!resolved())
+    throw std::invalid_argument(std::string("resolve TClonesArray before attempting to generate Avro schema"));
+  return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
 
 void TClonesArrayWalker::printJSON(void *address) {
   if (!resolved()) resolve(address);
@@ -672,6 +732,10 @@ std::string LeafWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string LeafWalker::avroTypeName() { return walker->avroTypeName(); }
 
+std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": ") + walker->avroSchema(indent, memo);
+}
+
 void LeafWalker::printJSON(void *address) { }   // stub
 
 void *LeafWalker::getAddress() { return nullptr; }
@@ -709,6 +773,10 @@ std::string ReaderValueWalker::repr(int indent, std::set<std::string> &memo) {
 
 std::string ReaderValueWalker::avroTypeName() { return walker->avroTypeName(); }
 
+std::string ReaderValueWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": ") + walker->avroSchema(indent, memo);
+}
+
 void ReaderValueWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   walker->printJSON(address);
@@ -732,6 +800,10 @@ std::string ReaderArrayWalker::repr(int indent, std::set<std::string> &memo) {
 }
 
 std::string ReaderArrayWalker::avroTypeName() { return "array"; }
+
+std::string ReaderArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": {\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
 
 void ReaderArrayWalker::printJSON(void *address) { }   // stub
 
@@ -785,6 +857,19 @@ std::string TreeWalker::repr() {
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
     if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
     out += (*iter)->repr(1, memo);
+  }
+  out += std::string("}");
+  return out;
+}
+
+std::string TreeWalker::avroSchema() {
+  std::set<std::string> memo;
+  std::string out;
+  out += std::string("{");
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
+    out += (*iter)->avroSchema(1, memo);
   }
   out += std::string("}");
   return out;
