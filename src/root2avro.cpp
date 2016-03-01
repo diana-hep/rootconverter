@@ -154,6 +154,8 @@ int main(int argc, char **argv) {
   treeWalker.resolve();
   std::cout << treeWalker.repr() << std::endl;
 
+  treeWalker.printJSON();
+
   // while (reader->Next())
   //   treeWalker.printJSON();
 

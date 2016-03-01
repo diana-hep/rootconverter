@@ -201,7 +201,13 @@ public:
   bool resolved() { return walker->resolved(); }
   void resolve(void *address) { walker->resolve(*((void**)address)); }
   std::string repr(int indent, std::set<std::string> &memo) { return std::string("{\"*\": ") + walker->repr(indent, memo) + std::string("}"); }
-  void printJSON(void *address) { walker->printJSON(*((void**)address)); }
+  void printJSON(void *address) {
+    void *dereferenced = *((void**)address);
+    if (dereferenced == nullptr)
+      std::cout << "null";
+    else
+      walker->printJSON(dereferenced);
+  }
 };
 
 class TRefWalker : public FieldWalker {
@@ -293,7 +299,18 @@ public:
   std::string repr(int indent, std::set<std::string> &memo) {
     return std::string("{\"TClonesArray\": ") + (resolved() ? walker->repr(indent, memo) : std::string("\"?\"")) + std::string("}");
   }
-  void printJSON(void *address) { std::cout << "TCLONESARRAY"; }   // stub
+  void printJSON(void *address) {
+    if (!resolved()) resolve(address);
+    if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+    std::cout << "[";
+    TIter nextItem = (TClonesArray*)address;
+    bool first = true;
+    for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
+      if (first) first = false; else std::cout << ", ";
+      walker->printJSON(item);
+    }
+    std::cout << "]";
+  }
 };
 
 class ExtractorInterface {
