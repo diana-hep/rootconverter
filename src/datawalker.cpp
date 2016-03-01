@@ -13,6 +13,8 @@
 
 #include "datawalker.h"
 
+#include "../test_Event/Event.h"
+
 MemberWalker::MemberWalker(TDataMember *dataMember, std::map<const std::string, ClassWalker*> &classes) :
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset())
@@ -162,12 +164,7 @@ std::string LeafWalker::determineType(TLeaf *tleaf) {
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : ExtractableWalker(fieldName, tbranch->GetClassName()) {
   walker = new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), classes);
 
-  std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
-                              std::string("public:\n") +
-                              std::string("  virtual void *getAddress() = 0;\n") +
-                              std::string("};\n") +
-                              std::string("TTreeReader *getReader();\n") +
-                              std::string("class Get_") + fieldName + std::string(" : public ExtractorInterface {\n") +
+  std::string codeToDeclare = std::string("class Get_") + fieldName + std::string(" : public ExtractorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  TTreeReaderValue<") + typeName + std::string("> value;\n") +
                               std::string("  Get_") + fieldName + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
@@ -189,6 +186,13 @@ void *ReaderValueWalker::getAddress() {
 ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::map<const std::string, ClassWalker*> &classes) : ExtractableWalker(fieldName, tbranch->GetClassName()) { }
 
 TreeWalker::TreeWalker(TTree *ttree) {
+  std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
+                              std::string("public:\n") +
+                              std::string("  virtual void *getAddress() = 0;\n") +
+                              std::string("};\n") +
+                              std::string("TTreeReader *getReader();\n");
+  gInterpreter->Declare(codeToDeclare.c_str());
+
   std::map<const std::string, ClassWalker*> classes;
 
   TIter nextBranch = ttree->GetListOfBranches();

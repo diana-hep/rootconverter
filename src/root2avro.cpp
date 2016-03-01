@@ -148,8 +148,10 @@ int main(int argc, char **argv) {
   std::cout << "BEGIN" << std::endl;
   TreeWalker treeWalker(reader->GetTree());
   std::cout << "END" << std::endl;
-  reader->Next();
-  treeWalker.printJSON();
+
+  while (reader->Next())
+    treeWalker.printJSON();
+
   std::cout << "END END" << std::endl;
 
   // TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
