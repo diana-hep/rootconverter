@@ -146,6 +146,7 @@ public:
   LeafWalker(TLeaf *tleaf, TTree *ttree);
   std::vector<int> dims;
   std::string determineType(TLeaf *tleaf);
+  FieldWalker *walker;
 };
 
 class ReaderValueWalker : public FieldWalker {

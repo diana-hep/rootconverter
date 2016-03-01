@@ -111,34 +111,54 @@ LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) : FieldWalker(tleaf->GetName(
 }
 
 std::string LeafWalker::determineType(TLeaf *tleaf) {
-  if (tleaf->IsA() == TLeafO::Class())
+  if (tleaf->IsA() == TLeafO::Class()) {
+    walker = new BoolWalker(tleaf->GetName());
     return std::string("bool");
-  else if (tleaf->IsA() == TLeafB::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned char");
-  else if (tleaf->IsA() == TLeafB::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafB::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new CharWalker(tleaf->GetName());
     return std::string("char");
-  else if (tleaf->IsA() == TLeafS::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned short");
-  else if (tleaf->IsA() == TLeafS::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafB::Class()  &&  tleaf->IsUnsigned()) {
+    walker = new UCharWalker(tleaf->GetName());
+    return std::string("unsigned char");
+  }
+  else if (tleaf->IsA() == TLeafS::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new ShortWalker(tleaf->GetName());
     return std::string("short");
-  else if (tleaf->IsA() == TLeafI::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned int");
-  else if (tleaf->IsA() == TLeafI::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafS::Class()  &&  tleaf->IsUnsigned()) {
+    walker = new UShortWalker(tleaf->GetName());
+    return std::string("unsigned short");
+  }
+  else if (tleaf->IsA() == TLeafI::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new IntWalker(tleaf->GetName());
     return std::string("int");
-  else if (tleaf->IsA() == TLeafL::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned long");
-  else if (tleaf->IsA() == TLeafL::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafI::Class()  &&  tleaf->IsUnsigned()) {
+    walker = new UIntWalker(tleaf->GetName());
+    return std::string("unsigned int");
+  }
+  else if (tleaf->IsA() == TLeafL::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new LongWalker(tleaf->GetName());
     return std::string("long");
-  else if (tleaf->IsA() == TLeafF::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned float");
-  else if (tleaf->IsA() == TLeafF::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafL::Class()  &&  tleaf->IsUnsigned()) {
+    walker = new ULongWalker(tleaf->GetName());
+    return std::string("unsigned long");
+  }
+  else if (tleaf->IsA() == TLeafF::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new FloatWalker(tleaf->GetName());
     return std::string("float");
-  else if (tleaf->IsA() == TLeafD::Class()  &&  tleaf->IsUnsigned())
-    return std::string("unsigned double");
-  else if (tleaf->IsA() == TLeafD::Class()  &&  !tleaf->IsUnsigned())
+  }
+  else if (tleaf->IsA() == TLeafD::Class()  &&  !tleaf->IsUnsigned()) {
+    walker = new DoubleWalker(tleaf->GetName());
     return std::string("double");
-  else if (tleaf->IsA() == TLeafC::Class())
+  }
+  else if (tleaf->IsA() == TLeafC::Class()) {
+    walker = new CStringWalker(tleaf->GetName());
     return std::string("string");
+  }
   else if (tleaf->IsA() == TLeafElement::Class())
     throw std::invalid_argument(std::string("TLeafElement not handled"));
   else if (tleaf->IsA() == TLeafObject::Class())
