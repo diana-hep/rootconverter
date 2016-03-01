@@ -14,6 +14,10 @@
 #include <TClass.h>
 #include <TDataMember.h>
 #include <TInterpreter.h>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
+
+using namespace ROOT::Internal;
 
 //// forwards
 class ClassWalker;
@@ -44,6 +48,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  virtual TTreeReaderValueBase *readerValue(std::string name) = 0;
 };
 
 class BoolWalker : public PrimitiveWalker {
@@ -51,6 +56,7 @@ public:
   BoolWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class CharWalker : public PrimitiveWalker {
@@ -58,6 +64,7 @@ public:
   CharWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class UCharWalker : public PrimitiveWalker {
@@ -65,6 +72,7 @@ public:
   UCharWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class ShortWalker : public PrimitiveWalker {
@@ -72,6 +80,7 @@ public:
   ShortWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class UShortWalker : public PrimitiveWalker {
@@ -79,6 +88,7 @@ public:
   UShortWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class IntWalker : public PrimitiveWalker {
@@ -86,6 +96,7 @@ public:
   IntWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class UIntWalker : public PrimitiveWalker {
@@ -93,6 +104,7 @@ public:
   UIntWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class LongWalker : public PrimitiveWalker {
@@ -100,6 +112,7 @@ public:
   LongWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class ULongWalker : public PrimitiveWalker {
@@ -107,6 +120,7 @@ public:
   ULongWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class FloatWalker : public PrimitiveWalker {
@@ -114,6 +128,7 @@ public:
   FloatWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 class DoubleWalker : public PrimitiveWalker {
@@ -121,6 +136,42 @@ public:
   DoubleWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
+};
+
+///////////////////////////////////////////////////////////////////// AnyStringWalkers
+
+class AnyStringWalker : public PrimitiveWalker {
+public:
+  AnyStringWalker(std::string fieldName, std::string typeName);
+  bool empty();
+  bool resolved();
+  void resolve(void *address);
+  std::string repr(int indent, std::set<std::string> &memo);
+  std::string escapeJSON(std::string string);
+  std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
+};
+
+class CStringWalker : public AnyStringWalker {
+public:
+  CStringWalker(std::string fieldName);
+  void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
+};
+
+class StdStringWalker : public AnyStringWalker {
+public:
+  StdStringWalker(std::string fieldName);
+  void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
+};
+
+class TStringWalker : public AnyStringWalker {
+public:
+  TStringWalker(std::string fieldName);
+  void printJSON(void *address);
+  TTreeReaderValueBase *readerValue(std::string name);
 };
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
@@ -151,45 +202,13 @@ public:
   std::vector<MemberWalker*> members;
 
   ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
-  void fill();
+  void fill();    // has side-effects, must be called soon after constructor
   bool empty();
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
-  void printJSON(void *address);
-};
-
-///////////////////////////////////////////////////////////////////// AnyStringWalkers
-
-class AnyStringWalker : public FieldWalker {
-public:
-  AnyStringWalker(std::string fieldName, std::string typeName);
-  bool empty();
-  bool resolved();
-  void resolve(void *address);
-  std::string repr(int indent, std::set<std::string> &memo);
-  std::string escapeJSON(std::string string);
-  std::string avroTypeName();
-  std::string avroSchema(int indent, std::set<std::string> &memo);
-};
-
-class CStringWalker : public AnyStringWalker {
-public:
-  CStringWalker(std::string fieldName);
-  void printJSON(void *address);
-};
-
-class StdStringWalker : public AnyStringWalker {
-public:
-  StdStringWalker(std::string fieldName);
-  void printJSON(void *address);
-};
-
-class TStringWalker : public AnyStringWalker {
-public:
-  TStringWalker(std::string fieldName);
   void printJSON(void *address);
 };
 
@@ -338,12 +357,15 @@ public:
 ///////////////////////////////////////////////////////////////////// LeafWalker
 
 class LeafWalker : public ExtractableWalker {
+protected:
+  std::string determineType(TLeaf *tleaf);  // it has side-effects
+
 public:
   std::vector<int> dims;
-  FieldWalker *walker;
+  PrimitiveWalker *walker;
+  TTreeReaderValueBase *readerValue;
 
   LeafWalker(TLeaf *tleaf, TTree *ttree);
-  std::string determineType(TLeaf *tleaf);
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);

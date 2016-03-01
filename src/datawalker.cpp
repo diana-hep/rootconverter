@@ -14,6 +14,8 @@
 #include <TLeafObject.h>
 #include <TClonesArray.h>
 
+extern TTreeReader *getReader();
+
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
 FieldWalker::FieldWalker(std::string fieldName, std::string typeName) :
@@ -48,6 +50,10 @@ void BoolWalker::printJSON(void *address) {
   if (*((bool*)address)) std::cout << "true"; else std::cout << "false";
 }
 
+TTreeReaderValueBase *BoolWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<bool>(*getReader(), name.c_str());
+}
+
 //// CharWalker
 
 CharWalker::CharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "char") { }
@@ -56,6 +62,10 @@ std::string CharWalker::avroTypeName() { return "int"; }
 
 void CharWalker::printJSON(void *address) {
   std::cout << (int)(*((char*)address));
+}
+
+TTreeReaderValueBase *CharWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<char>(*getReader(), name.c_str());
 }
 
 //// UCharWalker
@@ -68,6 +78,10 @@ void UCharWalker::printJSON(void *address) {
   std::cout << (int)(*((unsigned char*)address));
 }
 
+TTreeReaderValueBase *UCharWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<unsigned char>(*getReader(), name.c_str());
+}
+
 //// ShortWalker
 
 ShortWalker::ShortWalker(std::string fieldName) : PrimitiveWalker(fieldName, "short") { }
@@ -76,6 +90,10 @@ std::string ShortWalker::avroTypeName() { return "int"; }
 
 void ShortWalker::printJSON(void *address) {
   std::cout << *((short*)address);
+}
+
+TTreeReaderValueBase *ShortWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<short>(*getReader(), name.c_str());
 }
 
 //// UShortWalker
@@ -88,6 +106,10 @@ void UShortWalker::printJSON(void *address) {
   std::cout << *((unsigned short*)address);
 }
 
+TTreeReaderValueBase *UShortWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<unsigned short>(*getReader(), name.c_str());
+}
+
 //// IntWalker
 
 IntWalker::IntWalker(std::string fieldName) : PrimitiveWalker(fieldName, "int") { }
@@ -96,6 +118,10 @@ std::string IntWalker::avroTypeName() { return "int"; }
 
 void IntWalker::printJSON(void *address) {
   std::cout << *((int*)address);
+}
+
+TTreeReaderValueBase *IntWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<int>(*getReader(), name.c_str());
 }
 
 //// UIntWalker
@@ -108,6 +134,10 @@ void UIntWalker::printJSON(void *address) {
   std::cout << *((unsigned int*)address);
 }
 
+TTreeReaderValueBase *UIntWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<unsigned int>(*getReader(), name.c_str());
+}
+
 //// LongWalker
 
 LongWalker::LongWalker(std::string fieldName) : PrimitiveWalker(fieldName, "long") { }
@@ -116,6 +146,10 @@ std::string LongWalker::avroTypeName() { return "long"; }
 
 void LongWalker::printJSON(void *address) {
   std::cout << *((long*)address);
+}
+
+TTreeReaderValueBase *LongWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<long>(*getReader(), name.c_str());
 }
 
 //// ULongWalker
@@ -128,6 +162,10 @@ void ULongWalker::printJSON(void *address) {
   std::cout << *((unsigned long*)address);
 }
 
+TTreeReaderValueBase *ULongWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<unsigned long>(*getReader(), name.c_str());
+}
+
 //// FloatWalker
 
 FloatWalker::FloatWalker(std::string fieldName) : PrimitiveWalker(fieldName, "float") { }
@@ -136,6 +174,10 @@ std::string FloatWalker::avroTypeName() { return "float"; }
 
 void FloatWalker::printJSON(void *address) {
   std::cout << *((float*)address);
+}
+
+TTreeReaderValueBase *FloatWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<float>(*getReader(), name.c_str());
 }
 
 //// DoubleWalker
@@ -147,6 +189,66 @@ std::string DoubleWalker::avroTypeName() { return "double"; }
 void DoubleWalker::printJSON(void *address) {
   std::cout << *((double*)address);
 } 
+
+TTreeReaderValueBase *DoubleWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<double>(*getReader(), name.c_str());
+}
+
+///////////////////////////////////////////////////////////////////// AnyStringWalkers
+
+AnyStringWalker::AnyStringWalker(std::string fieldName, std::string typeName) :
+  PrimitiveWalker(fieldName, typeName) { }
+
+bool AnyStringWalker::empty() { return false; }
+
+bool AnyStringWalker::resolved() { return true; }
+
+void AnyStringWalker::resolve(void *address) { }
+
+std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + typeName + std::string("\"");
+}
+std::string AnyStringWalker::escapeJSON(std::string string) { return string; }
+
+std::string AnyStringWalker::avroTypeName() { return "string"; }
+
+std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
+
+//// CStringWalker
+
+CStringWalker::CStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "char*") { }
+
+void CStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON((char*)address) << "\"";
+}
+
+TTreeReaderValueBase *CStringWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<char*>(*getReader(), name.c_str());
+}
+
+//// StdStringWalker
+
+StdStringWalker::StdStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "string") { }
+
+void StdStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON(*((std::string*)address)) << "\"";
+}
+
+TTreeReaderValueBase *StdStringWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<std::string>(*getReader(), name.c_str());
+}
+
+//// TStringWalker
+
+TStringWalker::TStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "TString") { }
+
+void TStringWalker::printJSON(void *address) {
+  std::cout << "\"" << escapeJSON(((TString*)address)->Data()) << "\"";
+}
+
+TTreeReaderValueBase *TStringWalker::readerValue(std::string name) {
+  return new TTreeReaderValue<TString>(*getReader(), name.c_str());
+}
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
 
@@ -350,50 +452,6 @@ void ClassWalker::printJSON(void *address) {
   std::cout << "}";
 }
 
-///////////////////////////////////////////////////////////////////// AnyStringWalkers
-
-AnyStringWalker::AnyStringWalker(std::string fieldName, std::string typeName) :
-  FieldWalker(fieldName, typeName) { }
-
-bool AnyStringWalker::empty() { return false; }
-
-bool AnyStringWalker::resolved() { return true; }
-
-void AnyStringWalker::resolve(void *address) { }
-
-std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
-  return std::string("\"") + typeName + std::string("\"");
-}
-std::string AnyStringWalker::escapeJSON(std::string string) { return string; }
-
-std::string AnyStringWalker::avroTypeName() { return "string"; }
-
-std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
-
-//// CStringWalker
-
-CStringWalker::CStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "char*") { }
-
-void CStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON((char*)address) << "\"";
-}
-
-//// StdStringWalker
-
-StdStringWalker::StdStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "string") { }
-
-void StdStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON(*((std::string*)address)) << "\"";
-}
-
-//// TStringWalker
-
-TStringWalker::TStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "TString") { }
-
-void TStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON(((TString*)address)->Data()) << "\"";
-}
-
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
 PointerWalker::PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker) { }
@@ -411,7 +469,10 @@ std::string PointerWalker::repr(int indent, std::set<std::string> &memo) {
 std::string PointerWalker::avroTypeName() { return "union"; }
 
 std::string PointerWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  return std::string("[\"null\", ") + walker->avroSchema(indent, memo) + std::string("]");
+  FieldWalker *subWalker = walker;
+  for (PointerWalker *pointerWalker = dynamic_cast<PointerWalker*>(subWalker);  pointerWalker != nullptr;  subWalker = pointerWalker->walker);
+
+  return std::string("[\"null\", ") + subWalker->avroSchema(indent, memo) + std::string("]");
 }
 
 void PointerWalker::printJSON(void *address) {
@@ -663,7 +724,9 @@ bool ExtractableWalker::empty() { return false; }
 ///////////////////////////////////////////////////////////////////// LeafWalker
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
-  ExtractableWalker(tleaf->GetName(), determineType(tleaf)) { }
+  ExtractableWalker(tleaf->GetName(), determineType(tleaf)), readerValue(nullptr) {
+  readerValue = walker->readerValue(fieldName);
+}
 
 std::string LeafWalker::determineType(TLeaf *tleaf) {
   if (tleaf->IsA() == TLeafO::Class()) {
@@ -736,9 +799,12 @@ std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return std::string("\"") + fieldName + std::string("\": ") + walker->avroSchema(indent, memo);
 }
 
-void LeafWalker::printJSON(void *address) { }   // stub
+void LeafWalker::printJSON(void *address) {
+  std::cout << "\"" << fieldName << "\": ";
+  walker->printJSON(address);
+}
 
-void *LeafWalker::getAddress() { return nullptr; }
+void *LeafWalker::getAddress() { return readerValue->GetAddress(); }
 
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
