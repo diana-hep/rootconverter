@@ -21,6 +21,8 @@ extern TTreeReader *getReader();
 FieldWalker::FieldWalker(std::string fieldName, std::string typeName) :
   fieldName(fieldName), typeName(typeName) { }
 
+std::string FieldWalker::escapeJSON(std::string string) { return string; }
+
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
 
 PrimitiveWalker::PrimitiveWalker(std::string fieldName, std::string typeName) :
@@ -208,8 +210,6 @@ void AnyStringWalker::resolve(void *address) { }
 std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + typeName + std::string("\"");
 }
-std::string AnyStringWalker::escapeJSON(std::string string) { return string; }
-
 std::string AnyStringWalker::avroTypeName() { return "string"; }
 
 std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
@@ -254,7 +254,8 @@ TTreeReaderValueBase *TStringWalker::readerValue(std::string name) {
 
 MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
-  offset(dataMember->GetOffset())
+  offset(dataMember->GetOffset()),
+  comment(dataMember->GetTitle())
 {
   int arrayDim = dataMember->GetArrayDim();
   if (arrayDim > 0  &&  (typeName == std::string("char")  ||  typeName == std::string("const char")  ||  typeName == std::string("Char_t")  ||  typeName == std::string("const Char_t")))
@@ -358,7 +359,12 @@ std::string MemberWalker::repr(int indent, std::set<std::string> &memo) {
 std::string MemberWalker::avroTypeName() { return walker->avroTypeName(); }
 
 std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  return std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
+  std::string out;
+  out += std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo);
+  if (!comment.empty())
+    out += std::string(", \"doc\": \"") + escapeJSON(comment) + std::string("\"");
+  out += std::string("}");
+  return out;
 }
 
 void MemberWalker::printJSON(void *address) {
@@ -796,7 +802,7 @@ std::string LeafWalker::repr(int indent, std::set<std::string> &memo) {
 std::string LeafWalker::avroTypeName() { return walker->avroTypeName(); }
 
 std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  return std::string("\"") + fieldName + std::string("\": ") + walker->avroSchema(indent, memo);
+  return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
 void LeafWalker::printJSON(void *address) {
@@ -840,7 +846,7 @@ std::string ReaderValueWalker::repr(int indent, std::set<std::string> &memo) {
 std::string ReaderValueWalker::avroTypeName() { return walker->avroTypeName(); }
 
 std::string ReaderValueWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  return std::string("\"") + fieldName + std::string("\": ") + walker->avroSchema(indent, memo);
+  return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
 void ReaderValueWalker::printJSON(void *address) {
@@ -868,7 +874,7 @@ std::string ReaderArrayWalker::repr(int indent, std::set<std::string> &memo) {
 std::string ReaderArrayWalker::avroTypeName() { return "array"; }
 
 std::string ReaderArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  return std::string("\"") + fieldName + std::string("\": {\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+  return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": {\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}}");
 }
 
 void ReaderArrayWalker::printJSON(void *address) { }   // stub
@@ -877,7 +883,7 @@ void *ReaderArrayWalker::getAddress() { return nullptr; }
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
+TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace) {
   std::string codeToDeclare = std::string("class StdVectorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  virtual void start(void *vector) = 0;\n") +
@@ -889,6 +895,8 @@ TreeWalker::TreeWalker(TTree *ttree, std::string avroNamespace) {
                               std::string("};\n") +
                               std::string("TTreeReader *getReader();\n");
   gInterpreter->Declare(codeToDeclare.c_str());
+
+  TTree *ttree = getReader()->GetTree();
 
   TIter nextBranch = ttree->GetListOfBranches();
   for (TBranch *tbranch = (TBranch*)nextBranch();  tbranch != nullptr;  tbranch = (TBranch*)nextBranch()) {
@@ -932,15 +940,19 @@ std::string TreeWalker::avroSchema() {
   std::set<std::string> memo;
   std::string out;
 
-  // FIXME: need to wrap this up in an Avro record block!
+  out += std::string("{\"type\": \"record\",\n") +
+         std::string(" \"name\": \"") + getReader()->GetTree()->GetName() + std::string("\",\n");
+  if (!avroNamespace.empty())
+    out += std::string(" \"namespace\": \"") + avroNamespace + std::string("\",\n");
+  out += std::string(" \"fields\": [\n");
 
-  out += std::string("{");
   bool first = true;
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
-    if (first) first = false; else out += std::string(",\n") + std::string(1, ' ');
-    out += (*iter)->avroSchema(1, memo);
+    if (first) first = false; else out += std::string(",\n");
+    out += (*iter)->avroSchema(3, memo);
   }
-  out += std::string("}");
+
+  out += std::string("\n ]\n}\n");
   return out;
 }
 

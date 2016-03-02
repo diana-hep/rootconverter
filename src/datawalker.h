@@ -29,6 +29,7 @@ public:
   std::string fieldName;
   std::string typeName;
   FieldWalker(std::string fieldName, std::string typeName);
+  std::string escapeJSON(std::string string);
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
   virtual void resolve(void *address) = 0;
@@ -148,7 +149,6 @@ public:
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
-  std::string escapeJSON(std::string string);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
 };
@@ -180,6 +180,7 @@ class MemberWalker : public FieldWalker {
 public:
   size_t offset;
   FieldWalker *walker;
+  std::string comment;
 
   MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   FieldWalker *specializedWalker(std::string fieldName, std::string innerTypeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
@@ -415,8 +416,9 @@ class TreeWalker {
 public:
   std::map<const std::string, ClassWalker*> defs;
   std::vector<ExtractableWalker*> fields;
+  std::string avroNamespace;
 
-  TreeWalker(TTree *ttree, std::string avroNamespace = "");
+  TreeWalker(std::string avroNamespace = "");
   bool resolved();
   void resolve();
   std::string repr();
