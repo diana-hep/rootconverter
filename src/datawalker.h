@@ -358,15 +358,13 @@ public:
 ///////////////////////////////////////////////////////////////////// LeafWalker
 
 class LeafWalker : public ExtractableWalker {
-protected:
-  std::string determineType(TLeaf *tleaf);  // it has side-effects
-
 public:
   std::vector<int> dims;
   PrimitiveWalker *walker;
   TTreeReaderValueBase *readerValue;
 
   LeafWalker(TLeaf *tleaf, TTree *ttree);
+  PrimitiveWalker *leafToPrimitive(TLeaf *tleaf);
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);

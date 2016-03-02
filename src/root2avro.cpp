@@ -145,75 +145,24 @@ int main(int argc, char **argv) {
   file = TFile::Open(fileLocations[0].c_str());
   reader = new TTreeReader(treeLocation.c_str(), file);
     
-  std::cout << "BEGIN" << std::endl;
   TreeWalker treeWalker;
-  std::cout << "END" << std::endl;
 
   // std::cout << treeWalker.repr() << std::endl;
 
-  reader->Next();
-  treeWalker.resolve();
-
-  std::cout << "RESOLVED? " << treeWalker.resolved() << std::endl;
+  // reader->Next();
+  // treeWalker.resolve();
+  // std::cout << "RESOLVED? " << treeWalker.resolved() << std::endl;
 
   // std::cout << treeWalker.repr() << std::endl;
 
   std::cout << treeWalker.avroSchema() << std::endl;
 
-  treeWalker.printJSON();
+  // treeWalker.printJSON();
 
-  // while (reader->Next())
-  //   treeWalker.printJSON();
+  while (reader->Next())
+    treeWalker.printJSON();
 
-  // std::cout << "END END" << std::endl;
-
-  // TTreeAvroGenerator *generator = new TTreeAvroGenerator(reader->GetTree());
-
-  // if (schemaName.size() == 0)
-  //   schemaName = std::string(reader->GetTree()->GetName());
-
-  // if (mode == std::string("schema")) {
-  //   std::cout << generator->schema(0, schemaName, ns);
-  //   return 0;
-  // }
-
-  // std::string codeToDeclare;
-
-  // codeToDeclare = std::string("TTreeReader *getReader();\n\n");
-  // codeToDeclare += generator->definitions() + std::string("\n");
-  // codeToDeclare += std::string("class Root2Avro {\n");
-  // codeToDeclare += std::string("public:\n");
-  // codeToDeclare += generator->declarations() + std::string("\n");
-  // codeToDeclare += std::string("  void run() {\n");
-  // codeToDeclare += generator->init() + std::string("\n");
-
-  // if (mode == std::string("avro"))
-  //   throw;
-  // else if (mode == std::string("json"))
-  //   codeToDeclare += generator->printJSON();
-  // else
-  //   throw;
-
-  // codeToDeclare += std::string("  }\n");
-  // codeToDeclare += std::string("};\n");
-
-  // if (debug)
-  //   std::cout << codeToDeclare << std::endl;
-  // else {
-  //   // declare the new class
-  //   gInterpreter->Declare(codeToDeclare.c_str());
-
-  //   // and run it
-  //   ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory("Root2Avro");
-  //   TString methodName = "run";
-  //   CallFunc_t *callFunc = gInterpreter->CallFunc_Factory();
-  //   Long_t offset = -1;
-  //   gInterpreter->CallFunc_SetFunc(callFunc, classInfo, methodName, "", &offset);
-  //   void *instance = gInterpreter->ClassInfo_New(classInfo);
-  //   gInterpreter->CallFunc_Exec(callFunc, instance);
-  // }
-
-  // file->Close();
+  file->Close();
 
   return 0;
 }
