@@ -408,22 +408,26 @@ public:
 
 class LeafDimension {
 private:
-  int fixedSize;
+  LeafDimension *next_;
+  int size_;
   IntWalker *counter;
   TTreeReaderValueBase *counterReaderValue;
 public:
-  LeafDimension();
-  LeafDimension(int size);
-  LeafDimension(IntWalker *counter);
+  LeafDimension(LeafDimension *next);
+  LeafDimension(LeafDimension *next, int size);
+  LeafDimension(LeafDimension *next, IntWalker *counter);
+  std::string repr();
+  LeafDimension *next();   // linked list makes the recursive function in LeafWalker easier to understand
   int size();
 };
 
 class LeafWalker : public ExtractableWalker {
 public:
-  std::vector<LeafDimension> dims;
   PrimitiveWalker *walker;
   TTreeReaderValueBase *readerValue;
   TTreeReaderArrayBase *readerArray;
+  int dimensions;
+  LeafDimension *dims;
 
   LeafWalker(TLeaf *tleaf, TTree *ttree);
   PrimitiveWalker *leafToPrimitive(TLeaf *tleaf);
@@ -432,6 +436,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim);
   void printJSON(void *address);
   void *getAddress();
 };

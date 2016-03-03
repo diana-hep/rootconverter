@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     
   TreeWalker treeWalker;
 
-  // std::cout << treeWalker.repr() << std::endl;
+  std::cout << std::endl << treeWalker.repr() << std::endl << std::endl;
 
   // reader->Next();
   // treeWalker.resolve();
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 
   // std::cout << treeWalker.repr() << std::endl;
 
-  std::cout << treeWalker.avroSchema() << std::endl;
+  // std::cout << treeWalker.avroSchema() << std::endl;
 
   // treeWalker.printJSON();
 

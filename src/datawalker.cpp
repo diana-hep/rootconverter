@@ -865,19 +865,30 @@ ExtractableWalker::ExtractableWalker(std::string fieldName, std::string typeName
 
 bool ExtractableWalker::empty() { return false; }
 
-///////////////////////////////////////////////////////////////////// LeafWalker
+///////////////////////////////////////////////////////////////////// LeafWalker (and LeafDimension)
 
-LeafDimension::LeafDimension() : fixedSize(-1), counter(nullptr) { }
+LeafDimension::LeafDimension(LeafDimension *next) : next_(next), size_(-1), counter(nullptr) { }
 
-LeafDimension::LeafDimension(int size) : fixedSize(size), counter(nullptr) { }
+LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr) { }
 
-LeafDimension::LeafDimension(IntWalker *walker) : fixedSize(-1), counter(walker), counterReaderValue(counter->readerValue()) { }
+LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue()) { }
+
+std::string LeafDimension::repr() {
+  if (counter != nullptr)
+    return std::string("{\"counter\": ") + counter->fieldName + std::string("}");
+  else if (size_ == -1)
+    return std::string("\"variable\"");
+  else
+    return std::to_string(size_);
+}
+
+LeafDimension *LeafDimension::next() { return next_; }
 
 int LeafDimension::size() {
   if (counter != nullptr)
     return counter->value(counterReaderValue);
   else
-    return fixedSize;
+    return size_;
 }
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
@@ -903,16 +914,18 @@ LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
     }
   }
 
-  for (int i = 0;  i < intdims.size();  i++) {
+  dimensions = intdims.size();
+  dims = nullptr;
+  for (int i = dimensions - 1;  i >= 0;  i--) {
     if (ttree->GetLeaf(strdims[i].c_str()) != nullptr)
-      dims.push_back(LeafDimension(new IntWalker(strdims[i].c_str())));
+      dims = new LeafDimension(dims, new IntWalker(strdims[i].c_str()));
     else if (intdims[i] > 0)
-      dims.push_back(LeafDimension(intdims[i]));
+      dims = new LeafDimension(dims, intdims[i]);
     else
-      dims.push_back(LeafDimension());
+      dims = new LeafDimension(dims);
   }
 
-  if (dims.empty())
+  if (dimensions == 0)
     readerValue = walker->readerValue();
   else
     readerArray = walker->readerArray();
@@ -968,33 +981,54 @@ bool LeafWalker::resolved() { return true; }
 void LeafWalker::resolve(void *address) { }
 
 std::string LeafWalker::repr(int indent, std::set<std::string> &memo) {
-  return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
+  std::string out;
+  out += std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TLeaf\", \"dimensions\": [");
+  bool first = true;
+  for (LeafDimension *dim = dims;  dim != nullptr;  dim = dim->next()) {
+    if (first) first = false; else out += std::string(", ");
+    out += dim->repr();
+  }
+  out += std::string("], \"type\": ") + walker->repr(indent, memo) + std::string("}");
+  return out;
 }
 
 std::string LeafWalker::avroTypeName() { return walker->avroTypeName(); }
 
 std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
   std::string out = std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ");
-  if (readerValue != nullptr)
-    out += walker->avroSchema(indent, memo) + std::string("}");
-  else
-    out += std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}}");
+
+  for (int i = 0;  i < dimensions;  i++)
+    out += std::string("{\"type\": \"array\", \"items\": ");
+
+  out += walker->avroSchema(indent, memo) + std::string(dimensions, '}') + std::string("}");
   return out;
+}
+
+int LeafWalker::printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim) {
+  int dimSize = dim->size();
+
+  std::cout << "[";
+  bool first = true;
+  for (int dimIndex = 0;  dimIndex < dimSize  &&  readerIndex < readerSize;  dimIndex++) {
+    if (first) first = false; else std::cout << ", ";
+    if (dim->next() == nullptr) {
+      walker->printJSON(readerArray, readerIndex);
+      readerIndex += 1;
+    }
+    else
+      readerIndex = printJSONDeep(readerIndex, readerSize, dim->next());
+  }
+  std::cout << "]";
+
+  return readerIndex;
 }
 
 void LeafWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   if (address != nullptr)
     walker->printJSON(address);
-  else {
-    std::cout << "[";
-    bool first = true;
-    for (int i = 0;  i < readerArray->GetSize();  i++) {
-      if (first) first = false; else std::cout << ", ";
-      walker->printJSON(readerArray, i);
-    }
-    std::cout << "]";
-  }
+  else
+    printJSONDeep(0, readerArray->GetSize(), dims);
 }
 
 void *LeafWalker::getAddress() {
