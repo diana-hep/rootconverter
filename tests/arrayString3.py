@@ -1,6 +1,6 @@
 treeType = TreeType(Array(StdString, 3))
 
-skip = "ROOT doesn't recognize TString"
+skip = "ROOT doesn't recognize std::string"
 
 fill = r"""
 TTree *t = new TTree("t", "");

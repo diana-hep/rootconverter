@@ -9,7 +9,8 @@ import sys
 
 parser = argparse.ArgumentParser(description="Test root2avro by generating ROOT files of different types and attempting to read them back.")
 parser.add_argument("tests", metavar="N", nargs="*", action="store", help="tests to run (if blank, run everything in tests/*.py)")
-parser.add_argument("--list", action="store_true", help="just list the tests without running them")
+parser.add_argument("--list-only", action="store_true", help="just list the tests without running them")
+parser.add_argument("--generate-only", action="store_true", help="just generate the ROOT files without running the tests")
 args = parser.parse_args()
 
 if len(args.tests) == 0:
@@ -190,6 +191,9 @@ class TerminalColor:
     UNDERLINE = "\033[4m"
     ENDC = "\033[0m"
 
+if not os.path.exists("build"):
+    os.makedirs("build")
+
 for test in tests:
     print TerminalColor.OKGREEN + repr(test["treeType"]) + TerminalColor.ENDC, "in", test["testFileName"],
 
@@ -201,7 +205,7 @@ for test in tests:
         sys.stdout.flush()
         continue
 
-    if args.list:
+    if args.list_only:
         print
         continue
 
@@ -209,19 +213,35 @@ for test in tests:
     sys.stdout.flush()
 
     try:
+        rootScript = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".C")
+        rootScriptName = os.path.split(test["testFileName"])[1].rsplit(".", 1)[0]
         rootFile = os.path.join("build", os.path.split(test["testFileName"])[1].rsplit(".", 1)[0] + ".root")
 
         # build the root file if it doesn't exist or if it's older than the corresponding test
         if not os.path.exists(rootFile) or os.path.getmtime(rootFile) < os.path.getmtime(test["testFileName"]):
-            command = ["root", "-l"]
-            root = subprocess.Popen(command, stdin=subprocess.PIPE)
-            root.stdin.write("TFile *tfile = new TFile(\"%s\", \"RECREATE\");\n" % rootFile)
-            root.stdin.write(test["fill"] + "\n")
-            root.stdin.write("tfile->Write();\n")
-            root.stdin.write("tfile->Close();\n")
-            root.stdin.write(".q\n")
-            if root.wait() != 0:
-                raise RuntimeError("root TTree filling failed with exit code %d" % root2avro.returncode)
+            script = open(rootScript, "w")
+            script.write("#include <TFile.h>\n")
+            script.write("#include <TTree.h>\n")
+            script.write("void %s() {\n" % rootScriptName)
+            script.write("TFile *tfile = new TFile(\"%s\", \"RECREATE\");\n" % rootFile)
+            script.write(test["fill"] + "\n")
+            script.write("tfile->Write();\n")
+            script.write("tfile->Close();\n")
+            script.write("}\n")
+            script.close()
+            command = ["root", "-l", "-q", rootScript]
+            root = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            root.wait()
+            output = root.stdout.read().replace("\nProcessing %s...\n" % rootScript, "").strip()
+            if len(output) > 0:
+                print
+                print output
+            if root.returncode != 0:
+                raise RuntimeError("root TTree filling failed with exit code %d" % root.returncode)
+
+        if args.generate_only:
+            print TerminalColor.BOLD + TerminalColor.OKBLUE + "GENERATED" + TerminalColor.ENDC
+            continue
 
         command = ["build/root2avro", "--mode=schema", "file://" + rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
