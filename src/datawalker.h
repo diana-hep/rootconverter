@@ -3,6 +3,8 @@
 
 // C++ includes
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <map>
 #include <vector>
 #include <string>
@@ -18,6 +20,18 @@
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
 #include <TString.h>
+#include <TList.h>
+#include <TLeafO.h>
+#include <TLeafB.h>
+#include <TLeafS.h>
+#include <TLeafI.h>
+#include <TLeafL.h>
+#include <TLeafF.h>
+#include <TLeafD.h>
+#include <TLeafC.h>
+#include <TLeafElement.h>
+#include <TLeafObject.h>
+#include <TClonesArray.h>
 
 using namespace ROOT::Internal;
 
@@ -31,7 +45,8 @@ public:
   std::string fieldName;
   std::string typeName;
   FieldWalker(std::string fieldName, std::string typeName);
-  std::string escapeJSON(std::string string);
+  void printEscapedString(const char *string, std::ostream &stream);
+  std::string escapedString(const char *string);
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
   virtual void resolve(void *address) = 0;

@@ -1,19 +1,5 @@
 #include "datawalker.h"
 
-// more ROOT includes
-#include <TList.h>
-#include <TLeafO.h>
-#include <TLeafB.h>
-#include <TLeafS.h>
-#include <TLeafI.h>
-#include <TLeafL.h>
-#include <TLeafF.h>
-#include <TLeafD.h>
-#include <TLeafC.h>
-#include <TLeafElement.h>
-#include <TLeafObject.h>
-#include <TClonesArray.h>
-
 extern TTreeReader *getReader();
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
@@ -21,7 +7,29 @@ extern TTreeReader *getReader();
 FieldWalker::FieldWalker(std::string fieldName, std::string typeName) :
   fieldName(fieldName), typeName(typeName) { }
 
-std::string FieldWalker::escapeJSON(std::string string) { return string; }
+void FieldWalker::printEscapedString(const char *string, std::ostream &stream) {
+  for (const char *c = string;  *c != 0;  c++)
+    switch (*c) {
+      case '"': stream << "\\\""; break;
+      case '\\': stream << "\\\\"; break;
+      case '\b': stream << "\\b"; break;
+      case '\f': stream << "\\f"; break;
+      case '\n': stream << "\\n"; break;
+      case '\r': stream << "\\r"; break;
+      case '\t': stream << "\\t"; break;
+      default:
+        if ('\x00' <= *c  &&  *c <= '\x1f')
+          stream << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)*c << std::dec;
+        else
+          stream << *c;
+    }
+}
+
+std::string FieldWalker::escapedString(const char *string) {
+  std::ostringstream stream;
+  printEscapedString(string, stream);
+  return stream.str();
+}
 
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
 
@@ -219,7 +227,9 @@ std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo)
 CStringWalker::CStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "char*") { }
 
 void CStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON((char*)address) << "\"";
+  std::cout << "\"";
+  printEscapedString((char*)address, std::cout);
+  std::cout << "\"";
 }
 
 TTreeReaderValueBase *CStringWalker::readerValue() {
@@ -231,7 +241,9 @@ TTreeReaderValueBase *CStringWalker::readerValue() {
 StdStringWalker::StdStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "string") { }
 
 void StdStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON(*((std::string*)address)) << "\"";
+  std::cout << "\"";
+  printEscapedString(((std::string*)address)->c_str(), std::cout);
+  std::cout << "\"";
 }
 
 TTreeReaderValueBase *StdStringWalker::readerValue() {
@@ -244,7 +256,9 @@ TTreeReaderValueBase *StdStringWalker::readerValue() {
 TStringWalker::TStringWalker(std::string fieldName) : AnyStringWalker(fieldName, "TString") { }
 
 void TStringWalker::printJSON(void *address) {
-  std::cout << "\"" << escapeJSON(((TString*)address)->Data()) << "\"";
+  std::cout << "\"";
+  printEscapedString(((TString*)address)->Data(), std::cout);
+  std::cout << "\"";
 }
 
 TTreeReaderValueBase *TStringWalker::readerValue() {
@@ -364,7 +378,7 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
   std::string out;
   out += std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo);
   if (!comment.empty())
-    out += std::string(", \"doc\": \"") + escapeJSON(comment) + std::string("\"");
+    out += std::string(", \"doc\": \"") + escapedString(comment.c_str()) + std::string("\"");
   out += std::string("}");
   return out;
 }
