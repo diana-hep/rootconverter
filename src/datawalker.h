@@ -413,12 +413,12 @@ private:
   IntWalker *counter;
   TTreeReaderValueBase *counterReaderValue;
 public:
-  LeafDimension(LeafDimension *next);
   LeafDimension(LeafDimension *next, int size);
   LeafDimension(LeafDimension *next, IntWalker *counter);
   std::string repr();
   LeafDimension *next();   // linked list makes the recursive function in LeafWalker easier to understand
   int size();
+  int flatSize();
 };
 
 class LeafWalker : public ExtractableWalker {

@@ -867,8 +867,6 @@ bool ExtractableWalker::empty() { return false; }
 
 ///////////////////////////////////////////////////////////////////// LeafWalker (and LeafDimension)
 
-LeafDimension::LeafDimension(LeafDimension *next) : next_(next), size_(-1), counter(nullptr) { }
-
 LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr) { }
 
 LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue()) { }
@@ -876,8 +874,6 @@ LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker) : next_(nex
 std::string LeafDimension::repr() {
   if (counter != nullptr)
     return std::string("{\"counter\": ") + counter->fieldName + std::string("}");
-  else if (size_ == -1)
-    return std::string("\"variable\"");
   else
     return std::to_string(size_);
 }
@@ -889,6 +885,13 @@ int LeafDimension::size() {
     return counter->value(counterReaderValue);
   else
     return size_;
+}
+
+int LeafDimension::flatSize() {
+  int out = size();
+  if (next_ != nullptr)
+    out *= next_->flatSize();
+  return out;
 }
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
@@ -919,10 +922,8 @@ LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
   for (int i = dimensions - 1;  i >= 0;  i--) {
     if (ttree->GetLeaf(strdims[i].c_str()) != nullptr)
       dims = new LeafDimension(dims, new IntWalker(strdims[i].c_str()));
-    else if (intdims[i] > 0)
-      dims = new LeafDimension(dims, intdims[i]);
     else
-      dims = new LeafDimension(dims);
+      dims = new LeafDimension(dims, intdims[i]);
   }
 
   if (dimensions == 0)
@@ -1027,8 +1028,9 @@ void LeafWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   if (address != nullptr)
     walker->printJSON(address);
-  else
-    printJSONDeep(0, readerArray->GetSize(), dims);
+  else {
+    printJSONDeep(0, dims->flatSize(), dims);
+  }
 }
 
 void *LeafWalker::getAddress() {
