@@ -16,6 +16,7 @@
 #include <TInterpreter.h>
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
+#include <TTreeReaderArray.h>
 
 using namespace ROOT::Internal;
 
@@ -49,7 +50,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroSchema(int indent, std::set<std::string> &memo);
-  virtual TTreeReaderValueBase *readerValue(std::string name) = 0;
+  virtual TTreeReaderValueBase *readerValue() = 0;
 };
 
 class BoolWalker : public PrimitiveWalker {
@@ -57,7 +58,7 @@ public:
   BoolWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class CharWalker : public PrimitiveWalker {
@@ -65,7 +66,7 @@ public:
   CharWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class UCharWalker : public PrimitiveWalker {
@@ -73,7 +74,7 @@ public:
   UCharWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class ShortWalker : public PrimitiveWalker {
@@ -81,7 +82,7 @@ public:
   ShortWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class UShortWalker : public PrimitiveWalker {
@@ -89,7 +90,7 @@ public:
   UShortWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class IntWalker : public PrimitiveWalker {
@@ -97,7 +98,7 @@ public:
   IntWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class UIntWalker : public PrimitiveWalker {
@@ -105,7 +106,7 @@ public:
   UIntWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class LongWalker : public PrimitiveWalker {
@@ -113,7 +114,7 @@ public:
   LongWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class ULongWalker : public PrimitiveWalker {
@@ -121,7 +122,7 @@ public:
   ULongWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class FloatWalker : public PrimitiveWalker {
@@ -129,7 +130,7 @@ public:
   FloatWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class DoubleWalker : public PrimitiveWalker {
@@ -137,7 +138,7 @@ public:
   DoubleWalker(std::string fieldName);
   std::string avroTypeName();
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 ///////////////////////////////////////////////////////////////////// AnyStringWalkers
@@ -157,21 +158,21 @@ class CStringWalker : public AnyStringWalker {
 public:
   CStringWalker(std::string fieldName);
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class StdStringWalker : public AnyStringWalker {
 public:
   StdStringWalker(std::string fieldName);
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 class TStringWalker : public AnyStringWalker {
 public:
   TStringWalker(std::string fieldName);
   void printJSON(void *address);
-  TTreeReaderValueBase *readerValue(std::string name);
+  TTreeReaderValueBase *readerValue();
 };
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
