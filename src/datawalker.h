@@ -17,6 +17,7 @@
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
+#include <TString.h>
 
 using namespace ROOT::Internal;
 
@@ -406,6 +407,36 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  void *getAddress();
+};
+
+///////////////////////////////////////////////////////////////////// RawTBranchWalker
+
+class RawTBranchWalker : public ExtractableWalker {
+public:
+  TBranch *tbranch;
+  FieldWalker *walker;
+
+  RawTBranchWalker(std::string fieldName, std::string typeName, FieldWalker *walker);
+  bool resolved();
+  void resolve(void *address);
+  std::string repr(int indent, std::set<std::string> &memo);
+  std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
+  void printJSON(void *address);
+};
+
+class RawTBranchStdStringWalker : public RawTBranchWalker {
+public:
+  std::string *data;
+  RawTBranchStdStringWalker(std::string fieldName);
+  void *getAddress();
+};
+
+class RawTBranchTStringWalker : public RawTBranchWalker {
+public:
+  TString *data;
+  RawTBranchTStringWalker(std::string fieldName);
   void *getAddress();
 };
 

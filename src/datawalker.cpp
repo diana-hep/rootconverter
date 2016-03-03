@@ -212,7 +212,7 @@ std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
 }
 std::string AnyStringWalker::avroTypeName() { return "string"; }
 
-std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"bytes\""; }
+std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
 
 //// CStringWalker
 
@@ -235,6 +235,7 @@ void StdStringWalker::printJSON(void *address) {
 }
 
 TTreeReaderValueBase *StdStringWalker::readerValue() {
+  // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
   return new TTreeReaderValue<std::string>(*getReader(), fieldName.c_str());
 }
 
@@ -247,6 +248,7 @@ void TStringWalker::printJSON(void *address) {
 }
 
 TTreeReaderValueBase *TStringWalker::readerValue() {
+  // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
   return new TTreeReaderValue<TString>(*getReader(), fieldName.c_str());
 }
 
@@ -800,36 +802,6 @@ void LeafWalker::printJSON(void *address) {
 
 void *LeafWalker::getAddress() { return readerValue->GetAddress(); }
 
-// ///////////////////////////////////////////////////////////////////// ReaderCStringWalker
-
-// ReaderCStringWalker::ReaderCStringWalker(std::string fieldName) :
-//   ExtractableWalker(fieldName, "char*"),
-//   walker(new CStringWalker(fieldName)),
-//   readerValue(walker->readerValue()) { }
-
-// bool ReaderCStringWalker::resolved() { return true; }
-
-// void ReaderCStringWalker::resolve(void *address) { }
-
-// std::string ReaderCStringWalker::repr(int indent, std::set<std::string> &memo) {
-//   return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
-// }
-
-// std::string ReaderCStringWalker::avroTypeName() { return walker->avroTypeName(); }
-
-// std::string ReaderCStringWalker::avroSchema(int indent, std::set<std::string> &memo) {
-//   return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
-// }
-
-// void ReaderCStringWalker::printJSON(void *address) {
-//   std::cout << "\"" << fieldName << "\": ";
-//   walker->printJSON(address);
-// }
-
-// void *ReaderCStringWalker::getAddress() {
-//   return extractorInstance->getAddress();
-// }
-
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
 static int ExtractorInterfaceNumber = 0;
@@ -901,6 +873,60 @@ void ReaderArrayWalker::printJSON(void *address) { }   // stub
 
 void *ReaderArrayWalker::getAddress() { return nullptr; }
 
+///////////////////////////////////////////////////////////////////// RawTBranchWalker
+
+RawTBranchWalker::RawTBranchWalker(std::string fieldName, std::string typeName, FieldWalker *walker) :
+  ExtractableWalker(fieldName, typeName),
+  tbranch(nullptr),
+  walker(walker) { }
+
+bool RawTBranchWalker::resolved() { return true; }
+
+void RawTBranchWalker::resolve(void *address) { }
+
+std::string RawTBranchWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TBranch\", \"type\": ") + typeName + std::string("}");
+}
+
+std::string RawTBranchWalker::avroTypeName() { return walker->avroTypeName(); }
+
+std::string RawTBranchWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
+
+void RawTBranchWalker::printJSON(void *address) {
+  std::cout << "\"" << fieldName << "\": ";
+  walker->printJSON(address);
+}
+
+//// RawTBranchStdStringWalker
+
+RawTBranchStdStringWalker::RawTBranchStdStringWalker(std::string fieldName) :
+  RawTBranchWalker(fieldName, "string", new StdStringWalker(fieldName)),
+  data(nullptr)
+{
+  getReader()->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+}
+
+void *RawTBranchStdStringWalker::getAddress() {
+  tbranch->GetEntry(getReader()->GetCurrentEntry());
+  return data;
+}
+
+//// RawTBranchTStringWalker
+
+RawTBranchTStringWalker::RawTBranchTStringWalker(std::string fieldName) :
+  RawTBranchWalker(fieldName, "TString", new TStringWalker(fieldName)),
+  data(nullptr)
+{
+  getReader()->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+}
+
+void *RawTBranchTStringWalker::getAddress() {
+  tbranch->GetEntry(getReader()->GetCurrentEntry());
+  return data;
+}
+
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
 TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace) {
@@ -921,11 +947,17 @@ TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace)
   TIter nextBranch = ttree->GetListOfBranches();
   for (TBranch *tbranch = (TBranch*)nextBranch();  tbranch != nullptr;  tbranch = (TBranch*)nextBranch()) {
     std::string branchName = tbranch->GetName();
-    if (std::string(tbranch->GetClassName()).empty()) {
+    std::string className = std::string(tbranch->GetClassName());
+
+    if (className.empty()) {
       TIter nextLeaf = tbranch->GetListOfLeaves();
       for (TLeaf *tleaf = (TLeaf*)nextLeaf();  tleaf != nullptr;  tleaf = (TLeaf*)nextLeaf())
         fields.push_back(new LeafWalker(tleaf, ttree));
     }
+    else if (className == std::string("string"))
+      fields.push_back(new RawTBranchStdStringWalker(branchName));
+    else if (className == std::string("TString"))
+      fields.push_back(new RawTBranchTStringWalker(branchName));
     else
       fields.push_back(new ReaderValueWalker(branchName, tbranch, avroNamespace, defs));
   }
