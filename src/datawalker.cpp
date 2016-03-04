@@ -1164,9 +1164,8 @@ void LeafWalker::printJSON(void *address) {
   std::cout << "\"" << fieldName << "\": ";
   if (address != nullptr)
     walker->printJSON(address);
-  else {
+  else
     printJSONDeep(0, dims->flatSize(), dims);
-  }
 }
 
 void LeafWalker::reset(TTreeReader *reader) {

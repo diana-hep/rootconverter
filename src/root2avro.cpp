@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
   treeLocation = fileLocations.back();
   fileLocations.pop_back();
 
-  if (start != NA  &&  end != NA  &&  start >= end) {
-    std::cerr << "Start must be less than end (if provided)." << std::endl;
+  if (start != NA  &&  end != NA  &&  start > end) {
+    std::cerr << "Start must be less than or equal to end (if provided)." << std::endl;
     return -1;
   }
 
@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
   TreeWalker *treeWalker = nullptr;
 
   // main loop
-  uint64_t cumulativeCount = 0;
   uint64_t currentEntry = 0;
   for (int fileIndex = 0;  fileIndex < fileLocations.size();  fileIndex++) {
     std::string url = fileLocations[fileIndex];
@@ -175,20 +174,22 @@ int main(int argc, char **argv) {
     }
 
     // skip this file if the first requested entry comes after it
-    if (start != NA  &&  currentEntry + reader->GetTree()->GetEntries() < start) {
+    if (start != NA  &&  start >= currentEntry + reader->GetTree()->GetEntries()) {
       currentEntry += reader->GetTree()->GetEntries();
       continue;
     }
 
     // set up or update the TreeWalker
-    if (treeWalker != nullptr)
+    if (treeWalker != nullptr) {
       treeWalker->reset(reader);
+      reader->Next();
+    }
     else {
       treeWalker = new TreeWalker(reader);
       while (!treeWalker->resolved()  &&  reader->Next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {
-        std::cerr << "Could not resolve dynamic types (e.g. TClonesArray); is the dataset empty?" << std::endl;
+        std::cerr << "Could not resolve dynamic types (e.g. TClonesArray); is the first file empty?" << std::endl;
         return -1;
       }
     }
@@ -200,18 +201,19 @@ int main(int argc, char **argv) {
 
     // print out JSON strings (one JSON document per line)
     else if (mode == std::string("json")) {
-      if (start != NA)
+      if (start != NA  &&  start > currentEntry) {
         reader->SetEntry(start - currentEntry);
+        currentEntry = start;
+      }
       else
       reader->SetEntry(0);
 
       do {
+        if (end != NA  &&  currentEntry >= end)
+          return 0;
+
         treeWalker->printJSON();
-
         currentEntry += 1;
-        // if (end != NA  &&  currentEntry > end)
-        //   return 0;
-
       } while (reader->Next());
     }
 
