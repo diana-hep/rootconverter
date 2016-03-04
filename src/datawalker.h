@@ -320,18 +320,9 @@ public:
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
-// class StdVectorInterface {
-// public:
-//   virtual void start(void *vector) = 0;
-//   virtual bool valid() = 0;
-//   virtual void *get() = 0;
-//   virtual void step() = 0;
-// };
-
 class StdVectorWalker : public FieldWalker {
 public:
   FieldWalker *walker;
-  // StdVectorInterface *extractorInstance;
 
   StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker);
   size_t byteWidth();
@@ -490,22 +481,6 @@ public:
   void printJSON(void *address);
   void *getAddress();
 };
-
-// ///////////////////////////////////////////////////////////////////// ReaderArrayWalker
-
-// class ReaderArrayWalker : public ExtractableWalker {
-// public:
-//   FieldWalker *walker;
-
-//   ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
-//   bool resolved();
-//   void resolve(void *address);
-//   std::string repr(int indent, std::set<std::string> &memo);
-//   std::string avroTypeName();
-//   std::string avroSchema(int indent, std::set<std::string> &memo);
-//   void printJSON(void *address);
-//   void *getAddress();
-// };
 
 ///////////////////////////////////////////////////////////////////// RawTBranchWalker
 

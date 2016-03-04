@@ -429,7 +429,7 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, s
   else {
     walker = specializedWalker(fieldName, typeName, avroNamespace, defs);
     for (int i = arrayDim - 1;  i >= 0;  i--)
-      walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i));    // , dataMember->GetUnitSize()
+      walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i));
   }
 }
 
@@ -692,37 +692,8 @@ void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
-// static int StdVectorExtractorNumber = 0;
-
 StdVectorWalker::StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker) :
-  FieldWalker(fieldName, typeName), walker(walker)
-{
-
-
-  // std::string codeToDeclare = std::string("class StdVectorExtractor_") + std::to_string(StdVectorExtractorNumber) + std::string(" : public StdVectorInterface {\n") +
-  //                             std::string("public:\n") +
-  //                             std::string("  ") + typeName + std::string(" *vec;\n") +
-  //                             std::string("  ") + typeName + std::string("::iterator iter;\n") +
-  //                             std::string("  void start(void *v) {\n") +
-  //                             std::string("    vec = (") + typeName + std::string("*)v;\n") +
-  //                             std::string("    iter = vec->begin();\n") +
-  //                             std::string("  }\n") +
-  //                             std::string("  bool valid() {\n") +
-  //                             std::string("    return iter != vec->end();\n") +
-  //                             std::string("  }\n") +
-  //                             std::string("  void *get() {\n") +
-  //                             std::string("    return (void*)&(*iter);\n") +
-  //                             std::string("  }\n") +
-  //                             std::string("  void step() {\n") +
-  //                             std::string("    ++iter;\n") +
-  //                             std::string("  }\n") +
-  //                             std::string("};\n");
-  // std::cout << codeToDeclare << std::endl;
-  // gInterpreter->Declare(codeToDeclare.c_str());
-  // ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("StdVectorExtractor_") + std::to_string(StdVectorExtractorNumber)).c_str());
-  // extractorInstance = (StdVectorInterface*)gInterpreter->ClassInfo_New(classInfo);  
-  // StdVectorExtractorNumber += 1;
-}
+  FieldWalker(fieldName, typeName), walker(walker) { }
 
 size_t StdVectorWalker::byteWidth() { return sizeof(std::vector<char>); }
 
@@ -731,8 +702,13 @@ bool StdVectorWalker::empty() { return false; }
 bool StdVectorWalker::resolved() { return walker->resolved(); }
 
 void StdVectorWalker::resolve(void *address) {
-  // for (extractorInstance->start(address);  extractorInstance->valid();  extractorInstance->step())
-  //   walker->resolve(extractorInstance->get());
+  std::vector<char> *generic = (std::vector<char>*)address;
+  int numItems = generic->size() / walker->byteWidth();
+  void *ptr = generic->data();
+  for (int i = 0;  i < numItems;  i++) {
+    walker->resolve(ptr);
+    ptr = (void*)((size_t)ptr + walker->byteWidth());
+  }
 }
 
 std::string StdVectorWalker::repr(int indent, std::set<std::string> &memo) {
@@ -746,40 +722,17 @@ std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void StdVectorWalker::printJSON(void *address) {
-  // std::cout << "[";
-
-  // std::vector<void*> *generic = (std::vector<void*>*)address;
-
-  // int byteWidth;
-
-  // // TClass *c = TClass::GetClass(walker->typeName.c_str());
-  // // if (c != nullptr)
-  // //   byteWidth = c->Size() / 8;
-
-  // if (typeName == std::string("vector<double>"))
-  //   byteWidth = 8;
-  // else if (typeName == std::string("vector<vector<double> >"))
-  //   byteWidth = 24;
-  // else
-  //   std::cout << "OUCH " << typeName << std::endl;
-
-  // int numItems = generic->size() / (byteWidth / 8);
-
-  // void *ptr = generic->data();
-  // bool first = true;
-  // for (int i = 0;  i < numItems;  i++) {
-  //   if (first) first = false; else std::cout << ", ";
-  //   walker->printJSON(ptr);
-  //   ptr = (void*)((size_t)ptr + byteWidth);
-  // }
-
-  // // extractorInstance->start(address);
-
-  // // for (extractorInstance->start(address);  extractorInstance->valid();  extractorInstance->step()) {
-  // //   if (first) first = false; else std::cout << ", ";
-  // //   walker->printJSON(extractorInstance->get());
-  // // }
-  // std::cout << "]";
+  std::cout << "[";
+  std::vector<char> *generic = (std::vector<char>*)address;
+  int numItems = generic->size() / walker->byteWidth();
+  void *ptr = generic->data();
+  bool first = true;
+  for (int i = 0;  i < numItems;  i++) {
+    if (first) first = false; else std::cout << ", ";
+    walker->printJSON(ptr);
+    ptr = (void*)((size_t)ptr + walker->byteWidth());
+  }
+  std::cout << "]";
 }
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
@@ -1125,16 +1078,10 @@ static int ExtractorInterfaceNumber = 0;
 
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   ExtractableWalker(fieldName, tbranch->GetClassName()),
-  //  walker(new ClassWalker(fieldName, TClass::GetClass(tbranch->GetClassName()), avroNamespace, defs))
   walker(MemberWalker::specializedWalker(fieldName, tbranch->GetClassName(), avroNamespace, defs))
 {
-  //  ((ClassWalker*)walker)->fill();
-
-  std::cout << "HERE " << tbranch->GetClassName() << std::endl;
-
   std::string codeToDeclare = std::string("class Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string(" : public ExtractorInterface {\n") +
                               std::string("public:\n") +
-                              // std::string("  TTreeReaderValue<") + typeName + std::string(" > value;\n") +
                               std::string("  TTreeReaderValue<") + tbranch->GetClassName() + std::string(" > value;\n") +
                               std::string("  Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
                               std::string("  void *getAddress() { return value.GetAddress(); }\n") +
@@ -1174,29 +1121,6 @@ void ReaderValueWalker::printJSON(void *address) {
 void *ReaderValueWalker::getAddress() {
   return extractorInstance->getAddress();
 }
-
-// ///////////////////////////////////////////////////////////////////// ReaderArrayWalker
-
-// ReaderArrayWalker::ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-//   ExtractableWalker(fieldName, tbranch->GetClassName()) { }
-
-// bool ReaderArrayWalker::resolved() { return walker->resolved(); }
-
-// void ReaderArrayWalker::resolve(void *address) { walker->resolve(address); }
-
-// std::string ReaderArrayWalker::repr(int indent, std::set<std::string> &memo) {
-//   return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderArray\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
-// }
-
-// std::string ReaderArrayWalker::avroTypeName() { return "array"; }
-
-// std::string ReaderArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
-//   return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": {\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}}");
-// }
-
-// void ReaderArrayWalker::printJSON(void *address) { }   // stub
-
-// void *ReaderArrayWalker::getAddress() { return nullptr; }
 
 ///////////////////////////////////////////////////////////////////// RawTBranchWalker
 
@@ -1261,14 +1185,7 @@ void *RawTBranchTStringWalker::getAddress() {
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
 TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace) {
-  std::string codeToDeclare = std::string("class StdVectorInterface {\n") +
-                              std::string("public:\n") +
-                              std::string("  virtual void start(void *vector) = 0;\n") +
-                              std::string("  virtual bool valid() = 0;\n") +
-                              std::string("  virtual void *get() = 0;\n") +
-                              std::string("  virtual void step() = 0;\n") +
-                              std::string("};\n") +
-                              std::string("class ExtractorInterface {\n") +
+  std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
                               std::string("public:\n") +
                               std::string("  virtual void *getAddress() = 0;\n") +
                               std::string("};\n") +
