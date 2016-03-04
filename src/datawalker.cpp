@@ -1125,29 +1125,18 @@ void *LeafWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
-// static int ExtractorInterfaceNumber = 0;
+GenericReaderValue::GenericReaderValue() {}
+
+GenericReaderValue::GenericReaderValue(TTreeReader& tr, std::string fieldName, std::string typeName, FieldWalker *walker) :
+  TTreeReaderValueBase(&tr, fieldName.c_str(), TDictionary::GetDictionary(*walker->typeId())),
+  typeName(typeName) { }
+
+const char *GenericReaderValue::GetDerivedTypeName() const { return typeName.c_str(); }
 
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   ExtractableWalker(fieldName, tbranch->GetClassName()),
   walker(MemberWalker::specializedWalker(fieldName, tbranch->GetClassName(), avroNamespace, defs)),
-  value(*getReader(), fieldName, std::string(tbranch->GetClassName()), walker)
-{
-  // std::string codeToDeclare = std::string("class Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string(" : public ExtractorInterface {\n") +
-  //                             std::string("public:\n") +
-  //                             std::string("  TTreeReaderValue<") + tbranch->GetClassName() + std::string(" > value;\n") +
-  //                             std::string("  Extractor_") + std::to_string(ExtractorInterfaceNumber) + std::string("() : value(*getReader(), \"") + std::string(fieldName) + std::string("\") { }\n") +
-  //                             std::string("  void *getAddress() { return value.GetAddress(); }\n") +
-  //                             std::string("};\n");
-
-  // std::cout << codeToDeclare << std::endl;
-
-  // gInterpreter->Declare(codeToDeclare.c_str());
-
-  // ClassInfo_t *classInfo = gInterpreter->ClassInfo_Factory((std::string("Extractor_") + std::to_string(ExtractorInterfaceNumber)).c_str());
-  // extractorInstance = (ExtractorInterface*)gInterpreter->ClassInfo_New(classInfo);  
-
-  // ExtractorInterfaceNumber += 1;
-}
+  value(*getReader(), fieldName, std::string(tbranch->GetClassName()), walker) { }
 
 size_t ReaderValueWalker::sizeOf() { return walker->sizeOf(); }
 
@@ -1173,8 +1162,7 @@ void ReaderValueWalker::printJSON(void *address) {
 }
 
 void *ReaderValueWalker::getAddress() {
-  value.GetAddress();
-  // return extractorInstance->getAddress();
+  return value.GetAddress();
 }
 
 ///////////////////////////////////////////////////////////////////// RawTBranchWalker
@@ -1246,13 +1234,6 @@ void *RawTBranchTStringWalker::getAddress() {
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
 TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace) {
-  // std::string codeToDeclare = std::string("class ExtractorInterface {\n") +
-  //                             std::string("public:\n") +
-  //                             std::string("  virtual void *getAddress() = 0;\n") +
-  //                             std::string("};\n") +
-  //                             std::string("TTreeReader *getReader();\n");
-  // gInterpreter->Declare(codeToDeclare.c_str());
-
   TTree *ttree = getReader()->GetTree();
 
   TIter nextBranch = ttree->GetListOfBranches();

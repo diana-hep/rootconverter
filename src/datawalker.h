@@ -2,41 +2,40 @@
 #define DATAWALKER_H
 
 // C++ includes
-#include <iostream>
-#include <sstream>
 #include <iomanip>
+#include <iostream>
 #include <map>
-#include <vector>
-#include <string>
 #include <set>
+#include <sstream>
+#include <string>
 #include <typeinfo>
+#include <vector>
 
 // ROOT includes
-#include <TTree.h>
-#include <TLeaf.h>
 #include <TClass.h>
+#include <TClonesArray.h>
 #include <TDataMember.h>
-#include <TInterpreter.h>
-#include <TTreeReader.h>
-#include <TTreeReaderValue.h>
-#include <TTreeReaderArray.h>
-#include <TString.h>
-#include <TList.h>
-#include <TLeafO.h>
+#include <TDictionary.h>
 #include <TLeafB.h>
-#include <TLeafS.h>
+#include <TLeafC.h>
+#include <TLeafD.h>
+#include <TLeafElement.h>
+#include <TLeafF.h>
+#include <TLeaf.h>
 #include <TLeafI.h>
 #include <TLeafL.h>
-#include <TLeafF.h>
-#include <TLeafD.h>
-#include <TLeafC.h>
-#include <TLeafElement.h>
 #include <TLeafObject.h>
+#include <TLeafO.h>
+#include <TLeafS.h>
+#include <TList.h>
 #include <TObjArray.h>
-#include <TClonesArray.h>
-#include <TRef.h>
 #include <TRefArray.h>
-#include <TDictionary.h>
+#include <TRef.h>
+#include <TString.h>
+#include <TTree.h>
+#include <TTreeReaderArray.h>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
 
 using namespace ROOT::Internal;
 
@@ -442,11 +441,6 @@ public:
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
 
-// class ExtractorInterface {
-// public:
-//   virtual void *getAddress() = 0;
-// };
-
 class ExtractableWalker : public FieldWalker {
 public:
   ExtractableWalker(std::string fieldName, std::string typeName);
@@ -498,21 +492,15 @@ public:
 class GenericReaderValue: public TTreeReaderValueBase {
 public:
   std::string typeName;
-
-  GenericReaderValue() {}
-  GenericReaderValue(TTreeReader& tr, std::string fieldName, std::string typeName, FieldWalker *walker):
-    TTreeReaderValueBase(&tr, fieldName.c_str(), TDictionary::GetDictionary(*walker->typeId())),
-    typeName(typeName) { }
-  const char *GetDerivedTypeName() const { return typeName.c_str(); }
+  GenericReaderValue();
+  GenericReaderValue(TTreeReader& tr, std::string fieldName, std::string typeName, FieldWalker *walker);
+  const char *GetDerivedTypeName() const;
 };
 
 class ReaderValueWalker : public ExtractableWalker {
 public:
   FieldWalker *walker;
   GenericReaderValue value;
-
-  // CallFunc_t *extractorMethod;
-  // ExtractorInterface *extractorInstance;
 
   ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
