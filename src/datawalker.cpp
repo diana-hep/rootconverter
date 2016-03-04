@@ -1,8 +1,5 @@
 #include "datawalker.h"
 
-// FIXME: this is no longer needed; push a TTreeReader* through the tree the normal way
-extern TTreeReader *getReader();
-
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
 FieldWalker::FieldWalker(std::string fieldName, std::string typeName) :
@@ -69,12 +66,12 @@ void BoolWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   if (((TTreeReaderArray<bool>*)readerArrayBase)->At(i)) std::cout << "true"; else std::cout << "false";
 }
 
-TTreeReaderValueBase *BoolWalker::readerValue() {
-  return new TTreeReaderValue<bool>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *BoolWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<bool>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *BoolWalker::readerArray() {
-  return new TTreeReaderArray<bool>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *BoolWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<bool>(*reader, fieldName.c_str());
 }
 
 //// CharWalker
@@ -95,12 +92,12 @@ void CharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((int)((TTreeReaderArray<char>*)readerArrayBase)->At(i));
 }
 
-TTreeReaderValueBase *CharWalker::readerValue() {
-  return new TTreeReaderValue<char>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *CharWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<char>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *CharWalker::readerArray() {
-  return new TTreeReaderArray<char>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *CharWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<char>(*reader, fieldName.c_str());
 }
 
 //// UCharWalker
@@ -121,12 +118,12 @@ void UCharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((int)((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
 }
 
-TTreeReaderValueBase *UCharWalker::readerValue() {
-  return new TTreeReaderValue<unsigned char>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *UCharWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<unsigned char>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *UCharWalker::readerArray() {
-  return new TTreeReaderArray<unsigned char>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *UCharWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<unsigned char>(*reader, fieldName.c_str());
 }
 
 //// ShortWalker
@@ -147,12 +144,12 @@ void ShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<short>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *ShortWalker::readerValue() {
-  return new TTreeReaderValue<short>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *ShortWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<short>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *ShortWalker::readerArray() {
-  return new TTreeReaderArray<short>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *ShortWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<short>(*reader, fieldName.c_str());
 }
 
 //// UShortWalker
@@ -173,12 +170,12 @@ void UShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *UShortWalker::readerValue() {
-  return new TTreeReaderValue<unsigned short>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *UShortWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<unsigned short>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *UShortWalker::readerArray() {
-  return new TTreeReaderArray<unsigned short>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *UShortWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<unsigned short>(*reader, fieldName.c_str());
 }
 
 //// IntWalker
@@ -199,12 +196,12 @@ void IntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<int>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *IntWalker::readerValue() {
-  return new TTreeReaderValue<int>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *IntWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<int>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *IntWalker::readerArray() {
-  return new TTreeReaderArray<int>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *IntWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<int>(*reader, fieldName.c_str());
 }
 
 int IntWalker::value(TTreeReaderValueBase *readerValue) {
@@ -229,12 +226,12 @@ void UIntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *UIntWalker::readerValue() {
-  return new TTreeReaderValue<unsigned int>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *UIntWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<unsigned int>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *UIntWalker::readerArray() {
-  return new TTreeReaderArray<unsigned int>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *UIntWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<unsigned int>(*reader, fieldName.c_str());
 }
 
 //// LongWalker
@@ -255,12 +252,12 @@ void LongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *LongWalker::readerValue() {
-  return new TTreeReaderValue<Long64_t>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *LongWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<Long64_t>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *LongWalker::readerArray() {
-  return new TTreeReaderArray<Long64_t>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *LongWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<Long64_t>(*reader, fieldName.c_str());
 }
 
 //// ULongWalker
@@ -281,12 +278,12 @@ void ULongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<unsigned long>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *ULongWalker::readerValue() {
-  return new TTreeReaderValue<ULong64_t>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *ULongWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<ULong64_t>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *ULongWalker::readerArray() {
-  return new TTreeReaderArray<ULong64_t>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *ULongWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<ULong64_t>(*reader, fieldName.c_str());
 }
 
 //// FloatWalker
@@ -307,12 +304,12 @@ void FloatWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<float>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *FloatWalker::readerValue() {
-  return new TTreeReaderValue<float>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *FloatWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<float>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *FloatWalker::readerArray() {
-  return new TTreeReaderArray<float>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *FloatWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<float>(*reader, fieldName.c_str());
 }
 
 //// DoubleWalker
@@ -333,12 +330,12 @@ void DoubleWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << ((TTreeReaderArray<double>*)readerArrayBase)->At(i);
 }
 
-TTreeReaderValueBase *DoubleWalker::readerValue() {
-  return new TTreeReaderValue<double>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *DoubleWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderValue<double>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *DoubleWalker::readerArray() {
-  return new TTreeReaderArray<double>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *DoubleWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<double>(*reader, fieldName.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////// AnyStringWalkers
@@ -379,12 +376,12 @@ void CStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << "\"";
 }
 
-TTreeReaderValueBase *CStringWalker::readerValue() {
-  return new TTreeReaderArray<char>(*getReader(), fieldName.c_str());
+TTreeReaderValueBase *CStringWalker::readerValue(TTreeReader *reader) {
+  return new TTreeReaderArray<char>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *CStringWalker::readerArray() {
-  return new TTreeReaderArray<char*>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *CStringWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<char*>(*reader, fieldName.c_str());
 }
 
 //// StdStringWalker
@@ -407,13 +404,13 @@ void StdStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << "\"";
 }
 
-TTreeReaderValueBase *StdStringWalker::readerValue() {
+TTreeReaderValueBase *StdStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
-  return new TTreeReaderValue<std::string>(*getReader(), fieldName.c_str());
+  return new TTreeReaderValue<std::string>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *StdStringWalker::readerArray() {
-  return new TTreeReaderArray<std::string>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *StdStringWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<std::string>(*reader, fieldName.c_str());
 }
 
 //// TStringWalker
@@ -436,13 +433,13 @@ void TStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
   std::cout << "\"";
 }
 
-TTreeReaderValueBase *TStringWalker::readerValue() {
+TTreeReaderValueBase *TStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
-  return new TTreeReaderValue<TString>(*getReader(), fieldName.c_str());
+  return new TTreeReaderValue<TString>(*reader, fieldName.c_str());
 }
 
-TTreeReaderArrayBase *TStringWalker::readerArray() {
-  return new TTreeReaderArray<TString>(*getReader(), fieldName.c_str());
+TTreeReaderArrayBase *TStringWalker::readerArray(TTreeReader *reader) {
+  return new TTreeReaderArray<TString>(*reader, fieldName.c_str());
 }
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
@@ -990,7 +987,7 @@ bool ExtractableWalker::empty() { return false; }
 
 LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr) { }
 
-LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue()) { }
+LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker, TTreeReader *reader) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue(reader)) { }
 
 std::string LeafDimension::repr() {
   if (counter != nullptr)
@@ -1015,7 +1012,7 @@ int LeafDimension::flatSize() {
   return out;
 }
 
-LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
+LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree, TTreeReader *reader) :
   ExtractableWalker(tleaf->GetName(), leafToPrimitive(tleaf)->typeName),
   walker(leafToPrimitive(tleaf)),
   readerValue(nullptr),
@@ -1042,15 +1039,15 @@ LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree) :
   dims = nullptr;
   for (int i = dimensions - 1;  i >= 0;  i--) {
     if (ttree->GetLeaf(strdims[i].c_str()) != nullptr)
-      dims = new LeafDimension(dims, new IntWalker(strdims[i].c_str()));
+      dims = new LeafDimension(dims, new IntWalker(strdims[i].c_str()), reader);
     else
       dims = new LeafDimension(dims, intdims[i]);
   }
 
   if (dimensions == 0)
-    readerValue = walker->readerValue();
+    readerValue = walker->readerValue(reader);
   else
-    readerArray = walker->readerArray();
+    readerArray = walker->readerArray(reader);
 }
 
 PrimitiveWalker *LeafWalker::leafToPrimitive(TLeaf *tleaf) {
@@ -1169,16 +1166,16 @@ void *LeafWalker::getAddress() {
 
 GenericReaderValue::GenericReaderValue() {}
 
-GenericReaderValue::GenericReaderValue(TTreeReader& tr, std::string fieldName, std::string typeName, FieldWalker *walker) :
-  TTreeReaderValueBase(&tr, fieldName.c_str(), TDictionary::GetDictionary(*walker->typeId())),
+GenericReaderValue::GenericReaderValue(std::string fieldName, std::string typeName, TTreeReader *reader, FieldWalker *walker) :
+  TTreeReaderValueBase(reader, fieldName.c_str(), TDictionary::GetDictionary(*walker->typeId())),
   typeName(typeName) { }
 
 const char *GenericReaderValue::GetDerivedTypeName() const { return typeName.c_str(); }
 
-ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   ExtractableWalker(fieldName, tbranch->GetClassName()),
   walker(MemberWalker::specializedWalker(fieldName, tbranch->GetClassName(), avroNamespace, defs)),
-  value(*getReader(), fieldName, std::string(tbranch->GetClassName()), walker) { }
+  value(fieldName, std::string(tbranch->GetClassName()), reader, walker) { }
 
 size_t ReaderValueWalker::sizeOf() { return walker->sizeOf(); }
 
@@ -1239,11 +1236,12 @@ void RawTBranchWalker::printJSON(void *address) {
 
 //// RawTBranchStdStringWalker
 
-RawTBranchStdStringWalker::RawTBranchStdStringWalker(std::string fieldName) :
+RawTBranchStdStringWalker::RawTBranchStdStringWalker(std::string fieldName, TTreeReader *reader) :
   RawTBranchWalker(fieldName, "string", new StdStringWalker(fieldName)),
-  data(nullptr)
+  data(nullptr),
+  reader(reader)
 {
-  getReader()->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+  reader->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
 }
 
 size_t RawTBranchStdStringWalker::sizeOf() { return sizeof(std::string); }
@@ -1251,17 +1249,18 @@ size_t RawTBranchStdStringWalker::sizeOf() { return sizeof(std::string); }
 const std::type_info *RawTBranchStdStringWalker::typeId() { return &typeid(std::string); }
 
 void *RawTBranchStdStringWalker::getAddress() {
-  tbranch->GetEntry(getReader()->GetCurrentEntry());
+  tbranch->GetEntry(reader->GetCurrentEntry());
   return data;
 }
 
 //// RawTBranchTStringWalker
 
-RawTBranchTStringWalker::RawTBranchTStringWalker(std::string fieldName) :
+RawTBranchTStringWalker::RawTBranchTStringWalker(std::string fieldName, TTreeReader *reader) :
   RawTBranchWalker(fieldName, "TString", new TStringWalker(fieldName)),
-  data(nullptr)
+  data(nullptr),
+  reader(reader)
 {
-  getReader()->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+  reader->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
 }
 
 size_t RawTBranchTStringWalker::sizeOf() { return sizeof(TString); }
@@ -1269,14 +1268,17 @@ size_t RawTBranchTStringWalker::sizeOf() { return sizeof(TString); }
 const std::type_info *RawTBranchTStringWalker::typeId() { return &typeid(TString); }
 
 void *RawTBranchTStringWalker::getAddress() {
-  tbranch->GetEntry(getReader()->GetCurrentEntry());
+  tbranch->GetEntry(reader->GetCurrentEntry());
   return data;
 }
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace) {
-  TTree *ttree = getReader()->GetTree();
+TreeWalker::TreeWalker(TTreeReader *reader, std::string avroNamespace) :
+  reader(reader),
+  avroNamespace(avroNamespace)
+{
+  TTree *ttree = reader->GetTree();
 
   TIter nextBranch = ttree->GetListOfBranches();
   for (TBranch *tbranch = (TBranch*)nextBranch();  tbranch != nullptr;  tbranch = (TBranch*)nextBranch()) {
@@ -1286,14 +1288,14 @@ TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace)
     if (className.empty()) {
       TIter nextLeaf = tbranch->GetListOfLeaves();
       for (TLeaf *tleaf = (TLeaf*)nextLeaf();  tleaf != nullptr;  tleaf = (TLeaf*)nextLeaf())
-        fields.push_back(new LeafWalker(tleaf, ttree));
+        fields.push_back(new LeafWalker(tleaf, ttree, reader));
     }
     else if (className == std::string("string"))
-      fields.push_back(new RawTBranchStdStringWalker(branchName));
+      fields.push_back(new RawTBranchStdStringWalker(branchName, reader));
     else if (className == std::string("TString"))
-      fields.push_back(new RawTBranchTStringWalker(branchName));
+      fields.push_back(new RawTBranchTStringWalker(branchName, reader));
     else
-      fields.push_back(new ReaderValueWalker(branchName, tbranch, avroNamespace, defs));
+      fields.push_back(new ReaderValueWalker(branchName, tbranch, reader, avroNamespace, defs));
   }
 }
 
@@ -1331,7 +1333,7 @@ std::string TreeWalker::avroSchema() {
   std::string out;
 
   out += std::string("{\"type\": \"record\",\n") +
-         std::string(" \"name\": \"") + getReader()->GetTree()->GetName() + std::string("\",\n");
+         std::string(" \"name\": \"") + reader->GetTree()->GetName() + std::string("\",\n");
   if (!avroNamespace.empty())
     out += std::string(" \"namespace\": \"") + avroNamespace + std::string("\",\n");
   out += std::string(" \"fields\": [\n");

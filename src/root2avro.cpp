@@ -27,9 +27,6 @@ std::string              schemaName = "";
 std::string              ns = "";
 bool                     debug = false;
 
-TTreeReader             *reader = nullptr;
-TTreeReader *getReader() { return reader; }
-
 void help() {
   std::cerr << "Usage: root2avro fileLocation1, [fileLocation2, [...]], treeLocation" << std::endl << std::endl
             << "Where fileLocationN are either file paths or URLs TFile::Open can handle and treeLocation is the path of the" << std::endl
@@ -141,6 +138,7 @@ int main(int argc, char **argv) {
     gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
 
   TFile *file = nullptr;
+  TTreeReader *reader = nullptr;
   TreeWalker *treeWalker = nullptr;
 
   // main loop
@@ -185,7 +183,7 @@ int main(int argc, char **argv) {
     if (treeWalker != nullptr)
       treeWalker->reset(reader);
     else {
-      treeWalker = new TreeWalker;
+      treeWalker = new TreeWalker(reader);
       while (!treeWalker->resolved()  &&  reader->Next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {
