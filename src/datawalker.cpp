@@ -79,11 +79,11 @@ CharWalker::CharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "char
 std::string CharWalker::avroTypeName() { return "int"; }
 
 void CharWalker::printJSON(void *address) {
-  std::cout << (int)(*((char*)address));
+  std::cout << ((int)(*((char*)address)));
 }
 
 void CharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<char>*)readerArrayBase)->At(i);
+  std::cout << ((int)((TTreeReaderArray<char>*)readerArrayBase)->At(i));
 }
 
 TTreeReaderValueBase *CharWalker::readerValue() {
@@ -101,11 +101,11 @@ UCharWalker::UCharWalker(std::string fieldName) : PrimitiveWalker(fieldName, "un
 std::string UCharWalker::avroTypeName() { return "int"; }
 
 void UCharWalker::printJSON(void *address) {
-  std::cout << (int)(*((unsigned char*)address));
+  std::cout << ((int)(*((unsigned char*)address)));
 }
 
 void UCharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i);
+  std::cout << ((int)((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
 }
 
 TTreeReaderValueBase *UCharWalker::readerValue() {
@@ -873,7 +873,7 @@ LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker) : next_(nex
 
 std::string LeafDimension::repr() {
   if (counter != nullptr)
-    return std::string("{\"counter\": ") + counter->fieldName + std::string("}");
+    return std::string("{\"counter\": \"") + counter->fieldName + std::string("\"}");
   else
     return std::to_string(size_);
 }
