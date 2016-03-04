@@ -31,7 +31,10 @@
 #include <TLeafC.h>
 #include <TLeafElement.h>
 #include <TLeafObject.h>
+#include <TObjArray.h>
 #include <TClonesArray.h>
+#include <TRef.h>
+#include <TRefArray.h>
 
 using namespace ROOT::Internal;
 
@@ -47,6 +50,7 @@ public:
   FieldWalker(std::string fieldName, std::string typeName);
   void printEscapedString(const char *string, std::ostream &stream);
   std::string escapedString(const char *string);
+  virtual size_t byteWidth() = 0;
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
   virtual void resolve(void *address) = 0;
@@ -75,6 +79,7 @@ public:
 class BoolWalker : public PrimitiveWalker {
 public:
   BoolWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -85,6 +90,7 @@ public:
 class CharWalker : public PrimitiveWalker {
 public:
   CharWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -95,6 +101,7 @@ public:
 class UCharWalker : public PrimitiveWalker {
 public:
   UCharWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -105,6 +112,7 @@ public:
 class ShortWalker : public PrimitiveWalker {
 public:
   ShortWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -115,6 +123,7 @@ public:
 class UShortWalker : public PrimitiveWalker {
 public:
   UShortWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -125,6 +134,7 @@ public:
 class IntWalker : public PrimitiveWalker {
 public:
   IntWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -136,6 +146,7 @@ public:
 class UIntWalker : public PrimitiveWalker {
 public:
   UIntWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -146,6 +157,7 @@ public:
 class LongWalker : public PrimitiveWalker {
 public:
   LongWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -156,6 +168,7 @@ public:
 class ULongWalker : public PrimitiveWalker {
 public:
   ULongWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -166,6 +179,7 @@ public:
 class FloatWalker : public PrimitiveWalker {
 public:
   FloatWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -176,6 +190,7 @@ public:
 class DoubleWalker : public PrimitiveWalker {
 public:
   DoubleWalker(std::string fieldName);
+  size_t byteWidth();
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
@@ -199,6 +214,7 @@ public:
 class CStringWalker : public AnyStringWalker {
 public:
   CStringWalker(std::string fieldName);
+  size_t byteWidth();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue();
@@ -208,6 +224,7 @@ public:
 class StdStringWalker : public AnyStringWalker {
 public:
   StdStringWalker(std::string fieldName);
+  size_t byteWidth();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue();
@@ -217,6 +234,7 @@ public:
 class TStringWalker : public AnyStringWalker {
 public:
   TStringWalker(std::string fieldName);
+  size_t byteWidth();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue();
@@ -232,7 +250,8 @@ public:
   std::string comment;
 
   MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
-  FieldWalker *specializedWalker(std::string fieldName, std::string innerTypeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  static FieldWalker *specializedWalker(std::string fieldName, std::string typeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -245,6 +264,8 @@ public:
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
 class ClassWalker : public FieldWalker {
+private:
+  size_t byteWidth_;
 public:
   TClass *tclass;
   std::string avroNamespace;
@@ -253,6 +274,7 @@ public:
 
   ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   void fill();    // has side-effects, must be called soon after constructor
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -269,6 +291,7 @@ public:
   FieldWalker *walker;
 
   PointerWalker(std::string fieldName, FieldWalker *walker);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -285,6 +308,7 @@ public:
   FieldWalker *walker;
 
   TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -296,18 +320,21 @@ public:
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
-class StdVectorInterface {
-public:
-  virtual void start(void *vector) = 0;
-  virtual void *next() = 0;
-};
+// class StdVectorInterface {
+// public:
+//   virtual void start(void *vector) = 0;
+//   virtual bool valid() = 0;
+//   virtual void *get() = 0;
+//   virtual void step() = 0;
+// };
 
 class StdVectorWalker : public FieldWalker {
 public:
   FieldWalker *walker;
-  StdVectorInterface *extractorInstance;
+  // StdVectorInterface *extractorInstance;
 
-  StdVectorWalker(std::string fieldName, FieldWalker *walker);
+  StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -323,9 +350,9 @@ class ArrayWalker : public FieldWalker {
 public:
   FieldWalker *walker;
   int numItems;
-  size_t byteWidth;
 
-  ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems, size_t byteWidth);
+  ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -345,6 +372,7 @@ public:
   TClass *classToAssert;
 
   TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -363,6 +391,7 @@ public:
   FieldWalker *walker;
 
   TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -381,6 +410,7 @@ public:
   FieldWalker *walker;
 
   TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool empty();
   bool resolved();
   void resolve(void *address);
@@ -431,6 +461,7 @@ public:
 
   LeafWalker(TLeaf *tleaf, TTree *ttree);
   PrimitiveWalker *leafToPrimitive(TLeaf *tleaf);
+  size_t byteWidth();
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
@@ -450,6 +481,7 @@ public:
   ExtractorInterface *extractorInstance;
 
   ReaderValueWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  size_t byteWidth();
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
@@ -459,21 +491,21 @@ public:
   void *getAddress();
 };
 
-///////////////////////////////////////////////////////////////////// ReaderArrayWalker
+// ///////////////////////////////////////////////////////////////////// ReaderArrayWalker
 
-class ReaderArrayWalker : public ExtractableWalker {
-public:
-  FieldWalker *walker;
+// class ReaderArrayWalker : public ExtractableWalker {
+// public:
+//   FieldWalker *walker;
 
-  ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
-  bool resolved();
-  void resolve(void *address);
-  std::string repr(int indent, std::set<std::string> &memo);
-  std::string avroTypeName();
-  std::string avroSchema(int indent, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void *getAddress();
-};
+//   ReaderArrayWalker(std::string fieldName, TBranch *tbranch, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+//   bool resolved();
+//   void resolve(void *address);
+//   std::string repr(int indent, std::set<std::string> &memo);
+//   std::string avroTypeName();
+//   std::string avroSchema(int indent, std::set<std::string> &memo);
+//   void printJSON(void *address);
+//   void *getAddress();
+// };
 
 ///////////////////////////////////////////////////////////////////// RawTBranchWalker
 
@@ -483,6 +515,7 @@ public:
   FieldWalker *walker;
 
   RawTBranchWalker(std::string fieldName, std::string typeName, FieldWalker *walker);
+  size_t byteWidth();
   bool resolved();
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
@@ -495,6 +528,7 @@ class RawTBranchStdStringWalker : public RawTBranchWalker {
 public:
   std::string *data;
   RawTBranchStdStringWalker(std::string fieldName);
+  size_t byteWidth();
   void *getAddress();
 };
 
@@ -502,6 +536,7 @@ class RawTBranchTStringWalker : public RawTBranchWalker {
 public:
   TString *data;
   RawTBranchTStringWalker(std::string fieldName);
+  size_t byteWidth();
   void *getAddress();
 };
 
