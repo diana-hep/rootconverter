@@ -359,6 +359,24 @@ public:
   void printJSON(void *address);
 };
 
+///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
+
+class StdVectorBoolWalker : public FieldWalker {
+public:
+  FieldWalker *walker;
+
+  StdVectorBoolWalker(std::string fieldName);
+  size_t sizeOf();
+  const std::type_info *typeId();
+  bool empty();
+  bool resolved();
+  void resolve(void *address);
+  std::string repr(int indent, std::set<std::string> &memo);
+  std::string avroTypeName();
+  std::string avroSchema(int indent, std::set<std::string> &memo);
+  void printJSON(void *address);
+};
+
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
 class ArrayWalker : public FieldWalker {

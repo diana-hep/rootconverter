@@ -478,6 +478,9 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
   else if (tn == std::string("TRef"))
     return new TRefWalker(fieldName, avroNamespace, defs);
 
+  else if (tn == std::string("vector<bool>"))
+    return new StdVectorBoolWalker(fieldName);
+
   else if (tn.substr(0, vectorPrefix.size()) == vectorPrefix  &&  tn.back() == '>') {
     tn = tn.substr(vectorPrefix.size(), tn.size() - vectorPrefix.size() - 1);
     while (!tn.empty()  &&  tn.back() == ' ') tn.pop_back();
@@ -772,6 +775,44 @@ void StdVectorWalker::printJSON(void *address) {
     if (first) first = false; else std::cout << ", ";
     walker->printJSON(ptr);
     ptr = (void*)((size_t)ptr + walker->sizeOf());
+  }
+  std::cout << "]";
+}
+
+///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
+
+StdVectorBoolWalker::StdVectorBoolWalker(std::string fieldName) :
+  FieldWalker(fieldName, "vector<bool>"),
+  walker(new BoolWalker(fieldName)) { }
+
+size_t StdVectorBoolWalker::sizeOf() { return sizeof(std::vector<bool>); }
+
+const std::type_info *StdVectorBoolWalker::typeId() { return &typeid(std::vector<bool>); }
+
+bool StdVectorBoolWalker::empty() { return false; }
+
+bool StdVectorBoolWalker::resolved() { }
+
+void StdVectorBoolWalker::resolve(void *address) { }
+
+std::string StdVectorBoolWalker::repr(int indent, std::set<std::string> &memo) {
+  return std::string("{\"std::vector\": ") + walker->repr(indent, memo) + std::string("}");
+}
+
+std::string StdVectorBoolWalker::avroTypeName() { return "array"; }
+
+std::string StdVectorBoolWalker::avroSchema(int indent, std::set<std::string> &memo) {
+  return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
+}
+
+void StdVectorBoolWalker::printJSON(void *address) {
+  std::cout << "[";
+  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+  int numItems = vectorBool->size();
+  bool first = true;
+  for (int i = 0;  i < numItems;  i++) {
+    if (first) first = false; else std::cout << ", ";
+    walker->printJSON((void*)&vectorBool[i]);
   }
   std::cout << "]";
 }
