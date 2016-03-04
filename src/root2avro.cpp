@@ -142,6 +142,7 @@ int main(int argc, char **argv) {
   TreeWalker *treeWalker = nullptr;
 
   // main loop
+  uint64_t cumulativeCount = 0;
   uint64_t currentEntry = 0;
   for (int fileIndex = 0;  fileIndex < fileLocations.size();  fileIndex++) {
     std::string url = fileLocations[fileIndex];
@@ -208,8 +209,8 @@ int main(int argc, char **argv) {
         treeWalker->printJSON();
 
         currentEntry += 1;
-        if (end != NA  &&  currentEntry > end)
-          return 0;
+        // if (end != NA  &&  currentEntry > end)
+        //   return 0;
 
       } while (reader->Next());
     }

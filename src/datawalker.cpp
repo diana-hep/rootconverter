@@ -789,7 +789,7 @@ const std::type_info *StdVectorBoolWalker::typeId() { return &typeid(std::vector
 
 bool StdVectorBoolWalker::empty() { return false; }
 
-bool StdVectorBoolWalker::resolved() { }
+bool StdVectorBoolWalker::resolved() { return true; }
 
 void StdVectorBoolWalker::resolve(void *address) { }
 
@@ -985,9 +985,21 @@ bool ExtractableWalker::empty() { return false; }
 
 ///////////////////////////////////////////////////////////////////// LeafWalker (and LeafDimension)
 
-LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr) { }
+//// LeafDimension
+
+LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr), counterReaderValue(nullptr) { }
 
 LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker, TTreeReader *reader) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue(reader)) { }
+
+void LeafDimension::reset(TTreeReader *reader) {
+  if (counterReaderValue != nullptr) {
+    // FIXME: delete old counterReaderValue?
+    counterReaderValue = counter->readerValue(reader);
+  }
+  if (next_ != nullptr) {
+    next_->reset(reader);
+  }
+}
 
 std::string LeafDimension::repr() {
   if (counter != nullptr)
@@ -1011,6 +1023,8 @@ int LeafDimension::flatSize() {
     out *= next_->flatSize();
   return out;
 }
+
+//// LeafWalker
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree, TTreeReader *reader) :
   ExtractableWalker(tleaf->GetName(), leafToPrimitive(tleaf)->typeName),
@@ -1155,6 +1169,16 @@ void LeafWalker::printJSON(void *address) {
   }
 }
 
+void LeafWalker::reset(TTreeReader *reader) {
+  // FIXME: delete old readerValue/readerArray?
+  if (dimensions == 0)
+    readerValue = walker->readerValue(reader);
+  else {
+    readerArray = walker->readerArray(reader);
+    dims->reset(reader);
+  }
+}
+
 void *LeafWalker::getAddress() {
   if (readerValue != nullptr)
     return readerValue->GetAddress();
@@ -1174,8 +1198,8 @@ const char *GenericReaderValue::GetDerivedTypeName() const { return typeName.c_s
 
 ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   ExtractableWalker(fieldName, tbranch->GetClassName()),
-  walker(MemberWalker::specializedWalker(fieldName, tbranch->GetClassName(), avroNamespace, defs)),
-  value(fieldName, std::string(tbranch->GetClassName()), reader, walker) { }
+  walker(MemberWalker::specializedWalker(fieldName, typeName, avroNamespace, defs)),
+  value(new GenericReaderValue(fieldName, typeName, reader, walker)) { }
 
 size_t ReaderValueWalker::sizeOf() { return walker->sizeOf(); }
 
@@ -1200,8 +1224,13 @@ void ReaderValueWalker::printJSON(void *address) {
   walker->printJSON(address);
 }
 
+void ReaderValueWalker::reset(TTreeReader *reader) {
+  // FIXME: delete old value?
+  value = new GenericReaderValue(fieldName, typeName, reader, walker);
+}
+
 void *ReaderValueWalker::getAddress() {
-  return value.GetAddress();
+  return value->GetAddress();
 }
 
 ///////////////////////////////////////////////////////////////////// RawTBranchWalker
@@ -1248,6 +1277,11 @@ size_t RawTBranchStdStringWalker::sizeOf() { return sizeof(std::string); }
 
 const std::type_info *RawTBranchStdStringWalker::typeId() { return &typeid(std::string); }
 
+void RawTBranchStdStringWalker::reset(TTreeReader *reader) {
+  this->reader = reader;
+  reader->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+}
+
 void *RawTBranchStdStringWalker::getAddress() {
   tbranch->GetEntry(reader->GetCurrentEntry());
   return data;
@@ -1266,6 +1300,11 @@ RawTBranchTStringWalker::RawTBranchTStringWalker(std::string fieldName, TTreeRea
 size_t RawTBranchTStringWalker::sizeOf() { return sizeof(TString); }
 
 const std::type_info *RawTBranchTStringWalker::typeId() { return &typeid(TString); }
+
+void RawTBranchTStringWalker::reset(TTreeReader *reader) {
+  this->reader = reader;
+  reader->GetTree()->SetBranchAddress(fieldName.c_str(), &data, &tbranch);
+}
 
 void *RawTBranchTStringWalker::getAddress() {
   tbranch->GetEntry(reader->GetCurrentEntry());
@@ -1300,7 +1339,9 @@ TreeWalker::TreeWalker(TTreeReader *reader, std::string avroNamespace) :
 }
 
 void TreeWalker::reset(TTreeReader *reader) {
-  // FIXME
+  this->reader = reader;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+    (*iter)->reset(reader);
 }
 
 bool TreeWalker::resolved() {

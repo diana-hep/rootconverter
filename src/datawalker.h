@@ -463,6 +463,7 @@ class ExtractableWalker : public FieldWalker {
 public:
   ExtractableWalker(std::string fieldName, std::string typeName);
   bool empty();
+  virtual void reset(TTreeReader *reader) = 0;
   virtual void *getAddress() = 0;
 };
 
@@ -477,6 +478,7 @@ private:
 public:
   LeafDimension(LeafDimension *next, int size);
   LeafDimension(LeafDimension *next, IntWalker *counter, TTreeReader *reader);
+  void reset(TTreeReader *reader);
   std::string repr();
   LeafDimension *next();   // linked list makes the recursive function in LeafWalker easier to understand
   int size();
@@ -493,6 +495,7 @@ public:
 
   LeafWalker(TLeaf *tleaf, TTree *ttree, TTreeReader *reader);
   PrimitiveWalker *leafToPrimitive(TLeaf *tleaf);
+
   size_t sizeOf();
   const std::type_info *typeId();
   bool resolved();
@@ -502,6 +505,7 @@ public:
   std::string avroSchema(int indent, std::set<std::string> &memo);
   int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim);
   void printJSON(void *address);
+  void reset(TTreeReader *reader);
   void *getAddress();
 };
 
@@ -518,7 +522,7 @@ public:
 class ReaderValueWalker : public ExtractableWalker {
 public:
   FieldWalker *walker;
-  GenericReaderValue value;
+  GenericReaderValue *value;
 
   ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
@@ -529,6 +533,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  void reset(TTreeReader *reader);
   void *getAddress();
 };
 
@@ -557,6 +562,7 @@ public:
   RawTBranchStdStringWalker(std::string fieldName, TTreeReader *reader);
   size_t sizeOf();
   const std::type_info *typeId();
+  void reset(TTreeReader *reader);
   void *getAddress();
 };
 
@@ -567,6 +573,7 @@ public:
   RawTBranchTStringWalker(std::string fieldName, TTreeReader *reader);
   size_t sizeOf();
   const std::type_info *typeId();
+  void reset(TTreeReader *reader);
   void *getAddress();
 };
 
