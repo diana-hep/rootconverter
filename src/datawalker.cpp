@@ -1,5 +1,6 @@
 #include "datawalker.h"
 
+// FIXME: this is no longer needed; push a TTreeReader* through the tree the normal way
 extern TTreeReader *getReader();
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
@@ -1296,6 +1297,10 @@ TreeWalker::TreeWalker(std::string avroNamespace) : avroNamespace(avroNamespace)
   }
 }
 
+void TreeWalker::reset(TTreeReader *reader) {
+  // FIXME
+}
+
 bool TreeWalker::resolved() {
   for (auto iter = fields.begin();  iter != fields.end();  ++iter)
     if (!(*iter)->resolved())
@@ -1337,7 +1342,7 @@ std::string TreeWalker::avroSchema() {
     out += (*iter)->avroSchema(3, memo);
   }
 
-  out += std::string("\n ]\n}\n");
+  out += std::string("\n ]\n}");
   return out;
 }
 

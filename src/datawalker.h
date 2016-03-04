@@ -577,6 +577,8 @@ public:
   std::string avroNamespace;
 
   TreeWalker(std::string avroNamespace = "");
+  void reset(TTreeReader *reader);
+
   bool resolved();
   void resolve();
   std::string repr();

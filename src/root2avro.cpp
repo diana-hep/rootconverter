@@ -27,9 +27,7 @@ std::string              schemaName = "";
 std::string              ns = "";
 bool                     debug = false;
 
-TFile                   *file = nullptr;
 TTreeReader             *reader = nullptr;
-
 TTreeReader *getReader() { return reader; }
 
 void help() {
@@ -41,7 +39,7 @@ void help() {
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
             << "  --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm)." << std::endl
-            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only)." << std::endl
+            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
@@ -138,31 +136,103 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  // load the libraries needed to interpret the data
   for (int i = 0;  i < libs.size();  i++)
     gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
 
-  // FIXME: handle TChains
-  file = TFile::Open(fileLocations[0].c_str());
-  reader = new TTreeReader(treeLocation.c_str(), file);
-    
-  TreeWalker treeWalker;
+  TFile *file = nullptr;
+  TreeWalker *treeWalker = nullptr;
 
-  std::cout << std::endl << treeWalker.repr() << std::endl << std::endl;
+  // main loop
+  uint64_t currentEntry = 0;
+  for (int fileIndex = 0;  fileIndex < fileLocations.size();  fileIndex++) {
+    std::string url = fileLocations[fileIndex];
+    if (url.find(std::string("://")) == std::string::npos)
+      url = std::string("file://") + url;
 
-  reader->Next();
-  treeWalker.resolve();
-  // std::cout << "RESOLVED? " << treeWalker.resolved() << std::endl;
+    // get a new TFile (and get rid of the old one, if necessary)
+    if (file != nullptr) {
+      file->Close();
+      delete file;
+    }
+    file = TFile::Open(url.c_str());
+    if (!file->IsOpen()) {
+      std::cerr << "File not found: " << url << std::endl;
+      return -1;
+    }
+    if (file->IsZombie()) {
+      std::cerr << "Not a ROOT file: " << url << std::endl;
+      return -1;
+    }
 
-  // std::cout << treeWalker.repr() << std::endl;
+    // get a new TTreeReader (and get rid of the old one, if necessary)
+    if (reader != nullptr) {
+      delete reader;
+    }
+    reader = new TTreeReader(treeLocation.c_str(), file);
+    if (reader->IsZombie()) {
+      std::cerr << "Not a TTree: " << treeLocation.c_str() << " in file: " << url << std::endl;
+      return -1;
+    }
 
-  std::cout << std::endl << treeWalker.avroSchema() << std::endl << std::endl;
+    // skip this file if the first requested entry comes after it
+    if (start != NA  &&  currentEntry + reader->GetTree()->GetEntries() < start) {
+      currentEntry += reader->GetTree()->GetEntries();
+      continue;
+    }
 
-  treeWalker.printJSON();
+    // set up or update the TreeWalker
+    if (treeWalker != nullptr)
+      treeWalker->reset(reader);
+    else {
+      treeWalker = new TreeWalker;
+      while (!treeWalker->resolved()  &&  reader->Next())
+        treeWalker->resolve();
+      if (!treeWalker->resolved()) {
+        std::cerr << "Could not resolve dynamic types (e.g. TClonesArray); is the dataset empty?" << std::endl;
+        return -1;
+      }
+    }
 
-  while (reader->Next())
-    treeWalker.printJSON();
+    // print out Avro bytes (with an "Obj" header)
+    if (mode == std::string("avro")) {
+      // TODO
+    }
 
-  file->Close();
+    // print out JSON strings (one JSON document per line)
+    else if (mode == std::string("json")) {
+      if (start != NA)
+        reader->SetEntry(start - currentEntry);
+      else
+      reader->SetEntry(0);
+
+      do {
+        treeWalker->printJSON();
+
+        currentEntry += 1;
+        if (end != NA  &&  currentEntry > end)
+          return 0;
+
+      } while (reader->Next());
+    }
+
+    // print the schema and exit
+    else if (mode == std::string("schema")) {
+      std::cout << treeWalker->avroSchema() << std::endl;
+      return 0;
+    }
+
+    // print the ROOT representation and exit
+    else if (mode == std::string("repr")) {
+      std::cout << treeWalker->repr() << std::endl;
+      return 0;
+    }
+
+    else {
+      std::cerr << "Unrecognized mode: " << mode << std::endl;
+      return -1;
+    }
+  }
 
   return 0;
 }
