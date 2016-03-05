@@ -243,7 +243,9 @@ for test in tests:
             print TerminalColor.BOLD + TerminalColor.OKBLUE + "GENERATED" + TerminalColor.ENDC
             continue
 
-        command = ["build/root2avro", "--mode=schema", "file://" + rootFile, "t"]
+        # get a schema
+
+        command = ["build/root2avro", "--mode=schema", rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
         if root2avro.wait() != 0:
             raise RuntimeError("root2avro failed with exit code %d" % root2avro.returncode)
@@ -257,7 +259,9 @@ for test in tests:
         if not same(schemaResultJson, test["schema"], 0):
             raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (schemaResult, dumpsExpanded(test["schema"])))
 
-        command = ["build/root2avro", "--mode=json", "file://" + rootFile, "t"]
+        # run it once
+
+        command = ["build/root2avro", "--mode=json", rootFile, "t"]
         root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
         if root2avro.wait() != 0:
             raise RuntimeError("root2avro --mode=json failed with exit code %d" % root2avro.returncode)
@@ -269,6 +273,22 @@ for test in tests:
             raise RuntimeError("root2avro produced bad JSON:\n\n%s" % "".join(dataResult))
 
         if not same(dataResultJson, test["json"], 1e-5):
+            raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsOneLevel(dataResultJson), dumpsOneLevel(test["json"])))
+
+        # run it twice
+
+        command = ["build/root2avro", "--mode=json", rootFile, rootFile, "t"]
+        root2avro = subprocess.Popen(command, stdout=subprocess.PIPE)
+        if root2avro.wait() != 0:
+            raise RuntimeError("root2avro --mode=json failed with exit code %d" % root2avro.returncode)
+        dataResult = root2avro.stdout.readlines()
+
+        try:
+            dataResultJson = map(json.loads, dataResult)
+        except ValueError as err:
+            raise RuntimeError("root2avro produced bad JSON:\n\n%s" % "".join(dataResult))
+
+        if not same(dataResultJson, test["json"] + test["json"], 1e-5):
             raise RuntimeError("root2avro produced the wrong JSON:\n\n%s\n\nExpected:\n\n%s" % (dumpsOneLevel(dataResultJson), dumpsOneLevel(test["json"])))
 
     except Exception as err:

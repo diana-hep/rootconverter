@@ -45,10 +45,11 @@ t->Fill();
 
 schema = {"type": "record",
           "name": "t",
-          "fields": [{"name": "x", "type": {"type": "array", "items": {"type": "array", "items": "boolean"}}}]}
+          "fields": [{"name": "d", "type": "int"},
+                     {"name": "x", "type": {"type": "array", "items": {"type": "array", "items": "boolean"}}}]}
 
-json = [{"x": [[]]},
-        {"x": [[False, True]]},
-        {"x": [[False, True], [True, True]]},
-        {"x": [[False, True], [True, True], [True, False]]},
-        {"x": [[False, True], [True, True], [True, False], [False, False]]}]
+json = [{"d": 0, "x": []},
+        {"d": 1, "x": [[False, True]]},
+        {"d": 2, "x": [[False, True], [True, True]]},
+        {"d": 3, "x": [[False, True], [True, True], [True, False]]},
+        {"d": 4, "x": [[False, True], [True, True], [True, False], [False, False]]}]

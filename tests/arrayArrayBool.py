@@ -2,7 +2,7 @@ treeType = TreeType(Array(Array(Bool_t, 2), 2))
 
 fill = r"""
 TTree *t = new TTree("t", "");
-unsigned short x[2][2];
+bool x[2][2];
 t->Branch("x", &x, "x[2][2]/O");
 x[0][0] = true;
 x[0][1] = true;
@@ -31,7 +31,7 @@ t->Fill();
 
 schema = {"type": "record",
           "name": "t",
-          "fields": [{"name": "x", "type": {"type": "array", "items": {"type": "array", "items": "bool"}}}]}
+          "fields": [{"name": "x", "type": {"type": "array", "items": {"type": "array", "items": "boolean"}}}]}
 
 json = [{"x": [[True, True], [True, True]]},
         {"x": [[True, True], [True, False]]},
