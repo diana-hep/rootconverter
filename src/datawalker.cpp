@@ -806,11 +806,13 @@ std::string StdVectorBoolWalker::avroSchema(int indent, std::set<std::string> &m
 void StdVectorBoolWalker::printJSON(void *address) {
   std::cout << "[";
   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+
   int numItems = vectorBool->size();
   bool first = true;
   for (int i = 0;  i < numItems;  i++) {
     if (first) first = false; else std::cout << ", ";
-    walker->printJSON((void*)&vectorBool[i]);
+    bool val = vectorBool->at(i);
+    walker->printJSON((void*)&val);
   }
   std::cout << "]";
 }
