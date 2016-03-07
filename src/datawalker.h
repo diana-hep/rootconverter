@@ -37,7 +37,8 @@
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
 
-using namespace ROOT::Internal;
+// using namespace ROOT::Internal;
+using namespace ROOT;
 
 //// forwards
 class ClassWalker;

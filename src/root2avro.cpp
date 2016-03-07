@@ -7,13 +7,14 @@
 #include <TFile.h>
 #include <TTreeReader.h>
 
-#include <avro.h>
+// #include <avro.h>
 
 #include "datawalker.h"
 
 #define NA ((uint64_t)(-1))
 
-using namespace ROOT::Internal;
+// using namespace ROOT::Internal;
+using namespace ROOT;
 
 // global variables for this tiny, single-threaded program (parallelism comes from multiple processes)
 std::vector<std::string> fileLocations;
