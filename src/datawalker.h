@@ -506,6 +506,8 @@ public:
 
 class ExtractableWalker : public FieldWalker {
 public:
+  avro_value_t avroValue;
+
   ExtractableWalker(std::string fieldName, std::string typeName);
   bool empty();
   virtual void reset(TTreeReader *reader) = 0;

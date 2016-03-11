@@ -213,6 +213,7 @@ int main(int argc, char **argv) {
           treeWalker->closeAvro();
           return -1;
         }
+
         currentEntry += 1;
       } while (reader->Next());
     }
