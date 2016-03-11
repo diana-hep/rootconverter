@@ -11,6 +11,9 @@
 #include <typeinfo>
 #include <vector>
 
+// Avro includes
+#include <avro.h>
+
 // ROOT includes
 #include <TClass.h>
 #include <TClonesArray.h>
@@ -37,8 +40,8 @@
 #include <TTreeReader.h>
 #include <TTreeReaderValue.h>
 
-// using namespace ROOT::Internal;
-using namespace ROOT;
+using namespace ROOT::Internal;
+// using namespace ROOT;
 
 //// forwards
 class ClassWalker;
@@ -61,6 +64,7 @@ public:
   virtual std::string avroTypeName() = 0;
   virtual std::string avroSchema(int indent, std::set<std::string> &memo) = 0;
   virtual void printJSON(void *address) = 0;
+  virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
@@ -75,6 +79,8 @@ public:
   std::string avroSchema(int indent, std::set<std::string> &memo);
   virtual void printJSON(void *address) = 0;
   virtual void printJSON(TTreeReaderArrayBase *readerArrayBase, int i) = 0;
+  virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
+  virtual bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) = 0;
   virtual TTreeReaderValueBase *readerValue(TTreeReader *reader) = 0;
   virtual TTreeReaderArrayBase *readerArray(TTreeReader *reader) = 0;
 };
@@ -87,6 +93,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -99,6 +107,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -111,6 +121,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -123,6 +135,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -135,6 +149,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -147,6 +163,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
   int value(TTreeReaderValueBase *readerValue);
@@ -160,6 +178,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -172,6 +192,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -184,6 +206,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -196,6 +220,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -208,6 +234,8 @@ public:
   std::string avroTypeName();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -232,6 +260,8 @@ public:
   const std::type_info *typeId();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -243,6 +273,8 @@ public:
   const std::type_info *typeId();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -254,6 +286,8 @@ public:
   const std::type_info *typeId();
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  bool printAvro(void *address, avro_value_t *avrovalue);
+  bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -277,6 +311,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -302,6 +337,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
@@ -320,6 +356,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
@@ -338,6 +375,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
@@ -358,6 +396,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
@@ -376,6 +415,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
@@ -395,6 +435,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
@@ -416,6 +457,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
@@ -436,6 +478,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
@@ -456,6 +499,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
@@ -506,6 +550,8 @@ public:
   std::string avroSchema(int indent, std::set<std::string> &memo);
   int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim);
   void printJSON(void *address);
+  int printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue);
+  bool printAvro(void *address, avro_value_t *avrovalue);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -534,6 +580,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -554,12 +601,14 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void printJSON(void *address);
+  bool printAvro(void *address, avro_value_t *avrovalue);
 };
 
 class RawTBranchStdStringWalker : public RawTBranchWalker {
 public:
   std::string *data;
   TTreeReader *reader;
+
   RawTBranchStdStringWalker(std::string fieldName, TTreeReader *reader);
   size_t sizeOf();
   const std::type_info *typeId();
@@ -571,6 +620,7 @@ class RawTBranchTStringWalker : public RawTBranchWalker {
 public:
   TString *data;
   TTreeReader *reader;
+
   RawTBranchTStringWalker(std::string fieldName, TTreeReader *reader);
   size_t sizeOf();
   const std::type_info *typeId();
@@ -587,6 +637,12 @@ public:
   TTreeReader *reader;
   std::string avroNamespace;
 
+  bool avroHeaderPrinted = false;
+  avro_schema_t schema;
+  avro_file_writer_t avroWriter;
+  avro_value_iface_t *avroInterface;
+  avro_value_t avroValue;
+
   TreeWalker(TTreeReader *reader, std::string avroNamespace = "");
   void reset(TTreeReader *reader);
 
@@ -595,6 +651,9 @@ public:
   std::string repr();
   std::string avroSchema();
   void printJSON();
+  bool printAvroHeaderOnce(std::string &codec);
+  bool printAvro();
+  void closeAvro();
 };
 
 #endif // DATAWALKER_H

@@ -7,14 +7,12 @@
 #include <TFile.h>
 #include <TTreeReader.h>
 
-// #include <avro.h>
-
 #include "datawalker.h"
 
 #define NA ((uint64_t)(-1))
 
-// using namespace ROOT::Internal;
-using namespace ROOT;
+using namespace ROOT::Internal;
+// using namespace ROOT;
 
 // global variables for this tiny, single-threaded program (parallelism comes from multiple processes)
 std::vector<std::string> fileLocations;
@@ -197,7 +195,26 @@ int main(int argc, char **argv) {
 
     // print out Avro bytes (with an "Obj" header)
     if (mode == std::string("avro")) {
-      // TODO
+      if (start != NA  &&  start > currentEntry) {
+        reader->SetEntry(start - currentEntry);
+        currentEntry = start;
+      }
+      else
+      reader->SetEntry(0);
+
+      if (!treeWalker->printAvroHeaderOnce(codec)) return -1;
+      do {
+        if (end != NA  &&  currentEntry >= end) {
+          treeWalker->closeAvro();
+          return 0;
+        }
+
+        if (!treeWalker->printAvro()) {
+          treeWalker->closeAvro();
+          return -1;
+        }
+        currentEntry += 1;
+      } while (reader->Next());
     }
 
     // print out JSON strings (one JSON document per line)
@@ -236,5 +253,6 @@ int main(int argc, char **argv) {
     }
   }
 
+  treeWalker->closeAvro();
   return 0;
 }
