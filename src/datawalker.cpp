@@ -75,8 +75,11 @@ bool BoolWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool BoolWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 2" << std::endl;
-  return false;  // FIXME
+  if (((TTreeReaderArray<bool>*)readerArrayBase)->At(i))
+    avro_value_set_boolean(avrovalue, true);
+  else
+    avro_value_set_boolean(avrovalue, false);
+  return true;
 }
 
 TTreeReaderValueBase *BoolWalker::readerValue(TTreeReader *reader) {
@@ -111,8 +114,8 @@ bool CharWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool CharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 4" << std::endl;
-  return false;  // FIXME
+  avro_value_set_int(avrovalue, ((TTreeReaderArray<char>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *CharWalker::readerValue(TTreeReader *reader) {
@@ -147,8 +150,8 @@ bool UCharWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool UCharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 6" << std::endl;
-  return false;  // FIXME
+  avro_value_set_int(avrovalue, ((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *UCharWalker::readerValue(TTreeReader *reader) {
@@ -183,8 +186,8 @@ bool ShortWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool ShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 8" << std::endl;
-  return false;  // FIXME
+  avro_value_set_int(avrovalue, ((TTreeReaderArray<short>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *ShortWalker::readerValue(TTreeReader *reader) {
@@ -219,8 +222,8 @@ bool UShortWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool UShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 10" << std::endl;
-  return false;  // FIXME
+  avro_value_set_int(avrovalue, ((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *UShortWalker::readerValue(TTreeReader *reader) {
@@ -255,8 +258,8 @@ bool IntWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool IntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 12" << std::endl;
-  return false;  // FIXME
+  avro_value_set_int(avrovalue, ((TTreeReaderArray<int>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *IntWalker::readerValue(TTreeReader *reader) {
@@ -295,8 +298,8 @@ bool UIntWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool UIntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 14" << std::endl;
-  return false;  // FIXME
+  avro_value_set_long(avrovalue, ((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *UIntWalker::readerValue(TTreeReader *reader) {
@@ -331,8 +334,8 @@ bool LongWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool LongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 16" << std::endl;
-  return false;  // FIXME
+  avro_value_set_long(avrovalue, ((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *LongWalker::readerValue(TTreeReader *reader) {
@@ -367,8 +370,8 @@ bool ULongWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool ULongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 18" << std::endl;
-  return false;  // FIXME
+  avro_value_set_double(avrovalue, ((TTreeReaderArray<ULong64_t>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *ULongWalker::readerValue(TTreeReader *reader) {
@@ -403,8 +406,8 @@ bool FloatWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool FloatWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 20" << std::endl;
-  return false;  // FIXME
+  avro_value_set_float(avrovalue, ((TTreeReaderArray<float>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *FloatWalker::readerValue(TTreeReader *reader) {
@@ -439,8 +442,8 @@ bool DoubleWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool DoubleWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 22" << std::endl;
-  return false;  // FIXME
+  avro_value_set_double(avrovalue, ((TTreeReaderArray<double>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *DoubleWalker::readerValue(TTreeReader *reader) {
@@ -495,8 +498,8 @@ bool CStringWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool CStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 24" << std::endl;
-  return false;  // FIXME
+  avro_value_set_string(avrovalue, ((TTreeReaderArray<char*>*)readerArrayBase)->At(i));
+  return true;
 }
 
 TTreeReaderValueBase *CStringWalker::readerValue(TTreeReader *reader) {
@@ -533,8 +536,8 @@ bool StdStringWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool StdStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 26" << std::endl;
-  return false;  // FIXME
+  avro_value_set_string(avrovalue, ((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str());
+  return true;
 }
 
 TTreeReaderValueBase *StdStringWalker::readerValue(TTreeReader *reader) {
@@ -572,8 +575,8 @@ bool TStringWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 
 bool TStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 28" << std::endl;
-  return false;  // FIXME
+  avro_value_set_string(avrovalue, ((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data());
+  return true;
 }
 
 TTreeReaderValueBase *TStringWalker::readerValue(TTreeReader *reader) {
@@ -886,7 +889,7 @@ std::string TRefWalker::avroSchema(int indent, std::set<std::string> &memo) { re
 
 void TRefWalker::printJSON(void *address) { std::cout << "TREF"; }
 
-bool TRefWalker::printAvro(void *address, avro_value_t *avrovalue) { std::cout << "TREF"; }
+bool TRefWalker::printAvro(void *address, avro_value_t *avrovalue) { std::cout << "TREF"; return false; }
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
@@ -1112,7 +1115,7 @@ std::string TRefArrayWalker::avroSchema(int indent, std::set<std::string> &memo)
 
 void TRefArrayWalker::printJSON(void *address) { std::cout << "TREFARRAY"; }
 
-bool TRefArrayWalker::printAvro(void *address, avro_value_t *avrovalue) { std::cout << "TREFARRAY"; }
+bool TRefArrayWalker::printAvro(void *address, avro_value_t *avrovalue) { std::cout << "TREFARRAY"; return false; }
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
@@ -1358,18 +1361,37 @@ void LeafWalker::printJSON(void *address) {
 }
 
 int LeafWalker::printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 37" << std::endl;
-  return false;  // FIXME
+  int dimSize = dim->size();
+
+  for (int dimIndex = 0;  dimIndex < dimSize  &&  readerIndex < readerSize;  dimIndex++) {
+    if (dim->next() == nullptr) {
+      avro_value_t element;
+      avro_value_append(avrovalue, &element, nullptr);
+      if (!walker->printAvro(readerArray, readerIndex, &element))
+        return -1;
+      readerIndex += 1;
+    }
+    else {
+      avro_value_t element;
+      avro_value_append(avrovalue, &element, nullptr);
+      readerIndex = printAvroDeep(readerIndex, readerSize, dim->next(), &element);
+      if (readerIndex == -1)
+        return -1;
+    }
+  }
+
+  return readerIndex;
 }
 
 bool LeafWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  if (address != nullptr) {
-    walker->printAvro(address, avrovalue);
-    return true;
-  }
+  if (address != nullptr)
+    return walker->printAvro(address, avrovalue);
   else {
-    std::cerr << "FIXME 38" << std::endl;
-    return false;  // FIXME
+    avro_value_reset(avrovalue);
+    if (printAvroDeep(0, dims->flatSize(), dims, avrovalue) == -1)
+      return false;
+    else
+      return true;
   }
 }
 
@@ -1473,8 +1495,7 @@ void RawTBranchWalker::printJSON(void *address) {
 }
 
 bool RawTBranchWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  walker->printAvro(address, avrovalue);
-  return true;
+  return walker->printAvro(address, avrovalue);
 }
 
 //// RawTBranchStdStringWalker
@@ -1653,7 +1674,8 @@ bool TreeWalker::printAvroHeaderOnce(std::string &codec) {
 
 bool TreeWalker::printAvro() {
   for (auto iter = fields.begin();  iter != fields.end();  ++iter)
-    (*iter)->printAvro((*iter)->getAddress(), &(*iter)->avroValue);
+    if (!(*iter)->printAvro((*iter)->getAddress(), &(*iter)->avroValue))
+      return false;
   avro_file_writer_append_value(avroWriter, &avroValue);
   return true;
 }
