@@ -932,8 +932,8 @@ void StdVectorWalker::printJSON(void *address) {
   int numItems = generic->size() / walker->sizeOf();
   void *ptr = generic->data();
   bool first = true;
-  for (int i = 0;  i < numItems;  i++) {
-    if (first) first = false; else std::cout << ", ";
+  for (int i = 0;  i < numItems;  i++) {                     // std::vector<T> are guaranteed to be
+    if (first) first = false; else std::cout << ", ";        // contiguous for all T except bool
     walker->printJSON(ptr);
     ptr = (void*)((size_t)ptr + walker->sizeOf());
   }
@@ -941,8 +941,18 @@ void StdVectorWalker::printJSON(void *address) {
 }
 
 bool StdVectorWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 32" << std::endl;
-  return false;  // FIXME
+  avro_value_reset(avrovalue);
+  std::vector<char> *generic = (std::vector<char>*)address;
+  int numItems = generic->size() / walker->sizeOf();
+  void *ptr = generic->data();
+  for (int i = 0;  i < numItems;  i++) {                     // see above
+    avro_value_t element;
+    avro_value_append(avrovalue, &element, nullptr);
+    if (!walker->printAvro(ptr, &element))
+      return false;
+    ptr = (void*)((size_t)ptr + walker->sizeOf());
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
@@ -986,8 +996,17 @@ void StdVectorBoolWalker::printJSON(void *address) {
 }
 
 bool StdVectorBoolWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 33" << std::endl;
-  return false;  // FIXME
+  avro_value_reset(avrovalue);
+  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+  int numItems = vectorBool->size();
+  for (int i = 0;  i < numItems;  i++) {
+    avro_value_t element;
+    avro_value_append(avrovalue, &element, nullptr);
+    bool val = vectorBool->at(i);
+    if (!walker->printAvro((void*)&val, &element))
+      return false;
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
@@ -1451,8 +1470,7 @@ void ReaderValueWalker::printJSON(void *address) {
 }
 
 bool ReaderValueWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 39" << std::endl;
-  return false;  // FIXME
+  return walker->printAvro(address, avrovalue);
 }
 
 void ReaderValueWalker::reset(TTreeReader *reader) {
