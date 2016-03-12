@@ -865,41 +865,22 @@ void PointerWalker::printJSON(void *address) {
 }
 
 bool PointerWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  // avro_type_t t = avro_value_get_type(avrovalue);
-  // std::cerr << "uno " << t << " " << AVRO_UNION << std::endl;
-
-  // avro_value_t branch;
-
-  // avro_type_t t2 = avro_value_get_type(&branch);
-  // std::cerr << "t2 " << t2 << " " << AVRO_NULL << " " << AVRO_STRING << std::endl;
-
-  // void *dereferenced = *((void**)address);
-
-  // std::cerr << "dos " << (dereferenced == nullptr) << std::endl;
-
-  // if (dereferenced == nullptr) {
-  //   avro_value_set_branch(avrovalue, 0, &branch);
-  //   avro_value_set_null(&branch);
-  //   return true;
-  // }
-  // else {
-  //   std::cerr << "tres" << std::endl;
-
-  //   avro_value_set_branch(avrovalue, 1, &branch);
-
-  //   avro_type_t t3 = avro_value_get_type(&branch);
-  //   std::cerr << "t3 " << t2 << " " << AVRO_NULL << " " << AVRO_STRING << std::endl;
-
-  //   return walker->printAvro(dereferenced, &branch);
-  // }
-
+  avro_type_t t = avro_value_get_type(avrovalue);
   avro_value_t branch;
-  avro_value_set_branch(avrovalue, 0, &branch);
 
-  avro_value_set_null(&branch);
+  void *dereferenced = *((void**)address);
 
-  return true;  // FIXME
+  if (dereferenced == nullptr) {
+    avro_value_set_branch(avrovalue, 0, &branch);
+    avro_value_set_null(&branch);
+    return true;
+  }
+  else {
+    avro_value_set_branch(avrovalue, 1, &branch);
+    return walker->printAvro(dereferenced, &branch);
+  }
 
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
