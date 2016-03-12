@@ -1132,8 +1132,23 @@ void TObjArrayWalker::printJSON(void *address) {
 }
 
 bool TObjArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 35" << std::endl;
-  return false;  // FIXME
+  avro_value_reset(avrovalue);
+
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+  TObjArray *array = (TObjArray*)address;
+  if (!array->AssertClass(classToAssert))
+    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+
+  TIter nextItem = (TClonesArray*)address;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
+    avro_value_t element;
+    avro_value_append(avrovalue, &element, nullptr);
+    if (!walker->printAvro(item, &element))
+      return false;
+  }
+
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
@@ -1729,8 +1744,10 @@ bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
 
 bool TreeWalker::printAvro() {
   for (auto iter = fields.begin();  iter != fields.end();  ++iter)
-    if (!(*iter)->printAvro((*iter)->getAddress(), &(*iter)->avroValue))
+    if (!(*iter)->printAvro((*iter)->getAddress(), &(*iter)->avroValue)) {
+      std::cerr << avro_strerror() << std::endl;
       return false;
+    }
   avro_file_writer_append_value(avroWriter, &avroValue);
   return true;
 }
