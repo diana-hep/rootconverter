@@ -22,6 +22,7 @@ uint64_t                 end = NA;
 std::vector<std::string> libs;
 std::string              mode = "avro";
 std::string              codec = "null";
+int                      blockKB = 64;
 std::string              schemaName = "";
 std::string              ns = "";
 bool                     debug = false;
@@ -38,6 +39,7 @@ void help() {
             << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
+            << "  --block=SIZE           Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl
             << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
             << "  --ns=NAMESPACE         Namespace for schema (blank if not provided)." << std::endl
             << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
@@ -72,6 +74,7 @@ int main(int argc, char **argv) {
   std::string libsPrefix("--libs=");
   std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
+  std::string blockPrefix("--block=");
   std::string namePrefix("--name=");
   std::string nsPrefix("--ns=");
   std::string badPrefix("-");
@@ -99,6 +102,11 @@ int main(int argc, char **argv) {
 
     else if (arg.substr(0, codecPrefix.size()) == codecPrefix)
       codec = arg.substr(codecPrefix.size(), arg.size());
+
+    else if (arg.substr(0, blockPrefix.size()) == blockPrefix) {
+      std::string value = arg.substr(blockPrefix.size(), arg.size());
+      blockKB = atoi(value.c_str());
+    }
 
     else if (arg.substr(0, namePrefix.size()) == namePrefix) {
       schemaName = arg.substr(namePrefix.size(), arg.size());
@@ -202,7 +210,7 @@ int main(int argc, char **argv) {
       else
       reader->SetEntry(0);
 
-      if (!treeWalker->printAvroHeaderOnce(codec)) return -1;
+      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024)) return -1;
       do {
         if (end != NA  &&  currentEntry >= end) {
           treeWalker->closeAvro();

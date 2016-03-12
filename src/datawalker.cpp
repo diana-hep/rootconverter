@@ -1689,7 +1689,7 @@ void TreeWalker::printJSON() {
   std::cout << "}" << std::endl;
 }
 
-bool TreeWalker::printAvroHeaderOnce(std::string &codec) {
+bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
   if (!avroHeaderPrinted) {
     std::string schemastr = avroSchema();
 
@@ -1717,7 +1717,7 @@ bool TreeWalker::printAvroHeaderOnce(std::string &codec) {
       }
     
     std::string path;
-    if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), 0) != 0) {
+    if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), blockSize) != 0) {
       std::cerr << avro_strerror() << std::endl;
       return false;
     }

@@ -653,7 +653,7 @@ public:
   std::string repr();
   std::string avroSchema();
   void printJSON();
-  bool printAvroHeaderOnce(std::string &codec);
+  bool printAvroHeaderOnce(std::string &codec, int blockSize);
   bool printAvro();
   void closeAvro();
 };
