@@ -719,8 +719,7 @@ void MemberWalker::printJSON(void *address) {
 }
 
 bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 29" << std::endl;
-  return false;  // FIXME
+  return walker->printAvro((void*)((size_t)address + offset), avrovalue);
 }
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -816,8 +815,15 @@ void ClassWalker::printJSON(void *address) {
 }
 
 bool ClassWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 30" << std::endl;
-  return false;  // FIXME
+  size_t index = 0;
+  for (auto iter = members.begin();  iter != members.end();  ++iter) {
+    avro_value_t element;
+    avro_value_get_by_index(avrovalue, index, &element, nullptr);
+    if (!(*iter)->printAvro(address, &element))
+      return false;
+    index++;
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
@@ -859,8 +865,41 @@ void PointerWalker::printJSON(void *address) {
 }
 
 bool PointerWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 31" << std::endl;
-  return false;  // FIXME
+  // avro_type_t t = avro_value_get_type(avrovalue);
+  // std::cerr << "uno " << t << " " << AVRO_UNION << std::endl;
+
+  // avro_value_t branch;
+
+  // avro_type_t t2 = avro_value_get_type(&branch);
+  // std::cerr << "t2 " << t2 << " " << AVRO_NULL << " " << AVRO_STRING << std::endl;
+
+  // void *dereferenced = *((void**)address);
+
+  // std::cerr << "dos " << (dereferenced == nullptr) << std::endl;
+
+  // if (dereferenced == nullptr) {
+  //   avro_value_set_branch(avrovalue, 0, &branch);
+  //   avro_value_set_null(&branch);
+  //   return true;
+  // }
+  // else {
+  //   std::cerr << "tres" << std::endl;
+
+  //   avro_value_set_branch(avrovalue, 1, &branch);
+
+  //   avro_type_t t3 = avro_value_get_type(&branch);
+  //   std::cerr << "t3 " << t2 << " " << AVRO_NULL << " " << AVRO_STRING << std::endl;
+
+  //   return walker->printAvro(dereferenced, &branch);
+  // }
+
+  avro_value_t branch;
+  avro_value_set_branch(avrovalue, 0, &branch);
+
+  avro_value_set_null(&branch);
+
+  return true;  // FIXME
+
 }
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
@@ -1047,8 +1086,16 @@ void ArrayWalker::printJSON(void *address) {
 }
 
 bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 34" << std::endl;
-  return false;  // FIXME
+  avro_value_reset(avrovalue);
+  void *ptr = address;
+  for (int i = 0;  i < numItems;  i++) {
+    avro_value_t element;
+    avro_value_append(avrovalue, &element, nullptr);
+    if (!walker->printAvro(ptr, &element))
+      return false;
+    ptr = (void*)((size_t)ptr + walker->sizeOf());
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
@@ -1183,8 +1230,17 @@ void TClonesArrayWalker::printJSON(void *address) {
 }
 
 bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  std::cerr << "FIXME 36" << std::endl;
-  return false;  // FIXME
+  avro_value_reset(avrovalue);
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+  TIter nextItem = (TClonesArray*)address;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
+    avro_value_t element;
+    avro_value_append(avrovalue, &element, nullptr);
+    if (!walker->printAvro(item, &element))
+      return false;
+  }
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
