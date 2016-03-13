@@ -19,6 +19,8 @@
 #include <TClonesArray.h>
 #include <TDataMember.h>
 #include <TDictionary.h>
+#include <TFile.h>
+#include <TInterpreter.h>
 #include <TLeafB.h>
 #include <TLeafC.h>
 #include <TLeafD.h>
@@ -634,10 +636,17 @@ public:
 
 class TreeWalker {
 public:
+  std::string fileLocation;
+  std::string treeLocation;
+  std::string avroNamespace;
+
+  bool valid = false;
+  std::string errorMessage = "";
+  TFile *file;
+  TTreeReader *reader;
+
   std::map<const std::string, ClassWalker*> defs;
   std::vector<ExtractableWalker*> fields;
-  TTreeReader *reader;
-  std::string avroNamespace;
 
   bool avroHeaderPrinted = false;
   avro_schema_t schema;
@@ -645,8 +654,13 @@ public:
   avro_value_iface_t *avroInterface;
   avro_value_t avroValue;
 
-  TreeWalker(TTreeReader *reader, std::string avroNamespace = "");
-  void reset(TTreeReader *reader);
+  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace);
+  bool tryToOpenFile();
+  void reset(std::string fileLocation);
+
+  bool next();
+  long numEntriesInCurrentTree();
+  void setEntryInCurrentTree(long entry);
 
   bool resolved();
   void resolve();

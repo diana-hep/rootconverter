@@ -3,10 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <TInterpreter.h>
-#include <TFile.h>
-#include <TTreeReader.h>
-
 #include "datawalker.h"
 
 #define NA ((uint64_t)(-1))
@@ -144,8 +140,6 @@ int main(int argc, char **argv) {
   for (int i = 0;  i < libs.size();  i++)
     gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
 
-  TFile *file = nullptr;
-  TTreeReader *reader = nullptr;
   TreeWalker *treeWalker = nullptr;
 
   // main loop
@@ -155,60 +149,39 @@ int main(int argc, char **argv) {
     if (url.find(std::string("://")) == std::string::npos)
       url = std::string("file://") + url;
 
-    // get a new TFile (and get rid of the old one, if necessary)
-    if (file != nullptr) {
-      file->Close();
-      delete file;
-    }
-    file = TFile::Open(url.c_str());
-    if (!file->IsOpen()) {
-      std::cerr << "File not found: " << url << std::endl;
-      return -1;
-    }
-    if (file->IsZombie()) {
-      std::cerr << "Not a ROOT file: " << url << std::endl;
-      return -1;
-    }
-
-    // get a new TTreeReader (and get rid of the old one, if necessary)
-    if (reader != nullptr) {
-      delete reader;
-    }
-    reader = new TTreeReader(treeLocation.c_str(), file);
-    if (reader->IsZombie()) {
-      std::cerr << "Not a TTree: " << treeLocation.c_str() << " in file: " << url << std::endl;
-      return -1;
-    }
-
-    // skip this file if the first requested entry comes after it
-    if (start != NA  &&  start >= currentEntry + reader->GetTree()->GetEntries()) {
-      currentEntry += reader->GetTree()->GetEntries();
-      continue;
-    }
-
     // set up or update the TreeWalker
     if (treeWalker != nullptr) {
-      treeWalker->reset(reader);
-      reader->Next();
+      treeWalker->reset(url);
+      if (treeWalker->valid) treeWalker->next();
     }
     else {
-      treeWalker = new TreeWalker(reader);
-      while (!treeWalker->resolved()  &&  reader->Next())
+      treeWalker = new TreeWalker(url, treeLocation, ns);
+      while (treeWalker->valid  &&  !treeWalker->resolved()  &&  treeWalker->next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {
         std::cerr << "Could not resolve dynamic types (e.g. TClonesArray); is the first file empty?" << std::endl;
         return -1;
       }
     }
+    if (!treeWalker->valid) {
+      std::cerr << treeWalker->errorMessage << std::endl;
+      return -1;
+    }
+
+    // skip this file if the first requested entry comes after it
+    if (start != NA  &&  start >= currentEntry + treeWalker->numEntriesInCurrentTree()) {
+      currentEntry += treeWalker->numEntriesInCurrentTree();
+      continue;
+    }
 
     // print out Avro bytes (with an "Obj" header)
     if (mode == std::string("avro")) {
       if (start != NA  &&  start > currentEntry) {
-        reader->SetEntry(start - currentEntry);
+        treeWalker->setEntryInCurrentTree(start - currentEntry);
         currentEntry = start;
       }
       else
-      reader->SetEntry(0);
+      treeWalker->setEntryInCurrentTree(0);
 
       if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024)) return -1;
       do {
@@ -223,17 +196,17 @@ int main(int argc, char **argv) {
         }
 
         currentEntry += 1;
-      } while (reader->Next());
+      } while (treeWalker->next());
     }
 
     // print out JSON strings (one JSON document per line)
     else if (mode == std::string("json")) {
       if (start != NA  &&  start > currentEntry) {
-        reader->SetEntry(start - currentEntry);
+        treeWalker->setEntryInCurrentTree(start - currentEntry);
         currentEntry = start;
       }
       else
-      reader->SetEntry(0);
+      treeWalker->setEntryInCurrentTree(0);
 
       do {
         if (end != NA  &&  currentEntry >= end)
@@ -241,7 +214,7 @@ int main(int argc, char **argv) {
 
         treeWalker->printJSON();
         currentEntry += 1;
-      } while (reader->Next());
+      } while (treeWalker->next());
     }
 
     // print the schema and exit

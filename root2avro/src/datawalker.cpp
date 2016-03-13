@@ -1618,10 +1618,12 @@ void *RawTBranchTStringWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(TTreeReader *reader, std::string avroNamespace) :
-  reader(reader),
-  avroNamespace(avroNamespace)
+TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace) :
+  fileLocation(fileLocation), treeLocation(treeLocation), avroNamespace(avroNamespace)
 {
+  valid = tryToOpenFile();
+  if (!valid) return;
+
   TTree *ttree = reader->GetTree();
 
   TIter nextBranch = ttree->GetListOfBranches();
@@ -1643,10 +1645,50 @@ TreeWalker::TreeWalker(TTreeReader *reader, std::string avroNamespace) :
   }
 }
 
-void TreeWalker::reset(TTreeReader *reader) {
-  this->reader = reader;
+bool TreeWalker::tryToOpenFile() {
+  file = TFile::Open(fileLocation.c_str());
+  if (file == nullptr  ||  !file->IsOpen()) {
+    errorMessage = std::string("File not found: ") + fileLocation;
+    return false;
+  }
+
+  if (file->IsZombie()) {
+    errorMessage = std::string("Not a ROOT file: ") + fileLocation;
+    return false;
+  }
+
+  reader = new TTreeReader(treeLocation.c_str(), file);
+  if (reader->IsZombie()) {
+    errorMessage = std::string("Not a TTree: ") + treeLocation.c_str() + std::string(" in file: ") + fileLocation;
+    return false;
+  }
+
+  return true;
+}
+
+void TreeWalker::reset(std::string fileLocation) {
+  file->Close();
+  delete file;
+  delete this->reader;
+
+  this->fileLocation = fileLocation;
+  valid = tryToOpenFile();
+  if (!valid) return;
+
   for (auto iter = fields.begin();  iter != fields.end();  ++iter)
     (*iter)->reset(reader);
+}
+
+bool TreeWalker::next() {
+  return reader->Next();
+}
+
+long TreeWalker::numEntriesInCurrentTree() {
+  return reader->GetTree()->GetEntries();
+}
+
+void TreeWalker::setEntryInCurrentTree(long entry) {
+  reader->SetEntry(entry);
 }
 
 bool TreeWalker::resolved() {
