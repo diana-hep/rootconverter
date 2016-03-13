@@ -1,0 +1,11 @@
+-library RootReaderCPP
+
+-package org.dianahep.rootreader
+
+-direct
+
+-runtime JNA
+
+-I$(DIR)/../cpp/
+
+$(DIR)/../cpp/staticlib.h
