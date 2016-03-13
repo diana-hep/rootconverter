@@ -654,7 +654,7 @@ public:
   avro_value_iface_t *avroInterface;
   avro_value_t avroValue;
 
-  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace);
+  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace, std::vector<std::string> libs);
   bool tryToOpenFile();
   void reset(std::string fileLocation);
 

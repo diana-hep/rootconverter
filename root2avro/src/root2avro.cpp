@@ -51,10 +51,6 @@ std::vector<std::string> splitByComma(std::string in) {
   return out;
 }
 
-void analyzeTree(TTree *tree);
-void analyzeBranches(TObjArray *branches, TVirtualStreamerInfo *info, int level);
-void analyzeElement(TBranch *branch, TStreamerElement *element, int level);
-
 int main(int argc, char **argv) {
   for (int i = 1;  i < argc;  i++) {
     if (std::string(argv[i]) == std::string("-h")  ||
@@ -136,10 +132,6 @@ int main(int argc, char **argv) {
     return -1;
   }
 
-  // load the libraries needed to interpret the data
-  for (int i = 0;  i < libs.size();  i++)
-    gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
-
   TreeWalker *treeWalker = nullptr;
 
   // main loop
@@ -155,7 +147,7 @@ int main(int argc, char **argv) {
       if (treeWalker->valid) treeWalker->next();
     }
     else {
-      treeWalker = new TreeWalker(url, treeLocation, ns);
+      treeWalker = new TreeWalker(url, treeLocation, ns, libs);
       while (treeWalker->valid  &&  !treeWalker->resolved()  &&  treeWalker->next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {

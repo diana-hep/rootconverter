@@ -1618,9 +1618,13 @@ void *RawTBranchTStringWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace) :
+TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace, std::vector<std::string> libs) :
   fileLocation(fileLocation), treeLocation(treeLocation), avroNamespace(avroNamespace)
 {
+  // load the libraries needed to interpret the data
+  for (int i = 0;  i < libs.size();  i++)
+    gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
+
   valid = tryToOpenFile();
   if (!valid) return;
 
