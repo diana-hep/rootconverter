@@ -48,6 +48,43 @@ using namespace ROOT::Internal;
 //// forwards
 class ClassWalker;
 
+enum SchemaElement {
+  SchemaNull                 = 0,
+  SchemaBoolean              = 1,
+  SchemaInt                  = 2,
+  SchemaLong                 = 3,
+  SchemaFloat                = 4,
+  SchemaDouble               = 5,
+  SchemaString               = 6,
+  SchemaBytes                = 7,
+
+  SchemaArray                = 8,
+  SchemaMap                  = 9,
+
+  SchemaRecordName           = 10,
+  SchemaRecordNamespace      = 11,
+  SchemaRecordDoc            = 12,
+  SchemaRecordFieldName      = 13,
+  SchemaRecordFieldDoc       = 14,
+  SchemaRecordEnd            = 15,
+
+  SchemaEnumName             = 16,
+  SchemaEnumNamespace        = 17,
+  SchemaEnumDoc              = 18,
+  SchemaEnumSymbol           = 19,
+  SchemaEnumEnd              = 20,
+
+  SchemaFixedName            = 21,
+  SchemaFixedNamespace       = 22,
+  SchemaFixedDoc             = 23,
+  SchemaFixedSize            = 24,
+
+  SchemaUnionStart           = 25,
+  SchemaUnionEnd             = 26,
+};
+
+typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word);
+
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
 class FieldWalker {
@@ -65,6 +102,7 @@ public:
   virtual std::string repr(int indent, std::set<std::string> &memo) = 0;
   virtual std::string avroTypeName() = 0;
   virtual std::string avroSchema(int indent, std::set<std::string> &memo) = 0;
+  virtual void buildSchema(SchemaBuilder schemaBuilder) = 0;
   virtual void printJSON(void *address) = 0;
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 };
@@ -79,6 +117,7 @@ public:
   void resolve(void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  virtual void buildSchema(SchemaBuilder schemaBuilder) = 0;
   virtual void printJSON(void *address) = 0;
   virtual void printJSON(TTreeReaderArrayBase *readerArrayBase, int i) = 0;
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
@@ -93,6 +132,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -107,6 +147,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -121,6 +162,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -135,6 +177,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -149,6 +192,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -163,6 +207,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -178,6 +223,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -192,6 +238,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -206,6 +253,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -220,6 +268,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -234,6 +283,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   std::string avroTypeName();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -253,6 +303,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
 };
 
 class CStringWalker : public AnyStringWalker {
@@ -312,6 +363,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -338,6 +390,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -357,6 +410,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -376,6 +430,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -397,6 +452,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -416,6 +472,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -436,6 +493,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -458,6 +516,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -479,6 +538,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -500,6 +560,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -512,6 +573,7 @@ public:
 
   ExtractableWalker(std::string fieldName, std::string typeName);
   bool empty();
+  virtual void buildSchema(SchemaBuilder schemaBuilder) = 0;
   virtual void reset(TTreeReader *reader) = 0;
   virtual void *getAddress() = 0;
 };
@@ -552,6 +614,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim);
   void printJSON(void *address);
   int printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue);
@@ -583,6 +646,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
   void reset(TTreeReader *reader);
@@ -604,6 +668,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON(void *address);
   bool printAvro(void *address, avro_value_t *avrovalue);
 };
@@ -666,6 +731,7 @@ public:
   void resolve();
   std::string repr();
   std::string avroSchema();
+  void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON();
   bool printAvroHeaderOnce(std::string &codec, int blockSize);
   bool printAvro();

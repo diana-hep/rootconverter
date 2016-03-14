@@ -33,18 +33,25 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
 
-    class Test extends RootReaderCPPLibrary.callme {
-      def apply(data: Pointer) {
-        println("here " + data.getInt(0).toString)
+    object PrintOut extends RootReaderCPPLibrary.SchemaBuilder {
+      def apply(schemaElement: Int, word: Pointer) {
+        println("here " + schemaElement)
       }
     }
-    val t = new Test
+
+    // object PrintOut extends RootReaderCPPLibrary.DataBuilder {
+    //   def apply(data: Pointer) {
+    //     println("here " + data.getInt(0).toString)
+    //   }
+    // }
 
     var i = 0
     while (!done) {
       // RootReaderCPPLibrary.printJSON(treeWalker)
       // RootReaderCPPLibrary.printAvro(treeWalker)
-      RootReaderCPPLibrary.run(treeWalker, t)
+
+      RootReaderCPPLibrary.buildSchema(treeWalker, PrintOut)
+      // RootReaderCPPLibrary.buildData(treeWalker, PrintOut)
 
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
 

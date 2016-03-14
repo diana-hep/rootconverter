@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 
-typedef void (*callme)(void *data);
+#ifndef DATAWALKER_H
+enum SchemaElement { dummy = 0 };
+typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word);
+#endif // DATAWALKER_H
 
 extern "C" {
   void *addVectorString(void *vectorString, const char *str);
@@ -26,7 +29,8 @@ extern "C" {
   bool printAvro(void *treeWalker);
   void closeAvro(void *treeWalker);
 
-  void run(void *treeWalker, callme callback);
+  void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
+  // void buildData(void *treeWalker, DataBuilder dataBuilder);
 }
 
 #endif // STATICLIB_H

@@ -1,5 +1,5 @@
-#include "staticlib.h"
 #include "datawalker.h"
+#include "staticlib.h"
 
 void *addVectorString(void *vectorString, const char *str) {
   std::vector<std::string> *l;  
@@ -97,11 +97,7 @@ void closeAvro(void *treeWalker) {
   tw->closeAvro();
 }
 
-static int counter = 0;
-
-void run(void *treeWalker, callme callback) {
+void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
-  counter += 1;
-  int look = counter;
-  callback(&look);
+  tw->buildSchema(schemaBuilder);
 }
