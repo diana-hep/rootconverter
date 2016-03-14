@@ -31,10 +31,11 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     println(RootReaderCPPLibrary.avroSchema(treeWalker))
 
-    RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
+    // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
 
     while (!done) {
-      RootReaderCPPLibrary.printAvro(treeWalker)
+      RootReaderCPPLibrary.printJSON(treeWalker)
+      // RootReaderCPPLibrary.printAvro(treeWalker)
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
     }
   }
