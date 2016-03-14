@@ -1,2 +1,2 @@
 # root2avro
-Converts ROOT trees into a stream of typed Avro records, either for bulk translation or for streaming to another process.
+Converts ROOT trees into different formats to make them accessible in Big Data applications.
