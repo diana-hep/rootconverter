@@ -420,6 +420,11 @@ public:
 
   ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   void fill();    // has side-effects, must be called soon after constructor
+
+  std::vector<std::string> splitCppNamespace(std::string className);
+  std::string dropCppNamespace(std::string className);
+  std::string addCppNamespace(std::string className, std::string ns);
+
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();

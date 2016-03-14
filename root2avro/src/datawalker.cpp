@@ -812,7 +812,7 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-  FieldWalker(fieldName, tclass->GetName()), tclass(tclass), avroNamespace(avroNamespace), defs(defs) { }
+  FieldWalker(fieldName, dropCppNamespace(tclass->GetName())), tclass(tclass), avroNamespace(addCppNamespace(tclass->GetName(), avroNamespace)), defs(defs) { }
 
 void ClassWalker::fill() {
   TIter nextMember = tclass->GetListOfDataMembers();
@@ -824,6 +824,31 @@ void ClassWalker::fill() {
     }
   sizeOf_ = tclass->Size();
   typeId_ = tclass->GetTypeInfo();
+}
+
+std::vector<std::string> ClassWalker::splitCppNamespace(std::string className) {
+  std::string delim("::");
+  std::vector<std::string> out;
+  std::size_t start = 0;
+  std::size_t end = 0;
+  while ((end = className.find(delim, start)) != std::string::npos) {
+    out.push_back(className.substr(start, end - start));
+    start = end + 2;
+  }
+  out.push_back(className.substr(start));
+  return out;
+}
+
+std::string ClassWalker::dropCppNamespace(std::string className) {
+  return splitCppNamespace(className).back();
+}
+
+std::string ClassWalker::addCppNamespace(std::string className, std::string ns) {
+  std::string out = ns;
+  std::vector<std::string> cppns = splitCppNamespace(className);
+  for (int i = 0;  i < cppns.size() - 1;  i++)
+    out += std::string(".") + cppns[i];
+  return out;
 }
 
 size_t ClassWalker::sizeOf() { return sizeOf_; }
