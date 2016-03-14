@@ -25,9 +25,6 @@ extern "C" {
   const char *repr(void *treeWalker);
   const char *avroSchema(void *treeWalker);
   void printJSON(void *treeWalker);
-  bool printAvroHeaderOnce(void *treeWalker, const char *codec, int blockSize);
-  bool printAvro(void *treeWalker);
-  void closeAvro(void *treeWalker);
 
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
   // void buildData(void *treeWalker, DataBuilder dataBuilder);

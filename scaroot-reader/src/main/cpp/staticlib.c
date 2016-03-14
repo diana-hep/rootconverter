@@ -81,22 +81,6 @@ void printJSON(void *treeWalker) {
   tw->printJSON();
 }
 
-bool printAvroHeaderOnce(void *treeWalker, const char *codec, int blockSize) {
-  TreeWalker *tw = (TreeWalker*)treeWalker;
-  std::string c = codec;
-  return tw->printAvroHeaderOnce(c, blockSize);
-}
-
-bool printAvro(void *treeWalker) {
-  TreeWalker *tw = (TreeWalker*)treeWalker;
-  return tw->printAvro();
-}
-
-void closeAvro(void *treeWalker) {
-  TreeWalker *tw = (TreeWalker*)treeWalker;
-  tw->closeAvro();
-}
-
 void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->buildSchema(schemaBuilder);
