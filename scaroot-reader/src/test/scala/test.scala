@@ -29,15 +29,52 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     println(RootReaderCPPLibrary.repr(treeWalker))
 
-    println(RootReaderCPPLibrary.avroSchema(treeWalker))
-
     // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
 
     object PrintOut extends RootReaderCPPLibrary.SchemaBuilder {
       def apply(schemaElement: Int, word: Pointer) {
-        println("here " + schemaElement)
+        val printableSchemaElement = schemaElement match {
+          case SchemaNull(x) => x.toString
+          case SchemaBoolean(x) => x.toString
+          case SchemaInt(x) => x.toString
+          case SchemaLong(x) => x.toString
+          case SchemaFloat(x) => x.toString
+          case SchemaDouble(x) => x.toString
+          case SchemaString(x) => x.toString
+          case SchemaBytes(x) => x.toString
+          case SchemaArray(x) => x.toString
+          case SchemaMap(x) => x.toString
+          case SchemaRecordName(x) => x.toString
+          case SchemaRecordNamespace(x) => x.toString
+          case SchemaRecordDoc(x) => x.toString
+          case SchemaRecordFieldName(x) => x.toString
+          case SchemaRecordFieldDoc(x) => x.toString
+          case SchemaRecordEnd(x) => x.toString
+          case SchemaEnumName(x) => x.toString
+          case SchemaEnumNamespace(x) => x.toString
+          case SchemaEnumDoc(x) => x.toString
+          case SchemaEnumSymbol(x) => x.toString
+          case SchemaEnumEnd(x) => x.toString
+          case SchemaFixedName(x) => x.toString
+          case SchemaFixedNamespace(x) => x.toString
+          case SchemaFixedDoc(x) => x.toString
+          case SchemaFixedSize(x) => x.toString
+          case SchemaUnionStart(x) => x.toString
+          case SchemaUnionEnd(x) => x.toString
+          case SchemaReference(x) => x.toString
+        }
+
+        val printableWord =
+          if (word == Pointer.NULL)
+            "null"
+          else
+            "\"" + word.getString(0) + "\""
+
+        println("PrintOut(" + printableSchemaElement + ", " + printableWord + ")")
       }
     }
+
+    RootReaderCPPLibrary.buildSchema(treeWalker, PrintOut)
 
     // object PrintOut extends RootReaderCPPLibrary.DataBuilder {
     //   def apply(data: Pointer) {
@@ -45,18 +82,17 @@ class DefaultSuite extends FlatSpec with Matchers {
     //   }
     // }
 
-    var i = 0
-    while (!done) {
-      // RootReaderCPPLibrary.printJSON(treeWalker)
-      // RootReaderCPPLibrary.printAvro(treeWalker)
+    // var i = 0
+    // while (!done) {
+    //   // RootReaderCPPLibrary.printJSON(treeWalker)
+    //   // RootReaderCPPLibrary.printAvro(treeWalker)
 
-      RootReaderCPPLibrary.buildSchema(treeWalker, PrintOut)
-      // RootReaderCPPLibrary.buildData(treeWalker, PrintOut)
+    //   RootReaderCPPLibrary.buildData(treeWalker, PrintOut)
 
-      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+    //   done = (RootReaderCPPLibrary.next(treeWalker) == 0)
 
-      i += 1
-      if (i > 10) done = true
-    }
+    //   i += 1
+    //   if (i > 10) done = true
+    // }
   }
 }

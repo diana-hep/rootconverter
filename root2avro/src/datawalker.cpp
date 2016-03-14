@@ -58,8 +58,8 @@ const std::type_info *BoolWalker::typeId() { return &typeid(bool); }
 
 std::string BoolWalker::avroTypeName() { return "boolean"; }
 
-void BoolWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME BoolWalker" << std::endl;
+void BoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaBoolean, nullptr);
 }
 
 void BoolWalker::printJSON(void *address) {
@@ -104,8 +104,8 @@ const std::type_info *CharWalker::typeId() { return &typeid(char); }
 
 std::string CharWalker::avroTypeName() { return "int"; }
 
-void CharWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME CharWalker" << std::endl;
+void CharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void CharWalker::printJSON(void *address) {
@@ -144,8 +144,8 @@ const std::type_info *UCharWalker::typeId() { return &typeid(unsigned char); }
 
 std::string UCharWalker::avroTypeName() { return "int"; }
 
-void UCharWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME UCharWalker" << std::endl;
+void UCharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void UCharWalker::printJSON(void *address) {
@@ -184,8 +184,8 @@ const std::type_info *ShortWalker::typeId() { return &typeid(short); }
 
 std::string ShortWalker::avroTypeName() { return "int"; }
 
-void ShortWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME ShortWalker" << std::endl;
+void ShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void ShortWalker::printJSON(void *address) {
@@ -224,8 +224,8 @@ const std::type_info *UShortWalker::typeId() { return &typeid(unsigned short); }
 
 std::string UShortWalker::avroTypeName() { return "int"; }
 
-void UShortWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME UShortWalker" << std::endl;
+void UShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void UShortWalker::printJSON(void *address) {
@@ -264,8 +264,8 @@ const std::type_info *IntWalker::typeId() { return &typeid(int); }
 
 std::string IntWalker::avroTypeName() { return "int"; }
 
-void IntWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME IntWalker" << std::endl;
+void IntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void IntWalker::printJSON(void *address) {
@@ -308,8 +308,8 @@ const std::type_info *UIntWalker::typeId() { return &typeid(unsigned int); }
 
 std::string UIntWalker::avroTypeName() { return "long"; }
 
-void UIntWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME UIntWalker" << std::endl;
+void UIntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaLong, nullptr);
 }
 
 void UIntWalker::printJSON(void *address) {
@@ -348,8 +348,8 @@ const std::type_info *LongWalker::typeId() { return &typeid(Long64_t); }
 
 std::string LongWalker::avroTypeName() { return "long"; }
 
-void LongWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME LongWalker" << std::endl;
+void LongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaLong, nullptr);
 }
 
 void LongWalker::printJSON(void *address) {
@@ -388,8 +388,8 @@ const std::type_info *ULongWalker::typeId() { return &typeid(ULong64_t); }
 
 std::string ULongWalker::avroTypeName() { return "double"; }
 
-void ULongWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME ULongWalker" << std::endl;
+void ULongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaDouble, nullptr);
 }
 
 void ULongWalker::printJSON(void *address) {
@@ -428,8 +428,8 @@ const std::type_info *FloatWalker::typeId() { return &typeid(float); }
 
 std::string FloatWalker::avroTypeName() { return "float"; }
 
-void FloatWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME FloatWalker" << std::endl;
+void FloatWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaFloat, nullptr);
 }
 
 void FloatWalker::printJSON(void *address) {
@@ -468,8 +468,8 @@ const std::type_info *DoubleWalker::typeId() { return &typeid(double); }
 
 std::string DoubleWalker::avroTypeName() { return "double"; }
 
-void DoubleWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME DoubleWalker" << std::endl;
+void DoubleWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaDouble, nullptr);
 }
 
 void DoubleWalker::printJSON(void *address) {
@@ -514,8 +514,8 @@ std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
 }
 std::string AnyStringWalker::avroTypeName() { return "string"; }
 
-void AnyStringWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME AnyStringWalker" << std::endl;
+void AnyStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaString, nullptr);
 }
 
 std::string AnyStringWalker::avroSchema(int indent, std::set<std::string> &memo) { return "\"string\""; }
@@ -761,8 +761,13 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return out;
 }
 
-void MemberWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME MemberWalker" << std::endl;
+void MemberWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaRecordFieldName, fieldName.c_str());
+  if (!comment.empty())
+    schemaBuilder(SchemaRecordFieldDoc, comment.c_str());
+  else
+    schemaBuilder(SchemaRecordFieldDoc, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void MemberWalker::printJSON(void *address) {
@@ -856,8 +861,21 @@ std::string ClassWalker::avroTypeName() {
   return out;
 }
 
-void ClassWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME ClassWalker" << std::endl;
+void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  if (memo.find(avroTypeName()) != memo.end())
+    schemaBuilder(SchemaReference, avroTypeName().c_str());
+  else {
+    memo.insert(avroTypeName());
+
+    schemaBuilder(SchemaRecordName, typeName.c_str());
+    schemaBuilder(SchemaRecordNamespace, avroNamespace.c_str());
+    schemaBuilder(SchemaRecordDoc, nullptr);
+
+    for (auto iter = members.begin();  iter != members.end();  ++iter)
+      (*iter)->buildSchema(schemaBuilder, memo);
+
+    schemaBuilder(SchemaRecordEnd, nullptr);
+  }
 }
 
 void ClassWalker::printJSON(void *address) {
@@ -908,8 +926,14 @@ std::string PointerWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return std::string("[\"null\", ") + subWalker->avroSchema(indent, memo) + std::string("]");
 }
 
-void PointerWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME PointerWalker" << std::endl;
+void PointerWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  FieldWalker *subWalker = walker;
+  for (PointerWalker *pointerWalker = dynamic_cast<PointerWalker*>(subWalker);  pointerWalker != nullptr;  subWalker = pointerWalker->walker);
+
+  schemaBuilder(SchemaUnionStart, nullptr);
+  schemaBuilder(SchemaNull, nullptr);
+  subWalker->buildSchema(schemaBuilder, memo);
+  schemaBuilder(SchemaUnionEnd, nullptr);
 }
 
 void PointerWalker::printJSON(void *address) {
@@ -973,7 +997,7 @@ std::string TRefWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return "TREF";
 }
 
-void TRefWalker::buildSchema(SchemaBuilder schemaBuilder) {
+void TRefWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
   std::cerr << std::endl << "TREF" << std::endl;
 }
 
@@ -1020,8 +1044,9 @@ std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo)
   return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME StdVectorWalker" << std::endl;
+void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaArray, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void StdVectorWalker::printJSON(void *address) {
@@ -1079,8 +1104,9 @@ std::string StdVectorBoolWalker::avroSchema(int indent, std::set<std::string> &m
   return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void StdVectorBoolWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME StdVectorBoolWalker" << std::endl;
+void StdVectorBoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaArray, nullptr);
+  schemaBuilder(SchemaBoolean, nullptr);
 }
 
 void StdVectorBoolWalker::printJSON(void *address) {
@@ -1136,8 +1162,9 @@ std::string ArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void ArrayWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME ArrayWalker" << std::endl;
+void ArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaArray, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void ArrayWalker::printJSON(void *address) {
@@ -1200,8 +1227,9 @@ std::string TObjArrayWalker::avroSchema(int indent, std::set<std::string> &memo)
   return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void TObjArrayWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME TObjArrayWalker" << std::endl;
+void TObjArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaArray, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void TObjArrayWalker::printJSON(void *address) {
@@ -1271,7 +1299,7 @@ std::string TRefArrayWalker::avroSchema(int indent, std::set<std::string> &memo)
   return "TREFARRAY";
 }
 
-void TRefArrayWalker::buildSchema(SchemaBuilder schemaBuilder) {
+void TRefArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
   std::cerr << std::endl << "TREFARRAY" << std::endl;
 }
 
@@ -1317,8 +1345,9 @@ std::string TClonesArrayWalker::avroSchema(int indent, std::set<std::string> &me
   return std::string("{\"type\": \"array\", \"items\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void TClonesArrayWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME TClonesArrayWalker" << std::endl;
+void TClonesArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  schemaBuilder(SchemaArray, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void TClonesArrayWalker::printJSON(void *address) {
@@ -1513,8 +1542,10 @@ std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
   return out;
 }
 
-void LeafWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME LeafWalker" << std::endl;
+void LeafWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  for (int i = 0;  i < dimensions;  i++)
+    schemaBuilder(SchemaArray, nullptr);
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 int LeafWalker::printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim) {
@@ -1629,8 +1660,8 @@ std::string ReaderValueWalker::avroSchema(int indent, std::set<std::string> &mem
   return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void ReaderValueWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME ReaderValueWalker" << std::endl;
+void ReaderValueWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void ReaderValueWalker::printJSON(void *address) {
@@ -1676,8 +1707,8 @@ std::string RawTBranchWalker::avroSchema(int indent, std::set<std::string> &memo
   return std::string(indent, ' ') + std::string("{\"name\": \"") + fieldName + std::string("\", \"type\": ") + walker->avroSchema(indent, memo) + std::string("}");
 }
 
-void RawTBranchWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::cerr << "FIXME RawTBranchWalker" << std::endl;
+void RawTBranchWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
+  walker->buildSchema(schemaBuilder, memo);
 }
 
 void RawTBranchWalker::printJSON(void *address) {
@@ -1862,7 +1893,19 @@ std::string TreeWalker::avroSchema() {
 }
 
 void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  schemaBuilder(SchemaArray, nullptr);
+  std::set<std::string> memo;
+
+  schemaBuilder(SchemaRecordName, reader->GetTree()->GetName());
+  schemaBuilder(SchemaRecordNamespace, avroNamespace.c_str());
+  schemaBuilder(SchemaRecordDoc, nullptr);
+
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    schemaBuilder(SchemaRecordFieldName, (*iter)->fieldName.c_str());
+    schemaBuilder(SchemaRecordFieldDoc, nullptr);
+    (*iter)->buildSchema(schemaBuilder, memo);
+  }
+
+  schemaBuilder(SchemaRecordEnd, nullptr);
 }
 
 void TreeWalker::printJSON() {
