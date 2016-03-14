@@ -1,11 +1,28 @@
 #include "staticlib.h"
 #include "datawalker.h"
 
-void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, int numLibs, const char **libs) {
-  std::vector<std::string> vectorLibs;
-  for (int i = 0;  i < numLibs;  i++)
-    vectorLibs.push_back(std::string(libs[i]));
-  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace), vectorLibs);
+void *addVectorString(void *vectorString, const char *str) {
+  std::vector<std::string> *l;  
+
+  if (vectorString == nullptr)
+    l = new std::vector<std::string>;
+  else
+    l = (std::vector<std::string>*)vectorString;
+
+  l->push_back(std::string(str));
+
+  return l;
+}
+
+void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, void *libs) {
+  std::vector<std::string> *l;
+  if (libs == nullptr)
+    l = new std::vector<std::string>;
+  else
+    l = (std::vector<std::string>*)libs;
+
+  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace), *l);
+  delete l;
   return out;
 }
 
@@ -29,12 +46,12 @@ bool next(void *treeWalker) {
   return tw->next();
 }
 
-long numEntriesInCurrentTree(void *treeWalker) {
+int64_t numEntriesInCurrentTree(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   return tw->numEntriesInCurrentTree();
 }
 
-void setEntryInCurrentTree(void *treeWalker, long entry) {
+void setEntryInCurrentTree(void *treeWalker, int64_t entry) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->setEntryInCurrentTree(entry);
 }

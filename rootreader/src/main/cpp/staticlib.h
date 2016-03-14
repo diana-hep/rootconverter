@@ -1,15 +1,19 @@
 #ifndef STATICLIB_H
 #define STATICLIB_H
 
+#include <stdint.h>
+
 extern "C" {
-  void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, int numLibs, const char **libs);
+  void *addVectorString(void *vectorString, const char *str);
+
+  void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, void *libs);
   void reset(void *treeWalker, const char *fileLocation);
   bool valid(void *treeWalker);
   const char *errorMessage(void *treeWalker);
 
   bool next(void *treeWalker);
-  long numEntriesInCurrentTree(void *treeWalker);
-  void setEntryInCurrentTree(void *treeWalker, long entry);
+  int64_t numEntriesInCurrentTree(void *treeWalker);
+  void setEntryInCurrentTree(void *treeWalker, int64_t entry);
 
   bool resolved(void *treeWalker);
   void resolve(void *treeWalker);
