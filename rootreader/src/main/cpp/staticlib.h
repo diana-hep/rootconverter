@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+typedef void (*callme)(void *data);
+
 extern "C" {
   void *addVectorString(void *vectorString, const char *str);
 
@@ -23,6 +25,8 @@ extern "C" {
   bool printAvroHeaderOnce(void *treeWalker, const char *codec, int blockSize);
   bool printAvro(void *treeWalker);
   void closeAvro(void *treeWalker);
+
+  void run(void *treeWalker, callme callback);
 }
 
 #endif // STATICLIB_H

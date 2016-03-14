@@ -96,3 +96,12 @@ void closeAvro(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->closeAvro();
 }
+
+static int counter = 0;
+
+void run(void *treeWalker, callme callback) {
+  TreeWalker *tw = (TreeWalker*)treeWalker;
+  counter += 1;
+  int look = counter;
+  callback(&look);
+}

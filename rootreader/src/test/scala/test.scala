@@ -33,10 +33,23 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
 
+    class Test extends RootReaderCPPLibrary.callme {
+      def apply(data: Pointer) {
+        println("here " + data.getInt(0).toString)
+      }
+    }
+    val t = new Test
+
+    var i = 0
     while (!done) {
-      RootReaderCPPLibrary.printJSON(treeWalker)
+      // RootReaderCPPLibrary.printJSON(treeWalker)
       // RootReaderCPPLibrary.printAvro(treeWalker)
+      RootReaderCPPLibrary.run(treeWalker, t)
+
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+
+      i += 1
+      if (i > 10) done = true
     }
   }
 }
