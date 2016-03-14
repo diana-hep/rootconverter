@@ -1,6 +1,6 @@
 -library RootReaderCPP
 
--package org.dianahep.rootreader
+-package org.dianahep.scaroot.reader
 
 -direct
 

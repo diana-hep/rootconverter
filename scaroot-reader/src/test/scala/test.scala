@@ -9,7 +9,7 @@ import org.scalatest.Matchers
 
 import com.sun.jna.Pointer
 
-import org.dianahep.rootreader._
+import org.dianahep.scaroot.reader._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
