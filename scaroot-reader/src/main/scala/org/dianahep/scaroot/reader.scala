@@ -163,7 +163,6 @@ package reader {
   // Default interpreters for data.
 
   object Default {
-    val nul =     {() => None}
     val boolean = {value: Pointer => value.getByte(0) != 0}
     val int =     {value: Pointer => value.getInt(0)}
     val long =    {value: Pointer => value.getLong(0)}
@@ -186,48 +185,109 @@ package reader {
     def enum[ENUM <: Enumeration](enumeration: ENUM) = {value: Pointer => enumeration.apply(value.getInt(0))}
   }
 
+  // Custom interpreters for data. (Use '# for arrays.)
+  
+  trait Custom {
+    def in: List[String]
+  }
+
+  case class CustomBoolean[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomInt[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomLong[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomFloat[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomDouble[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomString[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomBytes[TYPE](f: (Pointer, Int) => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomArray[BUILDER <: Builder[_, _]](f: Int => BUILDER, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomFixed[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomEnum[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
+  case class CustomRecord[TYPE](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
+    def ::(x: String) = this.copy(in = x :: in)
+    def ::(x: Symbol) = this.copy(in = x.name :: in)
+  }
+
   // Immutable schemas that can extract and convert data using interpreters.
 
   sealed trait Schema[TYPE] {
     def interpret(data: Pointer): TYPE
   }
 
-  class SchemaNull[TYPE : ClassTag](walker: Pointer, interpreter: () => TYPE = Default.nul) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter()
+  class SchemaNull[TYPE : ClassTag](walker: Pointer, value: TYPE) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = value
     override def toString() = s"SchemaNull[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaBoolean[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.boolean) extends Schema[TYPE] {
+  class SchemaBoolean[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaBoolean[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.int) extends Schema[TYPE] {
+  class SchemaInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaInt[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaLong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.long) extends Schema[TYPE] {
+  class SchemaLong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaLong[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaFloat[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.float) extends Schema[TYPE] {
+  class SchemaFloat[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaFloat[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaDouble[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.double) extends Schema[TYPE] {
+  class SchemaDouble[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaDouble[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaString[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.string) extends Schema[TYPE] {
+  class SchemaString[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
     override def toString() = s"SchemaString[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaBytes[TYPE : ClassTag](walker: Pointer, interpreter: (Pointer, Int) => TYPE = Default.bytes) extends Schema[TYPE] {
+  class SchemaBytes[TYPE : ClassTag](walker: Pointer, interpreter: (Pointer, Int) => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = {
       val size = RootReaderCPPLibrary.getDataSize(walker, data)
       interpreter(RootReaderCPPLibrary.getData(walker, data, 0), size)
@@ -252,6 +312,16 @@ package reader {
   
   trait SchemaRecord[TYPE] extends Schema[TYPE] {
     def fields: Map[String, Schema[_]]
+  }
+
+  class SchemaOption[TYPE](walker: Pointer, nullable: Schema[TYPE]) extends Schema[Option[TYPE]] {
+    def interpret(data: Pointer): Option[TYPE] = {
+      val discriminant = RootReaderCPPLibrary.getDataSize(walker, data)
+      if (discriminant == 0)
+        None.asInstanceOf[Option[TYPE]]
+      else
+        Some(nullable.interpret(RootReaderCPPLibrary.getData(walker, data, discriminant))).asInstanceOf[Option[TYPE]]
+    }
   }
 
   object Schema {
