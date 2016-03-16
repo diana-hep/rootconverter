@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #ifndef DATAWALKER_H
-enum SchemaElement { dummy = 0 };
-typedef void (*SchemaBuilder)(SchemaElement schemaElement, void *fieldWalker, void *LeafDimension, const char *word);
+enum SchemaInstruction { dummy = 0 };
+typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, void *fieldWalker, void *LeafDimension, const char *word);
 #endif // DATAWALKER_H
 
 extern "C" {

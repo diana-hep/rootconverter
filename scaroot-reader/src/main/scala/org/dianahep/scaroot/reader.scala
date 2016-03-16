@@ -16,35 +16,35 @@ package reader {
   // Also used in a stack to build the schema used at runtime.
   // Must be kept in-sync with scaroot-reader/src/main/cpp/datawalker.h!
 
-  class SchemaElement(index: Int, name: String) {
+  sealed class SchemaInstruction(index: Int, name: String) {
     def unapply(x: Int) = (x == index)
-    override def toString() = s"SchemaElement.$name"
+    override def toString() = s"SchemaInstruction.$name"
   }
 
-  object SchemaElement {
-    val SchemaBool   = new SchemaElement(0, "SchemaBool")
-    val SchemaChar   = new SchemaElement(1, "SchemaChar")
-    val SchemaUChar  = new SchemaElement(2, "SchemaUChar")
-    val SchemaShort  = new SchemaElement(3, "SchemaShort")
-    val SchemaUShort = new SchemaElement(4, "SchemaUShort")
-    val SchemaInt    = new SchemaElement(5, "SchemaInt")
-    val SchemaUInt   = new SchemaElement(6, "SchemaUInt")
-    val SchemaLong   = new SchemaElement(7, "SchemaLong")
-    val SchemaULong  = new SchemaElement(8, "SchemaULong")
-    val SchemaFloat  = new SchemaElement(9, "SchemaFloat")
-    val SchemaDouble = new SchemaElement(10, "SchemaDouble")
-    val SchemaString = new SchemaElement(11, "SchemaString")
+  object SchemaInstruction {
+    val SchemaBool   = new SchemaInstruction(0, "SchemaBool")
+    val SchemaChar   = new SchemaInstruction(1, "SchemaChar")
+    val SchemaUChar  = new SchemaInstruction(2, "SchemaUChar")
+    val SchemaShort  = new SchemaInstruction(3, "SchemaShort")
+    val SchemaUShort = new SchemaInstruction(4, "SchemaUShort")
+    val SchemaInt    = new SchemaInstruction(5, "SchemaInt")
+    val SchemaUInt   = new SchemaInstruction(6, "SchemaUInt")
+    val SchemaLong   = new SchemaInstruction(7, "SchemaLong")
+    val SchemaULong  = new SchemaInstruction(8, "SchemaULong")
+    val SchemaFloat  = new SchemaInstruction(9, "SchemaFloat")
+    val SchemaDouble = new SchemaInstruction(10, "SchemaDouble")
+    val SchemaString = new SchemaInstruction(11, "SchemaString")
 
-    val SchemaClassName      = new SchemaElement(12, "SchemaClassName")
-    val SchemaClassDoc       = new SchemaElement(13, "SchemaClassDoc")
-    val SchemaClassFieldName = new SchemaElement(14, "SchemaClassFieldName")
-    val SchemaClassFieldDoc  = new SchemaElement(15, "SchemaClassFieldDoc")
-    val SchemaClassEnd       = new SchemaElement(16, "SchemaClassEnd")
-    val SchemaClassReference = new SchemaElement(17, "SchemaClassReference")
+    val SchemaClassName      = new SchemaInstruction(12, "SchemaClassName")
+    val SchemaClassDoc       = new SchemaInstruction(13, "SchemaClassDoc")
+    val SchemaClassFieldName = new SchemaInstruction(14, "SchemaClassFieldName")
+    val SchemaClassFieldDoc  = new SchemaInstruction(15, "SchemaClassFieldDoc")
+    val SchemaClassEnd       = new SchemaInstruction(16, "SchemaClassEnd")
+    val SchemaClassReference = new SchemaInstruction(17, "SchemaClassReference")
 
-    val SchemaPointer = new SchemaElement(18, "SchemaPointer")
+    val SchemaPointer = new SchemaInstruction(18, "SchemaPointer")
 
-    val SchemaSequence = new SchemaElement(19, "SchemaSequence")
+    val SchemaSequence = new SchemaInstruction(19, "SchemaSequence")
   }
 
   // Default interpreters for data.
@@ -294,6 +294,34 @@ package reader {
   }
 
   object Schema {
+    def apply[TYPE](treeWalker: Pointer)(implicit customizations: Seq[Custom] = Nil): Schema[TYPE] = {
+      var schemaInstructions: List[Int] = Nil
+      var schemaElements: List[Schema[_]] = Nil
+      var treeIndexPath: List[String] = Nil
+
+      object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
+        def apply(schemaInstruction: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
+          schemaInstructions = schemaInstruction :: schemaInstructions
+
+          schemaInstructions match {
+            case SchemaInstruction.SchemaBool() :: rest =>
+              schemaInstructions = rest
+              schemaElements = new SchemaBool(fieldWalker, interpreter = Default.bool) :: schemaElements
+
+
+
+
+          }
+        }
+      }
+
+
+
+
+
+      null.asInstanceOf[Schema[TYPE]]
+    }
+
     implicit def schemaClassFrom[TYPE](walker: Pointer, fields: List[(String, Schema[_])]): SchemaClass[TYPE] = macro schemaClassFromImpl[TYPE]
 
     def schemaClassFromImpl[TYPE](c: Context)(walker: c.Expr[Pointer], fields: c.Expr[List[(String, Schema[_])]])(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaClass[TYPE]] = {
@@ -349,10 +377,4 @@ package reader {
       """)
     }
   }
-
-
-
-
-
-
 }

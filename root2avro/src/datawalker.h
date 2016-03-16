@@ -52,7 +52,7 @@ class ClassWalker;
 class LeafDimension;
 
 // Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
-enum SchemaElement {
+enum SchemaInstruction {
   SchemaBool           = 0,
   SchemaChar           = 1,
   SchemaUChar          = 2,
@@ -78,7 +78,7 @@ enum SchemaElement {
   SchemaSequence       = 19,
 };
 
-typedef void (*SchemaBuilder)(SchemaElement schemaElement, void *fieldWalker, void *LeafDimension, const char *word);
+typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, void *fieldWalker, void *LeafDimension, const char *word);
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
