@@ -17,7 +17,7 @@ package reader {
   // Must be kept in-sync with scaroot-reader/src/main/cpp/datawalker.h!
 
   class SchemaElement(index: Int, name: String) {
-    def unapply(x: Int) = if (x == index) Some(this) else None
+    def unapply(x: Int) = (x == index)
     override def toString() = s"SchemaElement.$name"
   }
 
@@ -50,15 +50,37 @@ package reader {
   // Default interpreters for data.
 
   object Default {
-    val boolean = {value: Pointer => value.getByte(0) != 0}
-    val int =     {value: Pointer => value.getInt(0)}
-    val long =    {value: Pointer => value.getLong(0)}
-    val float =   {value: Pointer => value.getFloat(0)}
-    val double =  {value: Pointer => value.getDouble(0)}
-    val string =  {value: Pointer => value.getString(0)}
-    val bytes =   {(value: Pointer, size: Int) => value.getByteBuffer(0, size)}
+    val bool = {value: Pointer => value.getByte(0) != 0}
+    val char = {value: Pointer => value.getByte(0)}
+    val uchar = {value: Pointer => val out = value.getByte(0); if (out < 0) 2 * (java.lang.Byte.MAX_VALUE.toShort + 1) + out.toShort else out.toShort}
+    val short = {value: Pointer => value.getShort(0)}
+    val ushort = {value: Pointer => val out = value.getShort(0); if (out < 0) 2 * (java.lang.Short.MAX_VALUE.toInt + 1) + out.toInt else out.toInt}
+    val int = {value: Pointer => value.getInt(0)}
+    val uint = {value: Pointer => val out = value.getInt(0); if (out < 0) 2 * (java.lang.Integer.MAX_VALUE.toLong + 1) + out.toLong else out.toLong}
+    val long = {value: Pointer => value.getLong(0)}
+    val ulong = {value: Pointer => val out = value.getLong(0); if (out < 0) 2 * (java.lang.Long.MAX_VALUE.toDouble + 1) + out.toDouble else out.toDouble}
+    val float = {value: Pointer => value.getFloat(0)}
+    val double = {value: Pointer => value.getDouble(0)}
+    val string = {value: Pointer => value.getString(0)}
 
-    def array[ITEMS, Seq[ITEMS], BUILDER <: Builder[ITEMS, Seq[ITEMS]]] = {size: Int =>
+    val byteBuffer = {value: Pointer =>
+      var end = 0L
+      while (value.getByte(end) != 0)
+        end += 1L
+      value.getByteBuffer(0, end)
+    }
+
+    val byteArray = {value: Pointer =>
+      var end = 0
+      while (value.getByte(end) != 0)
+        end += 1
+      value.getByteArray(0, end)
+    }
+
+    def fixed(size: Int) = {value: Pointer => value.getByteBuffer(0, size)}
+    def enum[ENUM <: Enumeration](enumeration: ENUM) = {value: Pointer => enumeration.apply(value.getInt(0))}
+
+    def sequence[ITEMS, Seq[ITEMS], BUILDER <: Builder[ITEMS, Seq[ITEMS]]] = {size: Int =>
       val builder =
         if (size < 10)    // FIXME: optimize this
           List.newBuilder[ITEMS].asInstanceOf[Builder[ITEMS, Seq[ITEMS]]]
@@ -67,9 +89,6 @@ package reader {
       builder.sizeHint(size)
       builder
     }
-
-    def fixed(size: Int) = {value: Pointer => value.getByteBuffer(0, size)}
-    def enum[ENUM <: Enumeration](enumeration: ENUM) = {value: Pointer => enumeration.apply(value.getInt(0))}
   }
 
   // Custom interpreters for data. (Use '# for arrays.)
@@ -172,7 +191,7 @@ package reader {
     override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
-  case class CustomArray[BUILDER <: Builder[_, _] : ClassTag](f: Int => BUILDER, in: List[String] = Nil) extends Custom {
+  case class CustomSequence[BUILDER <: Builder[_, _] : ClassTag](f: Int => BUILDER, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
     override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[BUILDER].runtimeClass.getName}]"""
@@ -259,7 +278,7 @@ package reader {
     override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
   }
 
-  class SchemaArray[ITEMS, TYPE : ClassTag](walker: Pointer, dim: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
+  class SchemaSequence[ITEMS, TYPE : ClassTag](walker: Pointer, dim: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = {
       val size = RootReaderCPPLibrary.getDataSize(walker, data, dim)
       val listBuilder = builder(size)
@@ -330,5 +349,10 @@ package reader {
       """)
     }
   }
+
+
+
+
+
 
 }

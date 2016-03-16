@@ -39,29 +39,29 @@ class DefaultSuite extends FlatSpec with Matchers {
     object PrintOut extends RootReaderCPPLibrary.SchemaBuilder {
       def apply(schemaElement: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
         schemaElement match {
-          case SchemaElement.SchemaBool(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaChar(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaUChar(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaShort(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaUShort(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaInt(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaUInt(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaLong(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaULong(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaFloat(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaDouble(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaString(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaBool() => println(s"""SchemaBool $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaChar() => println(s"""SchemaChar $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUChar() => println(s"""SchemaUChar $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaShort() => println(s"""SchemaShort $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUShort() => println(s"""SchemaUShort $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaInt() => println(s"""SchemaInt $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUInt() => println(s"""SchemaUInt $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaLong() => println(s"""SchemaLong $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaULong() => println(s"""SchemaULong $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaFloat() => println(s"""SchemaFloat $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaDouble() => println(s"""SchemaDouble $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaString() => println(s"""SchemaString $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
 
-          case SchemaElement.SchemaClassName(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaClassDoc(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaClassFieldName(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaClassFieldDoc(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaClassEnd(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-          case SchemaElement.SchemaClassReference(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassName() => println(s"""SchemaClassName $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassDoc() => println(s"""SchemaClassDoc $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassFieldName() => println(s"""SchemaClassFieldName $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassFieldDoc() => println(s"""SchemaClassFieldDoc $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassEnd() => println(s"""SchemaClassEnd $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassReference() => println(s"""SchemaClassReference $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
 
-          case SchemaElement.SchemaPointer(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaPointer() => println(s"""SchemaPointer $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
 
-          case SchemaElement.SchemaSequence(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaSequence() => println(s"""SchemaSequence $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
         }
       }
     }
