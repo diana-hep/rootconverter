@@ -50,6 +50,7 @@ using namespace ROOT::Internal;
 //// forwards
 class ClassWalker;
 
+// Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
 enum SchemaElement {
   SchemaNull                 = 0,
   SchemaBoolean              = 1,
