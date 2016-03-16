@@ -85,3 +85,11 @@ void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->buildSchema(schemaBuilder);
 }
+
+int getDataSize(void *fieldWalker, void *address) {
+  return 0;
+}
+
+void *getData(void *fieldWalker, void *address, int index) {
+  return nullptr;
+}

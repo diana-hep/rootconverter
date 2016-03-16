@@ -27,7 +27,8 @@ extern "C" {
   void printJSON(void *treeWalker);
 
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
-  // void buildData(void *treeWalker, DataBuilder dataBuilder);
+  int getDataSize(void *fieldWalker, void *address);
+  void *getData(void *fieldWalker, void *address, int index);
 }
 
 #endif // STATICLIB_H
