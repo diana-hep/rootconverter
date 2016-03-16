@@ -49,6 +49,7 @@ using namespace ROOT::Internal;
 
 //// forwards
 class ClassWalker;
+class LeafDimension;
 
 // Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
 enum SchemaElement {
@@ -88,7 +89,7 @@ enum SchemaElement {
   SchemaReference            = 27,
 };
 
-typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word);
+typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word, void *fieldWalker);
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
@@ -112,6 +113,8 @@ public:
 #ifdef AVRO
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 #endif
+  virtual int getDataSize(void *address, LeafDimension *dim) = 0;
+  virtual const void *getData(void *address, int index, LeafDimension *dim) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
@@ -131,6 +134,8 @@ public:
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
   virtual bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) = 0;
 #endif
+  virtual int getDataSize(void *address, LeafDimension *dim) = 0;
+  virtual const void *getData(void *address, int index, LeafDimension *dim) = 0;
   virtual TTreeReaderValueBase *readerValue(TTreeReader *reader) = 0;
   virtual TTreeReaderArrayBase *readerArray(TTreeReader *reader) = 0;
 };
@@ -148,6 +153,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -165,6 +172,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -182,6 +191,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -199,6 +210,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -216,6 +229,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -233,6 +248,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
   int value(TTreeReaderValueBase *readerValue);
@@ -251,6 +268,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -268,6 +287,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -285,6 +306,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -302,6 +325,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -319,6 +344,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -334,7 +361,7 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
-  void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
+  virtual void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) = 0;
 };
 
 class CStringWalker : public AnyStringWalker {
@@ -342,12 +369,15 @@ public:
   CStringWalker(std::string fieldName);
   size_t sizeOf();
   const std::type_info *typeId();
+  void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -357,12 +387,15 @@ public:
   StdStringWalker(std::string fieldName);
   size_t sizeOf();
   const std::type_info *typeId();
+  void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -372,12 +405,15 @@ public:
   TStringWalker(std::string fieldName);
   size_t sizeOf();
   const std::type_info *typeId();
+  void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
   void printJSON(void *address);
   void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -405,6 +441,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -439,6 +477,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
@@ -461,6 +501,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
@@ -483,6 +525,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
@@ -507,6 +551,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
@@ -514,6 +560,8 @@ public:
 class StdVectorBoolWalker : public FieldWalker {
 public:
   FieldWalker *walker;
+  const bool FALSE = false;
+  const bool TRUE = true;
 
   StdVectorBoolWalker(std::string fieldName);
   size_t sizeOf();
@@ -529,6 +577,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
@@ -552,6 +602,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
@@ -577,6 +629,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
@@ -601,6 +655,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
@@ -625,6 +681,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
@@ -685,6 +743,8 @@ public:
   int printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue);
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -717,6 +777,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -741,6 +803,8 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  int getDataSize(void *address, LeafDimension *dim);
+  const void *getData(void *address, int index, LeafDimension *dim);
 };
 
 class RawTBranchStdStringWalker : public RawTBranchWalker {
