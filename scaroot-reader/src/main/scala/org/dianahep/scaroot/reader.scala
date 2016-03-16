@@ -192,87 +192,120 @@ package reader {
     def interpret(data: Pointer): TYPE
   }
 
+  class SchemaNull[TYPE : ClassTag](walker: Pointer, interpreter: () => TYPE = Default.nul) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter()
+    override def toString() = s"SchemaNull[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaBoolean[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.boolean) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaBoolean[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.int) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaInt[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaLong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.long) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaLong[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaFloat[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.float) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaFloat[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaDouble[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.double) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaDouble[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaString[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.string) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    override def toString() = s"SchemaString[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaBytes[TYPE : ClassTag](walker: Pointer, interpreter: (Pointer, Int) => TYPE = Default.bytes) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = {
+      val size = RootReaderCPPLibrary.getDataSize(walker, data)
+      interpreter(RootReaderCPPLibrary.getData(walker, data, 0), size)
+    }
+    override def toString() = s"SchemaBytes[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaArray[ITEMS, TYPE : ClassTag](walker: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = {
+      val size = RootReaderCPPLibrary.getDataSize(walker, data)
+      val listBuilder = builder(size)
+      var index = 0
+      while (index < size) {
+        val subdata = RootReaderCPPLibrary.getData(walker, data, index)
+        listBuilder += items.interpret(subdata)
+        index += 1
+      }
+      listBuilder.result
+    }
+    override def toString() = s"SchemaArray[${classTag[TYPE].runtimeClass.getName}]($items)"
+  }
+  
+  trait SchemaRecord[TYPE] extends Schema[TYPE] {
+    def fields: Map[String, Schema[_]]
+  }
+
   object Schema {
-    case class nul[TYPE : ClassTag](walker: Pointer, interpreter: () => TYPE = Default.nul) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter()
-      override def toString() = s"Schema.nul[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
+    def record[TYPE](walker: Pointer, fields: List[(String, Schema[_])]): SchemaRecord[TYPE] = macro specializedRecord[TYPE]
 
-    case class boolean[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.boolean) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.boolean[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class int[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.int) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.int[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class long[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.long) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.long[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class float[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.float) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.float[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class double[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.double) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.double[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class string[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE = Default.string) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
-      override def toString() = s"Schema.string[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class bytes[TYPE : ClassTag](walker: Pointer, interpreter: (Pointer, Int) => TYPE = Default.bytes) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = {
-        val size = RootReaderCPPLibrary.getDataSize(walker, data)
-        interpreter(RootReaderCPPLibrary.getData(walker, data, 0), size)
-      }
-      override def toString() = s"Schema.bytes[${classTag[TYPE].runtimeClass.getSimpleName}]"
-    }
-
-    case class array[ITEMS, TYPE : ClassTag](walker: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
-      def interpret(data: Pointer): TYPE = {
-        val size = RootReaderCPPLibrary.getDataSize(walker, data)
-        val listBuilder = builder(size)
-        var index = 0
-        while (index < size) {
-          val subdata = RootReaderCPPLibrary.getData(walker, data, index)
-          listBuilder += items.interpret(subdata)
-          index += 1
-        }
-        listBuilder.result
-      }
-      override def toString() = s"Schema.array[${classTag[TYPE].runtimeClass.getSimpleName}]($items)"
-    }
-    
-    trait Record[TYPE] extends Schema[TYPE]
-
-    def Record[TYPE](walker: Pointer, fields: List[(String, Schema[_])]): Record[TYPE] = macro specializedRecord[TYPE]
-
-    def specializedRecord[TYPE : c.WeakTypeTag](c: Context)(walker: c.Expr[Pointer], fields: c.Expr[List[(String, Schema[_])]]): c.Expr[Record[TYPE]] = {
+    def specializedRecord[TYPE](c: Context)(walker: c.Expr[Pointer], fields: c.Expr[List[(String, Schema[_])]])(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaRecord[TYPE]] = {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
 
+      val constructorParams = dataClass.declarations.collectFirst {
+        case m: MethodSymbol if (m.isPrimaryConstructor) => m
+      }.get.paramss.head
 
+      val subSchemas = List.newBuilder[ValDef]
+      val reprs = List.newBuilder[Tree]
+      val fieldPairs = List.newBuilder[Tree]
+      val gets = List.newBuilder[Tree]
 
+      constructorParams.foreach {param =>
+        val nameString = param.asTerm.name.decodedName.toString
+        val name = stringToTermName("f_" + nameString)
+        // val NullaryMethodType(tpe) = param.typeSignature
+        val tpe = param.typeSignature
 
-      c.Expr[Record[TYPE]](q"""
+        subSchemas += q"""
+          private val $name: (Schema[$tpe], Int) = {
+            val index = allPossibleFields.indexWhere(_._1 == $nameString)
+            if (index == -1)
+              throw new IllegalArgumentException("Scala class has field \"" + $nameString + "\", but this field is not in the Avro schema.")
+            else
+              (allPossibleFields(index)._2.asInstanceOf[Schema[$tpe]], index)
+          }"""
+        reprs += q"""$nameString + ": " + $name._1.toString"""
+        fieldPairs += q"""$nameString -> $name._1"""
+        gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2))"""
+      }
+
+      c.Expr[SchemaRecord[TYPE]](q"""
         import com.sun.jna.Pointer
         import org.dianahep.scaroot.reader.Schema
 
-        new Schema.Record[$dataClass] {
-          val fields = $fields.toArray
+        val allPossibleFields = $fields
+
+        new SchemaRecord[$dataClass] {
+          private val walker: Pointer = $walker
+
+          ..${subSchemas.result}
+
+          def fields = Map(..${fieldPairs.result})
+
           def interpret(data: Pointer): $dataClass = {
-            ..$valdefs
-            new $dataClass(..$valrefs)
+            new $dataClass(..${gets.result})
           }
-          override def toString() = "Schema.record[" + classOf[$dataClass].getSimpleName + "](" + fields.map({case (n, f) => n + ": " + f.toString}).mkString(", ") + ")"
+          override def toString() = "SchemaRecord[" + classOf[$dataClass].getName + "](" + List(..${reprs.result}).mkString(", ") + ")"
         }
       """)
     }

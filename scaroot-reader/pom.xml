@@ -26,17 +26,17 @@
       <version>${scala.version}</version>
     </dependency>
 
-    <!-- <dependency> -->
-    <!--   <groupId>org.scala-lang</groupId> -->
-    <!--   <artifactId>scala-reflect</artifactId> -->
-    <!--   <version>${scala.version}</version> -->
-    <!-- </dependency> -->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
 
-    <!-- <dependency> -->
-    <!--   <groupId>org.scalamacros</groupId> -->
-    <!--   <artifactId>quasiquotes_${scala.tools.version}</artifactId> -->
-    <!--   <version>2.1.0</version> -->
-    <!-- </dependency> -->
+    <dependency>
+      <groupId>org.scalamacros</groupId>
+      <artifactId>quasiquotes_${scala.tools.version}</artifactId>
+      <version>2.1.0</version>
+    </dependency>
 
     <dependency>
       <groupId>net.java.dev.jna</groupId>
@@ -133,13 +133,13 @@
               <useZincServer>true</useZincServer>
 
               <!-- Required only for Scala 2.10 -->
-              <!-- <compilerPlugins> -->
-              <!--   <compilerPlugin> -->
-              <!--     <groupId>org.scalamacros</groupId> -->
-              <!--     <artifactId>paradise_${scala.version}</artifactId> -->
-              <!--     <version>2.1.0</version> -->
-              <!--   </compilerPlugin> -->
-              <!-- </compilerPlugins> -->
+              <compilerPlugins>
+                <compilerPlugin>
+                  <groupId>org.scalamacros</groupId>
+                  <artifactId>paradise_${scala.version}</artifactId>
+                  <version>2.1.0</version>
+                </compilerPlugin>
+              </compilerPlugins>
             </configuration>
           </execution>
         </executions>
