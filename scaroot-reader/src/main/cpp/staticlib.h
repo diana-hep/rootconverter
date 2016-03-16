@@ -5,7 +5,7 @@
 
 #ifndef DATAWALKER_H
 enum SchemaElement { dummy = 0 };
-typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word);
+typedef void (*SchemaBuilder)(SchemaElement schemaElement, void *fieldWalker, void *LeafDimension, const char *word);
 #endif // DATAWALKER_H
 
 extern "C" {
@@ -27,8 +27,8 @@ extern "C" {
   void printJSON(void *treeWalker);
 
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
-  int getDataSize(void *fieldWalker, void *address);
-  void *getData(void *fieldWalker, void *address, int index);
+  int getDataSize(void *fieldWalker, void *address, void *dim);
+  const void *getData(void *fieldWalker, void *address, int index, void *dim);
 }
 
 #endif // STATICLIB_H

@@ -53,43 +53,32 @@ class LeafDimension;
 
 // Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
 enum SchemaElement {
-  SchemaNull                 = 0,
-  SchemaBoolean              = 1,
-  SchemaInt                  = 2,
-  SchemaLong                 = 3,
-  SchemaFloat                = 4,
-  SchemaDouble               = 5,
-  SchemaString               = 6,
-  SchemaBytes                = 7,
+  SchemaBool           = 0,
+  SchemaChar           = 1,
+  SchemaUChar          = 2,
+  SchemaShort          = 3,
+  SchemaUShort         = 4,
+  SchemaInt            = 5,
+  SchemaUInt           = 6,
+  SchemaLong           = 7,
+  SchemaULong          = 8,
+  SchemaFloat          = 9,
+  SchemaDouble         = 10,
+  SchemaString         = 11,
 
-  SchemaArray                = 8,
-  SchemaMap                  = 9,
+  SchemaClassName      = 12,
+  SchemaClassDoc       = 13,
+  SchemaClassFieldName = 14,
+  SchemaClassFieldDoc  = 15,
+  SchemaClassEnd       = 16,
+  SchemaClassReference = 17,
 
-  SchemaRecordName           = 10,
-  SchemaRecordNamespace      = 11,
-  SchemaRecordDoc            = 12,
-  SchemaRecordFieldName      = 13,
-  SchemaRecordFieldDoc       = 14,
-  SchemaRecordEnd            = 15,
+  SchemaPointer        = 18,
 
-  SchemaEnumName             = 16,
-  SchemaEnumNamespace        = 17,
-  SchemaEnumDoc              = 18,
-  SchemaEnumSymbol           = 19,
-  SchemaEnumEnd              = 20,
-
-  SchemaFixedName            = 21,
-  SchemaFixedNamespace       = 22,
-  SchemaFixedDoc             = 23,
-  SchemaFixedSize            = 24,
-
-  SchemaUnionStart           = 25,
-  SchemaUnionEnd             = 26,
-
-  SchemaReference            = 27,
+  SchemaSequence       = 19,
 };
 
-typedef void (*SchemaBuilder)(SchemaElement schemaElement, const char *word, void *fieldWalker);
+typedef void (*SchemaBuilder)(SchemaElement schemaElement, void *fieldWalker, void *LeafDimension, const char *word);
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
 

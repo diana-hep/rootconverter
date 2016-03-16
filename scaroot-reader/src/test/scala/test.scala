@@ -31,46 +31,38 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
 
+    def escape(raw: String): String = {
+      import scala.reflect.runtime.universe._
+      Literal(Constant(raw)).toString
+    }
+
     object PrintOut extends RootReaderCPPLibrary.SchemaBuilder {
-      def apply(schemaElement: Int, word: Pointer) {
-        val printableSchemaElement = schemaElement match {
-          case SchemaElement.SchemaNull(x) => x.toString
-          case SchemaElement.SchemaBoolean(x) => x.toString
-          case SchemaElement.SchemaInt(x) => x.toString
-          case SchemaElement.SchemaLong(x) => x.toString
-          case SchemaElement.SchemaFloat(x) => x.toString
-          case SchemaElement.SchemaDouble(x) => x.toString
-          case SchemaElement.SchemaString(x) => x.toString
-          case SchemaElement.SchemaBytes(x) => x.toString
-          case SchemaElement.SchemaArray(x) => x.toString
-          case SchemaElement.SchemaMap(x) => x.toString
-          case SchemaElement.SchemaRecordName(x) => x.toString
-          case SchemaElement.SchemaRecordNamespace(x) => x.toString
-          case SchemaElement.SchemaRecordDoc(x) => x.toString
-          case SchemaElement.SchemaRecordFieldName(x) => x.toString
-          case SchemaElement.SchemaRecordFieldDoc(x) => x.toString
-          case SchemaElement.SchemaRecordEnd(x) => x.toString
-          case SchemaElement.SchemaEnumName(x) => x.toString
-          case SchemaElement.SchemaEnumNamespace(x) => x.toString
-          case SchemaElement.SchemaEnumDoc(x) => x.toString
-          case SchemaElement.SchemaEnumSymbol(x) => x.toString
-          case SchemaElement.SchemaEnumEnd(x) => x.toString
-          case SchemaElement.SchemaFixedName(x) => x.toString
-          case SchemaElement.SchemaFixedNamespace(x) => x.toString
-          case SchemaElement.SchemaFixedDoc(x) => x.toString
-          case SchemaElement.SchemaFixedSize(x) => x.toString
-          case SchemaElement.SchemaUnionStart(x) => x.toString
-          case SchemaElement.SchemaUnionEnd(x) => x.toString
-          case SchemaElement.SchemaReference(x) => x.toString
+      def apply(schemaElement: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
+        schemaElement match {
+          case SchemaElement.SchemaBool(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaChar(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUChar(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaShort(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUShort(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaInt(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaUInt(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaLong(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaULong(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaFloat(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaDouble(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaString(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+
+          case SchemaElement.SchemaClassName(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassDoc(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassFieldName(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassFieldDoc(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassEnd(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+          case SchemaElement.SchemaClassReference(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+
+          case SchemaElement.SchemaPointer(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
+
+          case SchemaElement.SchemaSequence(x) => println(s"""$x $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
         }
-
-        val printableWord =
-          if (word == Pointer.NULL)
-            "null"
-          else
-            "\"" + word.getString(0) + "\""
-
-        println("PrintOut(" + printableSchemaElement + ", " + printableWord + ")")
       }
     }
 

@@ -16,148 +16,35 @@ package reader {
   // Also used in a stack to build the schema used at runtime.
   // Must be kept in-sync with scaroot-reader/src/main/cpp/datawalker.h!
 
-  sealed trait SchemaElement
+  class SchemaElement(index: Int, name: String) {
+    def unapply(x: Int) = if (x == index) Some(this) else None
+    override def toString() = s"SchemaElement.$name"
+  }
 
   object SchemaElement {
-    object SchemaNull extends SchemaElement {
-      def unapply(x: Int) = if (x == 0) Some(this) else None
-      override def toString() = "SchemaNull"
-    }
+    val SchemaBool   = new SchemaElement(0, "SchemaBool")
+    val SchemaChar   = new SchemaElement(1, "SchemaChar")
+    val SchemaUChar  = new SchemaElement(2, "SchemaUChar")
+    val SchemaShort  = new SchemaElement(3, "SchemaShort")
+    val SchemaUShort = new SchemaElement(4, "SchemaUShort")
+    val SchemaInt    = new SchemaElement(5, "SchemaInt")
+    val SchemaUInt   = new SchemaElement(6, "SchemaUInt")
+    val SchemaLong   = new SchemaElement(7, "SchemaLong")
+    val SchemaULong  = new SchemaElement(8, "SchemaULong")
+    val SchemaFloat  = new SchemaElement(9, "SchemaFloat")
+    val SchemaDouble = new SchemaElement(10, "SchemaDouble")
+    val SchemaString = new SchemaElement(11, "SchemaString")
 
-    object SchemaBoolean extends SchemaElement {
-      def unapply(x: Int) = if (x == 1) Some(this) else None
-      override def toString() = "SchemaBoolean"
-    }
+    val SchemaClassName      = new SchemaElement(12, "SchemaClassName")
+    val SchemaClassDoc       = new SchemaElement(13, "SchemaClassDoc")
+    val SchemaClassFieldName = new SchemaElement(14, "SchemaClassFieldName")
+    val SchemaClassFieldDoc  = new SchemaElement(15, "SchemaClassFieldDoc")
+    val SchemaClassEnd       = new SchemaElement(16, "SchemaClassEnd")
+    val SchemaClassReference = new SchemaElement(17, "SchemaClassReference")
 
-    object SchemaInt extends SchemaElement {
-      def unapply(x: Int) = if (x == 2) Some(this) else None
-      override def toString() = "SchemaInt"
-    }
+    val SchemaPointer = new SchemaElement(18, "SchemaPointer")
 
-    object SchemaLong extends SchemaElement {
-      def unapply(x: Int) = if (x == 3) Some(this) else None
-      override def toString() = "SchemaLong"
-    }
-
-    object SchemaFloat extends SchemaElement {
-      def unapply(x: Int) = if (x == 4) Some(this) else None
-      override def toString() = "SchemaFloat"
-    }
-
-    object SchemaDouble extends SchemaElement {
-      def unapply(x: Int) = if (x == 5) Some(this) else None
-      override def toString() = "SchemaDouble"
-    }
-
-    object SchemaString extends SchemaElement {
-      def unapply(x: Int) = if (x == 6) Some(this) else None
-      override def toString() = "SchemaString"
-    }
-
-    object SchemaBytes extends SchemaElement {
-      def unapply(x: Int) = if (x == 7) Some(this) else None
-      override def toString() = "SchemaBytes"
-    }
-
-    object SchemaArray extends SchemaElement {
-      def unapply(x: Int) = if (x == 8) Some(this) else None
-      override def toString() = "SchemaArray"
-    }
-
-    object SchemaMap extends SchemaElement {
-      def unapply(x: Int) = if (x == 9) Some(this) else None
-      override def toString() = "SchemaMap"
-    }
-
-    object SchemaRecordName extends SchemaElement {
-      def unapply(x: Int) = if (x == 10) Some(this) else None
-      override def toString() = "SchemaRecordName"
-    }
-
-    object SchemaRecordNamespace extends SchemaElement {
-      def unapply(x: Int) = if (x == 11) Some(this) else None
-      override def toString() = "SchemaRecordNamespace"
-    }
-
-    object SchemaRecordDoc extends SchemaElement {
-      def unapply(x: Int) = if (x == 12) Some(this) else None
-      override def toString() = "SchemaRecordDoc"
-    }
-
-    object SchemaRecordFieldName extends SchemaElement {
-      def unapply(x: Int) = if (x == 13) Some(this) else None
-      override def toString() = "SchemaRecordFieldName"
-    }
-
-    object SchemaRecordFieldDoc extends SchemaElement {
-      def unapply(x: Int) = if (x == 14) Some(this) else None
-      override def toString() = "SchemaRecordFieldDoc"
-    }
-
-    object SchemaRecordEnd extends SchemaElement {
-      def unapply(x: Int) = if (x == 15) Some(this) else None
-      override def toString() = "SchemaRecordEnd"
-    }
-
-    object SchemaEnumName extends SchemaElement {
-      def unapply(x: Int) = if (x == 16) Some(this) else None
-      override def toString() = "SchemaEnumName"
-    }
-
-    object SchemaEnumNamespace extends SchemaElement {
-      def unapply(x: Int) = if (x == 17) Some(this) else None
-      override def toString() = "SchemaEnumNamespace"
-    }
-
-    object SchemaEnumDoc extends SchemaElement {
-      def unapply(x: Int) = if (x == 18) Some(this) else None
-      override def toString() = "SchemaEnumDoc"
-    }
-
-    object SchemaEnumSymbol extends SchemaElement {
-      def unapply(x: Int) = if (x == 19) Some(this) else None
-      override def toString() = "SchemaEnumSymbol"
-    }
-
-    object SchemaEnumEnd extends SchemaElement {
-      def unapply(x: Int) = if (x == 20) Some(this) else None
-      override def toString() = "SchemaEnumEnd"
-    }
-
-    object SchemaFixedName extends SchemaElement {
-      def unapply(x: Int) = if (x == 21) Some(this) else None
-      override def toString() = "SchemaFixedName"
-    }
-
-    object SchemaFixedNamespace extends SchemaElement {
-      def unapply(x: Int) = if (x == 22) Some(this) else None
-      override def toString() = "SchemaFixedNamespace"
-    }
-
-    object SchemaFixedDoc extends SchemaElement {
-      def unapply(x: Int) = if (x == 23) Some(this) else None
-      override def toString() = "SchemaFixedDoc"
-    }
-
-    object SchemaFixedSize extends SchemaElement {
-      def unapply(x: Int) = if (x == 24) Some(this) else None
-      override def toString() = "SchemaFixedSize"
-    }
-
-    object SchemaUnionStart extends SchemaElement {
-      def unapply(x: Int) = if (x == 25) Some(this) else None
-      override def toString() = "SchemaUnionStart"
-    }
-
-    object SchemaUnionEnd extends SchemaElement {
-      def unapply(x: Int) = if (x == 26) Some(this) else None
-      override def toString() = "SchemaUnionEnd"
-    }
-
-    object SchemaReference extends SchemaElement {
-      def unapply(x: Int) = if (x == 27) Some(this) else None
-      override def toString() = "SchemaReference"
-    }
+    val SchemaSequence = new SchemaElement(19, "SchemaSequence")
   }
 
   // Default interpreters for data.
@@ -274,50 +161,50 @@ package reader {
   }
 
   class SchemaBoolean[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaBoolean[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaInt[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaLong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaLong[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaFloat[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaFloat[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaDouble[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaDouble[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaString[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0))
+    def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
     override def toString() = s"SchemaString[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaBytes[TYPE : ClassTag](walker: Pointer, interpreter: (Pointer, Int) => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = {
-      val size = RootReaderCPPLibrary.getDataSize(walker, data)
-      interpreter(RootReaderCPPLibrary.getData(walker, data, 0), size)
+      val size = RootReaderCPPLibrary.getDataSize(walker, data, Pointer.NULL)
+      interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL), size)
     }
     override def toString() = s"SchemaBytes[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaArray[ITEMS, TYPE : ClassTag](walker: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = {
-      val size = RootReaderCPPLibrary.getDataSize(walker, data)
+      val size = RootReaderCPPLibrary.getDataSize(walker, data, Pointer.NULL)
       val listBuilder = builder(size)
       var index = 0
       while (index < size) {
-        val subdata = RootReaderCPPLibrary.getData(walker, data, index)
+        val subdata = RootReaderCPPLibrary.getData(walker, data, index, Pointer.NULL)
         listBuilder += items.interpret(subdata)
         index += 1
       }
@@ -332,11 +219,11 @@ package reader {
 
   class SchemaOption[TYPE](walker: Pointer, nullable: Schema[TYPE]) extends Schema[Option[TYPE]] {
     def interpret(data: Pointer): Option[TYPE] = {
-      val discriminant = RootReaderCPPLibrary.getDataSize(walker, data)
+      val discriminant = RootReaderCPPLibrary.getDataSize(walker, data, Pointer.NULL)
       if (discriminant == 0)
         None.asInstanceOf[Option[TYPE]]
       else
-        Some(nullable.interpret(RootReaderCPPLibrary.getData(walker, data, discriminant))).asInstanceOf[Option[TYPE]]
+        Some(nullable.interpret(RootReaderCPPLibrary.getData(walker, data, discriminant, Pointer.NULL))).asInstanceOf[Option[TYPE]]
     }
   }
 
@@ -372,7 +259,7 @@ package reader {
           }"""
         reprs += q"""$nameString + ": " + $name._1.toString"""
         fieldPairs += q"""$nameString -> $name._1"""
-        gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2))"""
+        gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2, Pointer.NULL))"""
       }
 
       c.Expr[SchemaRecord[TYPE]](q"""
