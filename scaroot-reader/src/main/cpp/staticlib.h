@@ -5,7 +5,7 @@
 
 #ifndef DATAWALKER_H
 enum SchemaInstruction { dummy = 0 };
-typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, void *fieldWalker, void *LeafDimension, const char *word);
+typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *data);
 #endif // DATAWALKER_H
 
 extern "C" {

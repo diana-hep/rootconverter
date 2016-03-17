@@ -59,7 +59,7 @@ const std::type_info *BoolWalker::typeId() { return &typeid(bool); }
 std::string BoolWalker::avroTypeName() { return "boolean"; }
 
 void BoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaBool, this, nullptr, nullptr);
+  schemaBuilder(SchemaBool, nullptr);
 }
 
 void BoolWalker::printJSON(void *address) {
@@ -88,16 +88,16 @@ bool BoolWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
-int BoolWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int BoolWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *BoolWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<bool>*)address)->At(index);
-}
+// const void *BoolWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<bool>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *BoolWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<bool>(*reader, fieldName.c_str());
@@ -118,7 +118,7 @@ const std::type_info *CharWalker::typeId() { return &typeid(char); }
 std::string CharWalker::avroTypeName() { return "int"; }
 
 void CharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaChar, this, nullptr, nullptr);
+  schemaBuilder(SchemaChar, nullptr);
 }
 
 void CharWalker::printJSON(void *address) {
@@ -141,16 +141,16 @@ bool CharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
-int CharWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int CharWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *CharWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<char>*)address)->At(index);
-}
+// const void *CharWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<char>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *CharWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<char>(*reader, fieldName.c_str());
@@ -171,7 +171,7 @@ const std::type_info *UCharWalker::typeId() { return &typeid(unsigned char); }
 std::string UCharWalker::avroTypeName() { return "int"; }
 
 void UCharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaUChar, this, nullptr, nullptr);
+  schemaBuilder(SchemaUChar, nullptr);
 }
 
 void UCharWalker::printJSON(void *address) {
@@ -194,16 +194,16 @@ bool UCharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
-int UCharWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int UCharWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *UCharWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<unsigned char>*)address)->At(index);
-}
+// const void *UCharWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<unsigned char>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *UCharWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned char>(*reader, fieldName.c_str());
@@ -224,7 +224,7 @@ const std::type_info *ShortWalker::typeId() { return &typeid(short); }
 std::string ShortWalker::avroTypeName() { return "int"; }
 
 void ShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaShort, this, nullptr, nullptr);
+  schemaBuilder(SchemaShort, nullptr);
 }
 
 void ShortWalker::printJSON(void *address) {
@@ -247,16 +247,16 @@ bool ShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
-int ShortWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int ShortWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *ShortWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<short>*)address)->At(index);
-}
+// const void *ShortWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<short>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *ShortWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<short>(*reader, fieldName.c_str());
@@ -277,7 +277,7 @@ const std::type_info *UShortWalker::typeId() { return &typeid(unsigned short); }
 std::string UShortWalker::avroTypeName() { return "int"; }
 
 void UShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaUShort, this, nullptr, nullptr);
+  schemaBuilder(SchemaUShort, nullptr);
 }
 
 void UShortWalker::printJSON(void *address) {
@@ -300,16 +300,16 @@ bool UShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_
 }
 #endif
 
-int UShortWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int UShortWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *UShortWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<unsigned short>*)address)->At(index);
-}
+// const void *UShortWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<unsigned short>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *UShortWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned short>(*reader, fieldName.c_str());
@@ -330,7 +330,7 @@ const std::type_info *IntWalker::typeId() { return &typeid(int); }
 std::string IntWalker::avroTypeName() { return "int"; }
 
 void IntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaInt, this, nullptr, nullptr);
+  schemaBuilder(SchemaInt, nullptr);
 }
 
 void IntWalker::printJSON(void *address) {
@@ -353,16 +353,16 @@ bool IntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_val
 }
 #endif
 
-int IntWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int IntWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *IntWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<int>*)address)->At(index);
-}
+// const void *IntWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<int>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *IntWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<int>(*reader, fieldName.c_str());
@@ -387,7 +387,7 @@ const std::type_info *UIntWalker::typeId() { return &typeid(unsigned int); }
 std::string UIntWalker::avroTypeName() { return "long"; }
 
 void UIntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaUInt, this, nullptr, nullptr);
+  schemaBuilder(SchemaUInt, nullptr);
 }
 
 void UIntWalker::printJSON(void *address) {
@@ -410,16 +410,16 @@ bool UIntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
-int UIntWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int UIntWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *UIntWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<unsigned int>*)address)->At(index);
-}
+// const void *UIntWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<unsigned int>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *UIntWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned int>(*reader, fieldName.c_str());
@@ -440,7 +440,7 @@ const std::type_info *LongWalker::typeId() { return &typeid(Long64_t); }
 std::string LongWalker::avroTypeName() { return "long"; }
 
 void LongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaLong, this, nullptr, nullptr);
+  schemaBuilder(SchemaLong, nullptr);
 }
 
 void LongWalker::printJSON(void *address) {
@@ -463,16 +463,16 @@ bool LongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
-int LongWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int LongWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *LongWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<Long64_t>*)address)->At(index);
-}
+// const void *LongWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<Long64_t>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *LongWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<Long64_t>(*reader, fieldName.c_str());
@@ -493,7 +493,7 @@ const std::type_info *ULongWalker::typeId() { return &typeid(ULong64_t); }
 std::string ULongWalker::avroTypeName() { return "double"; }
 
 void ULongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaULong, this, nullptr, nullptr);
+  schemaBuilder(SchemaULong, nullptr);
 }
 
 void ULongWalker::printJSON(void *address) {
@@ -516,16 +516,16 @@ bool ULongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
-int ULongWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int ULongWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *ULongWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<ULong64_t>*)address)->At(index);
-}
+// const void *ULongWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<ULong64_t>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *ULongWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<ULong64_t>(*reader, fieldName.c_str());
@@ -546,7 +546,7 @@ const std::type_info *FloatWalker::typeId() { return &typeid(float); }
 std::string FloatWalker::avroTypeName() { return "float"; }
 
 void FloatWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaFloat, this, nullptr, nullptr);
+  schemaBuilder(SchemaFloat, nullptr);
 }
 
 void FloatWalker::printJSON(void *address) {
@@ -569,16 +569,16 @@ bool FloatWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
-int FloatWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int FloatWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *FloatWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<float>*)address)->At(index);
-}
+// const void *FloatWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<float>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *FloatWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<float>(*reader, fieldName.c_str());
@@ -599,7 +599,7 @@ const std::type_info *DoubleWalker::typeId() { return &typeid(double); }
 std::string DoubleWalker::avroTypeName() { return "double"; }
 
 void DoubleWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaDouble, this, nullptr, nullptr);
+  schemaBuilder(SchemaDouble, nullptr);
 }
 
 void DoubleWalker::printJSON(void *address) {
@@ -622,16 +622,16 @@ bool DoubleWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_
 }
 #endif
 
-int DoubleWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int DoubleWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *DoubleWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<double>*)address)->At(index);
-}
+// const void *DoubleWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<double>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *DoubleWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<double>(*reader, fieldName.c_str());
@@ -668,7 +668,7 @@ size_t CStringWalker::sizeOf() { return 0; }
 const std::type_info *CStringWalker::typeId() { &typeid(char*); }
 
 void CStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaString, this, nullptr, nullptr);
+  schemaBuilder(SchemaString, nullptr);
 }
 
 void CStringWalker::printJSON(void *address) {
@@ -695,16 +695,16 @@ bool CStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro
 }
 #endif
 
-int CStringWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int CStringWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *CStringWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return address;
-  else
-    return &((TTreeReaderArray<char*>*)address)->At(index);
-}
+// const void *CStringWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return address;
+//   else
+//     return &((TTreeReaderArray<char*>*)address)->At(index);
+// }
 
 TTreeReaderValueBase *CStringWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderArray<char>(*reader, fieldName.c_str());
@@ -723,7 +723,7 @@ size_t StdStringWalker::sizeOf() { return sizeof(std::string); }
 const std::type_info *StdStringWalker::typeId() { return &typeid(std::string); }
 
 void StdStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaString, this, nullptr, nullptr);
+  schemaBuilder(SchemaString, nullptr);
 }
 
 void StdStringWalker::printJSON(void *address) {
@@ -750,16 +750,16 @@ bool StdStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, av
 }
 #endif
 
-int StdStringWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int StdStringWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *StdStringWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return ((std::string*)address)->c_str();
-  else
-    return ((TTreeReaderArray<std::string>*)address)->At(index).c_str();
-}
+// const void *StdStringWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return ((std::string*)address)->c_str();
+//   else
+//     return ((TTreeReaderArray<std::string>*)address)->At(index).c_str();
+// }
 
 TTreeReaderValueBase *StdStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
@@ -779,7 +779,7 @@ size_t TStringWalker::sizeOf() { return sizeof(TString); }
 const std::type_info *TStringWalker::typeId() { return &typeid(TString); }
 
 void TStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaString, this, nullptr, nullptr);
+  schemaBuilder(SchemaString, nullptr);
 }
 
 void TStringWalker::printJSON(void *address) {
@@ -806,16 +806,16 @@ bool TStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro
 }
 #endif
 
-int TStringWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int TStringWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *TStringWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (index == -1)
-    return ((TString*)address)->Data();
-  else
-    return ((TTreeReaderArray<TString>*)address)->At(index).Data();
-}
+// const void *TStringWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (index == -1)
+//     return ((TString*)address)->Data();
+//   else
+//     return ((TTreeReaderArray<TString>*)address)->At(index).Data();
+// }
 
 TTreeReaderValueBase *TStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
@@ -952,7 +952,8 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
 }
 
 void MemberWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaClassFieldName, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaClassFieldName, fieldName.c_str());
+  schemaBuilder(SchemaClassField, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -967,13 +968,13 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int MemberWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int MemberWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *MemberWalker::getData(void *address, int index, LeafDimension *dim) {
-  return (void*)((size_t)address + offset);
-}
+// const void *MemberWalker::getData(void *address, int index, LeafDimension *dim) {
+//   return (void*)((size_t)address + offset);
+// }
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
@@ -1086,16 +1087,16 @@ void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   std::string className(tclass->GetName());
 
   if (memo.find(className) != memo.end())
-    schemaBuilder(SchemaClassReference, nullptr, nullptr, className.c_str());
+    schemaBuilder(SchemaClassReference, className.c_str());
   else {
     memo.insert(className);
 
-    schemaBuilder(SchemaClassName, nullptr, nullptr, className.c_str());
+    schemaBuilder(SchemaClassName, className.c_str());
 
     for (auto iter = members.begin();  iter != members.end();  ++iter)
       (*iter)->buildSchema(schemaBuilder, memo);
 
-    schemaBuilder(SchemaClassEnd, nullptr, nullptr, nullptr);
+    schemaBuilder(SchemaClassEnd, nullptr);
   }
 }
 
@@ -1123,13 +1124,13 @@ bool ClassWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int ClassWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int ClassWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *ClassWalker::getData(void *address, int index, LeafDimension *dim) {
-  return nullptr;
-}
+// const void *ClassWalker::getData(void *address, int index, LeafDimension *dim) {
+//   return nullptr;
+// }
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
@@ -1161,7 +1162,7 @@ void PointerWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::strin
   FieldWalker *subWalker = walker;
   for (PointerWalker *pointerWalker = dynamic_cast<PointerWalker*>(subWalker);  pointerWalker != nullptr;  subWalker = pointerWalker->walker);
 
-  schemaBuilder(SchemaPointer, this, nullptr, nullptr);
+  schemaBuilder(SchemaPointer, this);
   subWalker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1197,22 +1198,22 @@ bool PointerWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int PointerWalker::getDataSize(void *address, LeafDimension *dim) {
-  // PointerWalker returns 0 if it contains nullptr, 1 if it contains an item (a "size," in a sense).
-  void *dereferenced = *((void**)address);
-  if (dereferenced == nullptr)
-    return 0;
-  else
-    return 1;
-}
+// int PointerWalker::getDataSize(void *address, LeafDimension *dim) {
+//   // PointerWalker returns 0 if it contains nullptr, 1 if it contains an item (a "size," in a sense).
+//   void *dereferenced = *((void**)address);
+//   if (dereferenced == nullptr)
+//     return 0;
+//   else
+//     return 1;
+// }
 
-const void *PointerWalker::getData(void *address, int index, LeafDimension *dim) {
-  void *dereferenced = *((void**)address);
-  if (dereferenced == nullptr)
-    return nullptr;
-  else
-    return dereferenced;
-}
+// const void *PointerWalker::getData(void *address, int index, LeafDimension *dim) {
+//   void *dereferenced = *((void**)address);
+//   if (dereferenced == nullptr)
+//     return nullptr;
+//   else
+//     return dereferenced;
+// }
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
 
@@ -1259,13 +1260,13 @@ bool TRefWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int TRefWalker::getDataSize(void *address, LeafDimension *dim) {
-  std::cerr << std::endl << "TREF" << std::endl; return 0;
-}
+// int TRefWalker::getDataSize(void *address, LeafDimension *dim) {
+//   std::cerr << std::endl << "TREF" << std::endl; return 0;
+// }
 
-const void *TRefWalker::getData(void *address, int index, LeafDimension *dim) {
-  std::cerr << std::endl << "TREF" << std::endl; return nullptr;
-}
+// const void *TRefWalker::getData(void *address, int index, LeafDimension *dim) {
+//   std::cerr << std::endl << "TREF" << std::endl; return nullptr;
+// }
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
 
@@ -1303,7 +1304,7 @@ std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaSequence, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1338,16 +1339,16 @@ bool StdVectorWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int StdVectorWalker::getDataSize(void *address, LeafDimension *dim) {
-  std::vector<char> *generic = (std::vector<char>*)address;
-  return generic->size() / walker->sizeOf();
-}
+// int StdVectorWalker::getDataSize(void *address, LeafDimension *dim) {
+//   std::vector<char> *generic = (std::vector<char>*)address;
+//   return generic->size() / walker->sizeOf();
+// }
 
-const void *StdVectorWalker::getData(void *address, int index, LeafDimension *dim) {
-  std::vector<char> *generic = (std::vector<char>*)address;
-  int numItems = generic->size() / walker->sizeOf();
-  return (void*)((size_t)generic->data() + index * walker->sizeOf());
-}
+// const void *StdVectorWalker::getData(void *address, int index, LeafDimension *dim) {
+//   std::vector<char> *generic = (std::vector<char>*)address;
+//   int numItems = generic->size() / walker->sizeOf();
+//   return (void*)((size_t)generic->data() + index * walker->sizeOf());
+// }
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
 
@@ -1376,7 +1377,7 @@ std::string StdVectorBoolWalker::avroSchema(int indent, std::set<std::string> &m
 }
 
 void StdVectorBoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaSequence, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1410,18 +1411,18 @@ bool StdVectorBoolWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int StdVectorBoolWalker::getDataSize(void *address, LeafDimension *dim) {
-  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
-  return vectorBool->size();
-}
+// int StdVectorBoolWalker::getDataSize(void *address, LeafDimension *dim) {
+//   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+//   return vectorBool->size();
+// }
 
-const void *StdVectorBoolWalker::getData(void *address, int index, LeafDimension *dim) {
-  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
-  if (vectorBool->at(index))
-    return (void*)(&TRUE);
-  else
-    return (void*)(&FALSE);
-}
+// const void *StdVectorBoolWalker::getData(void *address, int index, LeafDimension *dim) {
+//   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+//   if (vectorBool->at(index))
+//     return (void*)(&TRUE);
+//   else
+//     return (void*)(&FALSE);
+// }
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
@@ -1449,7 +1450,7 @@ std::string ArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
 }
 
 void ArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaSequence, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1480,13 +1481,13 @@ bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int ArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-  return numItems;
-}
+// int ArrayWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return numItems;
+// }
 
-const void *ArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-  return (void*)((size_t)address + index * walker->sizeOf());
-}
+// const void *ArrayWalker::getData(void *address, int index, LeafDimension *dim) {
+//   return (void*)((size_t)address + index * walker->sizeOf());
+// }
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
@@ -1524,7 +1525,7 @@ std::string TObjArrayWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void TObjArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaSequence, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1567,23 +1568,23 @@ bool TObjArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int TObjArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-  if (!resolved()) resolve(address);
-  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
-  TObjArray *array = (TObjArray*)address;
-  if (!array->AssertClass(classToAssert))
-    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
-  return array->GetEntries();
-}
+// int TObjArrayWalker::getDataSize(void *address, LeafDimension *dim) {
+//   if (!resolved()) resolve(address);
+//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+//   TObjArray *array = (TObjArray*)address;
+//   if (!array->AssertClass(classToAssert))
+//     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+//   return array->GetEntries();
+// }
 
-const void *TObjArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (!resolved()) resolve(address);
-  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
-  TObjArray *array = (TObjArray*)address;
-  if (!array->AssertClass(classToAssert))
-    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
-  return (void*)array->At(index);
-}
+// const void *TObjArrayWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (!resolved()) resolve(address);
+//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+//   TObjArray *array = (TObjArray*)address;
+//   if (!array->AssertClass(classToAssert))
+//     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+//   return (void*)array->At(index);
+// }
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
 
@@ -1629,13 +1630,13 @@ bool TRefArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int TRefArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-  std::cerr << std::endl << "TREFARRAY" << std::endl; return 0;
-}
+// int TRefArrayWalker::getDataSize(void *address, LeafDimension *dim) {
+//   std::cerr << std::endl << "TREFARRAY" << std::endl; return 0;
+// }
 
-const void *TRefArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-  std::cerr << std::endl << "TREFARRAY" << std::endl; return nullptr;
-}
+// const void *TRefArrayWalker::getData(void *address, int index, LeafDimension *dim) {
+//   std::cerr << std::endl << "TREFARRAY" << std::endl; return nullptr;
+// }
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
@@ -1671,7 +1672,7 @@ std::string TClonesArrayWalker::avroSchema(int indent, std::set<std::string> &me
 }
 
 void TClonesArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this, nullptr, fieldName.c_str());
+  schemaBuilder(SchemaSequence, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1704,19 +1705,19 @@ bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int TClonesArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-  if (!resolved()) resolve(address);
-  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
-  TClonesArray *array = (TClonesArray*)address;
-  return array->GetEntries();
-}
+// int TClonesArrayWalker::getDataSize(void *address, LeafDimension *dim) {
+//   if (!resolved()) resolve(address);
+//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+//   TClonesArray *array = (TClonesArray*)address;
+//   return array->GetEntries();
+// }
 
-const void *TClonesArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (!resolved()) resolve(address);
-  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
-  TClonesArray *array = (TClonesArray*)address;
-  return (void*)array->At(index);
-}
+// const void *TClonesArrayWalker::getData(void *address, int index, LeafDimension *dim) {
+//   if (!resolved()) resolve(address);
+//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+//   TClonesArray *array = (TClonesArray*)address;
+//   return (void*)array->At(index);
+// }
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
 
@@ -1887,7 +1888,7 @@ void LeafWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   for (LeafDimension *d = dims;  d != nullptr;  d = d->next()) {
     std::cout << "LeafWalker::buildSchema adding LeafDimension" << std::endl;
 
-    schemaBuilder(SchemaSequence, this, d, nullptr);
+    schemaBuilder(SchemaSequence, d);
   }
 
   std::cout << "LeafWalker::buildSchema" << std::endl;
@@ -1959,28 +1960,28 @@ bool LeafWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int LeafWalker::getDataSize(void *address, LeafDimension *dim) {
-  if (address != nullptr)
-    return 0;
-  else
-    return dim->size();
-}
+// int LeafWalker::getDataSize(void *address, LeafDimension *dim) {
+//   if (address != nullptr)
+//     return 0;
+//   else
+//     return dim->size();
+// }
 
-const void *LeafWalker::getData(void *address, int index, LeafDimension *dim) {
-  std::cout << "LeafWalker::getData " << address << " " << index << " " << dim << std::endl;
+// const void *LeafWalker::getData(void *address, int index, LeafDimension *dim) {
+//   std::cout << "LeafWalker::getData " << address << " " << index << " " << dim << std::endl;
 
-  if (readerValue != nullptr) {
-    std::cout << "HERE " << readerValue->GetAddress() << std::endl;
+//   if (readerValue != nullptr) {
+//     std::cout << "HERE " << readerValue->GetAddress() << std::endl;
 
-    return walker->getData(readerValue->GetAddress(), -1, dim);
-  }
-  else {
-    int readerIndex = index;
-    for (LeafDimension *d = dims;  d != dim;  d = d->next())
-      readerIndex += d->size();
-    return walker->getData(readerArray, readerIndex, nullptr);
-  }
-}
+//     return walker->getData(readerValue->GetAddress(), -1, dim);
+//   }
+//   else {
+//     int readerIndex = index;
+//     for (LeafDimension *d = dims;  d != dim;  d = d->next())
+//       readerIndex += d->size();
+//     return walker->getData(readerArray, readerIndex, nullptr);
+//   }
+// }
 
 void LeafWalker::reset(TTreeReader *reader) {
   // FIXME: delete old readerValue/readerArray?
@@ -2047,13 +2048,13 @@ bool ReaderValueWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int ReaderValueWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int ReaderValueWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *ReaderValueWalker::getData(void *address, int index, LeafDimension *dim) {
-  return getAddress();
-}
+// const void *ReaderValueWalker::getData(void *address, int index, LeafDimension *dim) {
+//   return getAddress();
+// }
 
 void ReaderValueWalker::reset(TTreeReader *reader) {
   // FIXME: delete old value?
@@ -2104,16 +2105,16 @@ bool RawTBranchWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
-int RawTBranchWalker::getDataSize(void *address, LeafDimension *dim) {
-  return 0;
-}
+// int RawTBranchWalker::getDataSize(void *address, LeafDimension *dim) {
+//   return 0;
+// }
 
-const void *RawTBranchWalker::getData(void *address, int index, LeafDimension *dim) {
-  return address;
-}
-// FIXME: you probably (almost certainly) want to give RawTBranchStdStringWalker and RawTBranchTStringWalker
-// custom ::getData methods that know how to pull c_str() or Data() out of the object.
-// But you'll find that in the unit testing...
+// const void *RawTBranchWalker::getData(void *address, int index, LeafDimension *dim) {
+//   return address;
+// }
+// // FIXME: you probably (almost certainly) want to give RawTBranchStdStringWalker and RawTBranchTStringWalker
+// // custom ::getData methods that know how to pull c_str() or Data() out of the object.
+// // But you'll find that in the unit testing...
 
 
 //// RawTBranchStdStringWalker
@@ -2291,14 +2292,15 @@ std::string TreeWalker::avroSchema() {
 void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
   std::set<std::string> memo;
 
-  schemaBuilder(SchemaClassName, nullptr, nullptr, reader->GetTree()->GetName());
+  schemaBuilder(SchemaClassName, reader->GetTree()->GetName());
 
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
-    schemaBuilder(SchemaClassFieldName, *iter, nullptr, (*iter)->fieldName.c_str());
+    schemaBuilder(SchemaClassFieldName, (*iter)->fieldName.c_str());
+    schemaBuilder(SchemaClassField, *iter);
     (*iter)->buildSchema(schemaBuilder, memo);
   }
 
-  schemaBuilder(SchemaClassEnd, nullptr, nullptr, nullptr);
+  schemaBuilder(SchemaClassEnd, nullptr);
 }
 
 void TreeWalker::printJSON() {

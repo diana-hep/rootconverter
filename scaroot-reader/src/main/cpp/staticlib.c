@@ -87,13 +87,15 @@ void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {
 }
 
 int getDataSize(void *fieldWalker, void *address, void *dim) {
-  FieldWalker *fw = (FieldWalker*)fieldWalker;
-  LeafDimension *ld = (LeafDimension*)ld;
-  return fw->getDataSize(address, ld);
+  /* FieldWalker *fw = (FieldWalker*)fieldWalker; */
+  /* LeafDimension *ld = (LeafDimension*)ld; */
+  /* return fw->getDataSize(address, ld); */
+  return 0;
 }
 
 const void *getData(void *fieldWalker, void *address, int index, void *dim) {
-  FieldWalker *fw = (FieldWalker*)fieldWalker;
-  LeafDimension *ld = (LeafDimension*)ld;
-  return fw->getData(address, index, ld);
+  /* FieldWalker *fw = (FieldWalker*)fieldWalker; */
+  /* LeafDimension *ld = (LeafDimension*)ld; */
+  /* return fw->getData(address, index, ld); */
+  return nullptr;
 }

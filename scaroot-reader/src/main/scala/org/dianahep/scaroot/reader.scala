@@ -5,6 +5,7 @@ import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.classTag
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.WeakTypeTag
 // import scala.reflect.macros.blackbox.Context
 import scala.reflect.macros.Context
 
@@ -36,12 +37,13 @@ package reader {
 
     val SchemaClassName      = new SchemaInstruction(12, "SchemaClassName")
     val SchemaClassFieldName = new SchemaInstruction(13, "SchemaClassFieldName")
-    val SchemaClassEnd       = new SchemaInstruction(14, "SchemaClassEnd")
-    val SchemaClassReference = new SchemaInstruction(15, "SchemaClassReference")
+    val SchemaClassField     = new SchemaInstruction(14, "SchemaClassFieldName")
+    val SchemaClassEnd       = new SchemaInstruction(15, "SchemaClassEnd")
+    val SchemaClassReference = new SchemaInstruction(16, "SchemaClassReference")
 
-    val SchemaPointer = new SchemaInstruction(16, "SchemaPointer")
+    val SchemaPointer = new SchemaInstruction(17, "SchemaPointer")
 
-    val SchemaSequence = new SchemaInstruction(17, "SchemaSequence")
+    val SchemaSequence = new SchemaInstruction(18, "SchemaSequence")
   }
 
   // Default interpreters for data.
@@ -334,7 +336,8 @@ package reader {
           }"""
         reprs += q"""$nameString + ": " + $name._1.toString"""
         fieldPairs += q"""$nameString -> $name._1"""
-        gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2, Pointer.NULL))"""
+        // gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2, Pointer.NULL))"""
+        gets += q"""$name._1.interpret(Pointer.NULL)"""
       }
 
       println("four")
