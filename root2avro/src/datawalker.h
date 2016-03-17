@@ -67,15 +67,13 @@ enum SchemaInstruction {
   SchemaString         = 11,
 
   SchemaClassName      = 12,
-  SchemaClassDoc       = 13,
-  SchemaClassFieldName = 14,
-  SchemaClassFieldDoc  = 15,
-  SchemaClassEnd       = 16,
-  SchemaClassReference = 17,
+  SchemaClassFieldName = 13,
+  SchemaClassEnd       = 14,
+  SchemaClassReference = 15,
 
-  SchemaPointer        = 18,
+  SchemaPointer        = 16,
 
-  SchemaSequence       = 19,
+  SchemaSequence       = 17,
 };
 
 typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, void *fieldWalker, void *LeafDimension, const char *word);

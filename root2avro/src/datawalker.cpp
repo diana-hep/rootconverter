@@ -953,10 +953,6 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
 
 void MemberWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
   schemaBuilder(SchemaClassFieldName, this, nullptr, fieldName.c_str());
-  if (!comment.empty())
-    schemaBuilder(SchemaClassFieldDoc, nullptr, nullptr, comment.c_str());
-  else
-    schemaBuilder(SchemaClassFieldDoc, nullptr, nullptr, nullptr);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1095,7 +1091,6 @@ void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
     memo.insert(className);
 
     schemaBuilder(SchemaClassName, nullptr, nullptr, className.c_str());
-    schemaBuilder(SchemaClassDoc, nullptr, nullptr, nullptr);
 
     for (auto iter = members.begin();  iter != members.end();  ++iter)
       (*iter)->buildSchema(schemaBuilder, memo);
@@ -1889,8 +1884,14 @@ std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
 }
 
 void LeafWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  for (LeafDimension *d = dims;  d != nullptr;  d = d->next())
+  for (LeafDimension *d = dims;  d != nullptr;  d = d->next()) {
+    std::cout << "LeafWalker::buildSchema adding LeafDimension" << std::endl;
+
     schemaBuilder(SchemaSequence, this, d, nullptr);
+  }
+
+  std::cout << "LeafWalker::buildSchema" << std::endl;
+
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1966,8 +1967,13 @@ int LeafWalker::getDataSize(void *address, LeafDimension *dim) {
 }
 
 const void *LeafWalker::getData(void *address, int index, LeafDimension *dim) {
-  if (address != nullptr)
-    return walker->getData(address, -1, dim);
+  std::cout << "LeafWalker::getData " << address << " " << index << " " << dim << std::endl;
+
+  if (readerValue != nullptr) {
+    std::cout << "HERE " << readerValue->GetAddress() << std::endl;
+
+    return walker->getData(readerValue->GetAddress(), -1, dim);
+  }
   else {
     int readerIndex = index;
     for (LeafDimension *d = dims;  d != dim;  d = d->next())
@@ -2046,7 +2052,7 @@ int ReaderValueWalker::getDataSize(void *address, LeafDimension *dim) {
 }
 
 const void *ReaderValueWalker::getData(void *address, int index, LeafDimension *dim) {
-  return address;
+  return getAddress();
 }
 
 void ReaderValueWalker::reset(TTreeReader *reader) {
@@ -2105,6 +2111,10 @@ int RawTBranchWalker::getDataSize(void *address, LeafDimension *dim) {
 const void *RawTBranchWalker::getData(void *address, int index, LeafDimension *dim) {
   return address;
 }
+// FIXME: you probably (almost certainly) want to give RawTBranchStdStringWalker and RawTBranchTStringWalker
+// custom ::getData methods that know how to pull c_str() or Data() out of the object.
+// But you'll find that in the unit testing...
+
 
 //// RawTBranchStdStringWalker
 
@@ -2282,11 +2292,9 @@ void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
   std::set<std::string> memo;
 
   schemaBuilder(SchemaClassName, nullptr, nullptr, reader->GetTree()->GetName());
-  schemaBuilder(SchemaClassDoc, nullptr, nullptr, nullptr);
 
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
     schemaBuilder(SchemaClassFieldName, *iter, nullptr, (*iter)->fieldName.c_str());
-    schemaBuilder(SchemaClassFieldDoc, nullptr, nullptr, nullptr);
     (*iter)->buildSchema(schemaBuilder, memo);
   }
 

@@ -1,6 +1,5 @@
 package org.dianahep.scaroot
 
-import scala.collection.mutable
 import scala.collection.mutable.Builder
 import scala.language.experimental.macros
 import scala.language.higherKinds
@@ -16,7 +15,7 @@ package reader {
   // Also used in a stack to build the schema used at runtime.
   // Must be kept in-sync with scaroot-reader/src/main/cpp/datawalker.h!
 
-  sealed class SchemaInstruction(index: Int, name: String) {
+  sealed class SchemaInstruction(val index: Int, val name: String) {
     def unapply(x: Int) = (x == index)
     override def toString() = s"SchemaInstruction.$name"
   }
@@ -36,15 +35,13 @@ package reader {
     val SchemaString = new SchemaInstruction(11, "SchemaString")
 
     val SchemaClassName      = new SchemaInstruction(12, "SchemaClassName")
-    val SchemaClassDoc       = new SchemaInstruction(13, "SchemaClassDoc")
-    val SchemaClassFieldName = new SchemaInstruction(14, "SchemaClassFieldName")
-    val SchemaClassFieldDoc  = new SchemaInstruction(15, "SchemaClassFieldDoc")
-    val SchemaClassEnd       = new SchemaInstruction(16, "SchemaClassEnd")
-    val SchemaClassReference = new SchemaInstruction(17, "SchemaClassReference")
+    val SchemaClassFieldName = new SchemaInstruction(13, "SchemaClassFieldName")
+    val SchemaClassEnd       = new SchemaInstruction(14, "SchemaClassEnd")
+    val SchemaClassReference = new SchemaInstruction(15, "SchemaClassReference")
 
-    val SchemaPointer = new SchemaInstruction(18, "SchemaPointer")
+    val SchemaPointer = new SchemaInstruction(16, "SchemaPointer")
 
-    val SchemaSequence = new SchemaInstruction(19, "SchemaSequence")
+    val SchemaSequence = new SchemaInstruction(17, "SchemaSequence")
   }
 
   // Default interpreters for data.
@@ -89,6 +86,11 @@ package reader {
       builder.sizeHint(size)
       builder
     }
+  }
+
+  class GenericClass(val name: String)(fieldNames: String*)(fieldValues: Any*) {
+    private val lookup = (fieldNames zip fieldValues).toMap
+    def apply(field: String): Any = lookup(field)
   }
 
   // Custom interpreters for data. (Use '# for arrays.)
@@ -264,6 +266,7 @@ package reader {
   }
 
   trait SchemaClass[TYPE] extends Schema[TYPE] {
+    def name: String
     def fields: Map[String, Schema[_]]
   }
 
@@ -294,48 +297,26 @@ package reader {
   }
 
   object Schema {
-    def apply[TYPE](treeWalker: Pointer)(implicit customizations: Seq[Custom] = Nil): Schema[TYPE] = {
-      var schemaInstructions: List[Int] = Nil
-      var schemaElements: List[Schema[_]] = Nil
-      var treeIndexPath: List[String] = Nil
+    def schemaClassFrom[TYPE](walker: Pointer, className: String, fields: List[(String, Schema[_])]): SchemaClass[TYPE] = macro schemaClassFromImpl[TYPE]
 
-      object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
-        def apply(schemaInstruction: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
-          schemaInstructions = schemaInstruction :: schemaInstructions
-
-          schemaInstructions match {
-            case SchemaInstruction.SchemaBool() :: rest =>
-              schemaInstructions = rest
-              schemaElements = new SchemaBool(fieldWalker, interpreter = Default.bool) :: schemaElements
-
-
-
-
-          }
-        }
-      }
-
-
-
-
-
-      null.asInstanceOf[Schema[TYPE]]
-    }
-
-    implicit def schemaClassFrom[TYPE](walker: Pointer, fields: List[(String, Schema[_])]): SchemaClass[TYPE] = macro schemaClassFromImpl[TYPE]
-
-    def schemaClassFromImpl[TYPE](c: Context)(walker: c.Expr[Pointer], fields: c.Expr[List[(String, Schema[_])]])(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaClass[TYPE]] = {
+    def schemaClassFromImpl[TYPE](c: Context)(walker: c.Expr[Pointer], className: c.Expr[String], fields: c.Expr[List[(String, Schema[_])]])(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaClass[TYPE]] = {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
+
+      println("one", dataClass.declarations)
 
       val constructorParams = dataClass.declarations.collectFirst {
         case m: MethodSymbol if (m.isPrimaryConstructor) => m
       }.get.paramss.head
 
+      println("two", constructorParams)
+
       val subSchemas = List.newBuilder[ValDef]
       val reprs = List.newBuilder[Tree]
       val fieldPairs = List.newBuilder[Tree]
       val gets = List.newBuilder[Tree]
+
+      println("three")
 
       constructorParams.foreach {param =>
         val nameString = param.asTerm.name.decodedName.toString
@@ -356,6 +337,16 @@ package reader {
         gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(walker, data, $name._2, Pointer.NULL))"""
       }
 
+      println("four")
+
+      val makeNew =
+        if (dataClass =:= typeOf[GenericClass])
+          q"new $dataClass($className)(fields.map(_._1))(..${gets.result})"
+        else
+          q"new $dataClass(..${gets.result})"
+
+      println("five")
+
       c.Expr[SchemaClass[TYPE]](q"""
         import com.sun.jna.Pointer
         import org.dianahep.scaroot.reader.Schema
@@ -367,11 +358,11 @@ package reader {
 
           ..${subSchemas.result}
 
+          def name = $className
           def fields = Map(..${fieldPairs.result})
 
-          def interpret(data: Pointer): $dataClass = {
-            new $dataClass(..${gets.result})
-          }
+          def interpret(data: Pointer): $dataClass = $makeNew
+
           override def toString() = "SchemaClass[" + classOf[$dataClass].getName + "](" + List(..${reprs.result}).mkString(", ") + ")"
         }
       """)

@@ -7,14 +7,105 @@ import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
+
+
+
+import scala.language.existentials
+
 import com.sun.jna.Pointer
 
 import org.dianahep.scaroot.reader._
 
+case class Test(x: Int, y: Double, z: String)
+
 class DefaultSuite extends FlatSpec with Matchers {
+  def schema[TYPE](treeWalker: Pointer)(implicit customizations: Seq[Custom] = Nil): Schema[TYPE] = {
+    import SchemaInstruction._
+    sealed trait StackElement
+    case class S(schemaInstruction: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) extends StackElement
+    case class F(name: String, schema: Schema[_]) extends StackElement
+
+    var stack = List[StackElement](S(SchemaClassFieldName.index, Pointer.NULL, Pointer.NULL, Pointer.NULL))
+
+    object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
+      def apply(schemaInstruction: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
+        stack = S(schemaInstruction, fieldWalker, dim, word) :: stack
+
+        stack match {
+          case S(SchemaBool(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaBool(walker, interpreter = Default.bool)) :: rest
+
+          case S(SchemaChar(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaChar(walker, interpreter = Default.char)) :: rest
+
+          case S(SchemaUChar(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaUChar(walker, interpreter = Default.uchar)) :: rest
+
+          case S(SchemaShort(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaShort(walker, interpreter = Default.short)) :: rest
+
+          case S(SchemaUShort(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaUShort(walker, interpreter = Default.ushort)) :: rest
+
+          case S(SchemaInt(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaInt(walker, interpreter = Default.int)) :: rest
+
+          case S(SchemaUInt(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaUInt(walker, interpreter = Default.uint)) :: rest
+
+          case S(SchemaLong(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaLong(walker, interpreter = Default.long)) :: rest
+
+          case S(SchemaULong(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaULong(walker, interpreter = Default.ulong)) :: rest
+
+          case S(SchemaFloat(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaFloat(walker, interpreter = Default.float)) :: rest
+
+          case S(SchemaDouble(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaDouble(walker, interpreter = Default.double)) :: rest
+
+          case S(SchemaString(), walker, _, _) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest =>
+            stack = F(fieldName.getString(0), new SchemaString(walker, interpreter = Default.string)) :: rest
+
+          case S(SchemaClassEnd(), _, _, _) :: rest1 =>
+            stack = rest1
+
+            def popFields(): List[(String, Schema[_])] = stack match {
+              case F(fieldName, schema) :: rest2 =>
+                stack = rest2
+                (fieldName, schema) :: popFields()
+              case _ =>
+                Nil
+            }
+            val fields = popFields()
+
+            val S(SchemaClassName(), walker, _, className) :: S(SchemaClassFieldName(), _, _, fieldName) :: rest3 = stack
+
+            val fieldNameMayBeFake =
+              if (fieldName == Pointer.NULL)
+                ""
+              else
+                fieldName.getString(0)
+
+            stack = F(fieldNameMayBeFake, Schema.schemaClassFrom[Test](walker, className.getString(0), fields)) :: rest3
+
+          case _ =>
+        }
+      }
+    }
+
+    RootReaderCPPLibrary.buildSchema(treeWalker, schemaBuilder)
+
+    val F(_, result: Schema[TYPE]) :: Nil = stack
+    result
+  }
+
   "stuff" must "work" in {
-    val libs = RootReaderCPPLibrary.addVectorString(Pointer.NULL, "../root2avro/test_Event/Event_cxx.so")
-    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
+    // val libs = RootReaderCPPLibrary.addVectorString(Pointer.NULL, "../root2avro/test_Event/Event_cxx.so")
+    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
+
+    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
     if (RootReaderCPPLibrary.valid(treeWalker) == 0)
       throw new Exception(RootReaderCPPLibrary.errorMessage(treeWalker))
 
@@ -31,66 +122,22 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     // implicit val customizations = List('one :: 'two :: 'three :: CustomInt({x: Pointer => x.getLong(0)}))
 
-    val schema = Schema(treeWalker)
+    val s = schema(treeWalker)
+    println(s)
 
-    println(schema)
+    var i = 0
+    while (!done) {
+      // RootReaderCPPLibrary.printJSON(treeWalker)
+      // RootReaderCPPLibrary.printAvro(treeWalker)
 
-    // RootReaderCPPLibrary.printAvroHeaderOnce(treeWalker, "null", 64*1024)
+      println(s"entry $i")
+      val result = s.interpret(Pointer.NULL)
+      println(result)
 
-    // def escape(raw: String): String = {
-    //   import scala.reflect.runtime.universe._
-    //   Literal(Constant(raw)).toString
-    // }
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
 
-    // object PrintOut extends RootReaderCPPLibrary.SchemaBuilder {
-    //   def apply(schemaInstruction: Int, fieldWalker: Pointer, dim: Pointer, word: Pointer) {
-    //     schemaInstruction match {
-    //       case SchemaInstruction.SchemaBool() => println(s"""SchemaBool $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaChar() => println(s"""SchemaChar $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaUChar() => println(s"""SchemaUChar $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaShort() => println(s"""SchemaShort $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaUShort() => println(s"""SchemaUShort $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaInt() => println(s"""SchemaInt $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaUInt() => println(s"""SchemaUInt $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaLong() => println(s"""SchemaLong $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaULong() => println(s"""SchemaULong $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaFloat() => println(s"""SchemaFloat $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaDouble() => println(s"""SchemaDouble $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaString() => println(s"""SchemaString $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-
-    //       case SchemaInstruction.SchemaClassName() => println(s"""SchemaClassName $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaClassDoc() => println(s"""SchemaClassDoc $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaClassFieldName() => println(s"""SchemaClassFieldName $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaClassFieldDoc() => println(s"""SchemaClassFieldDoc $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaClassEnd() => println(s"""SchemaClassEnd $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //       case SchemaInstruction.SchemaClassReference() => println(s"""SchemaClassReference $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-
-    //       case SchemaInstruction.SchemaPointer() => println(s"""SchemaPointer $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-
-    //       case SchemaInstruction.SchemaSequence() => println(s"""SchemaSequence $fieldWalker $dim ${if (word == Pointer.NULL) "null" else escape(word.getString(0))}""")
-    //     }
-    //   }
-    // }
-
-    // RootReaderCPPLibrary.buildSchema(treeWalker, PrintOut)
-
-    // object PrintOut extends RootReaderCPPLibrary.DataBuilder {
-    //   def apply(data: Pointer) {
-    //     println("here " + data.getInt(0).toString)
-    //   }
-    // }
-
-    // var i = 0
-    // while (!done) {
-    //   // RootReaderCPPLibrary.printJSON(treeWalker)
-    //   // RootReaderCPPLibrary.printAvro(treeWalker)
-
-    //   RootReaderCPPLibrary.buildData(treeWalker, PrintOut)
-
-    //   done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-
-    //   i += 1
-    //   if (i > 10) done = true
-    // }
+      i += 1
+      if (i > 10) done = true
+    }
   }
 }
