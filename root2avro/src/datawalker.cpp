@@ -88,6 +88,14 @@ bool BoolWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
+const void *BoolWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *BoolWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&(((TTreeReaderArray<bool>*)readerArrayBase)->At(i)));
+}
+
 // int BoolWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -140,6 +148,14 @@ bool CharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
   return true;
 }
 #endif
+
+const void *CharWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *CharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<char>*)readerArrayBase)->At(i));
+}
 
 // int CharWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -194,6 +210,14 @@ bool UCharWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
+const void *UCharWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *UCharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
+}
+
 // int UCharWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -246,6 +270,14 @@ bool ShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
   return true;
 }
 #endif
+
+const void *ShortWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *ShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<short>*)readerArrayBase)->At(i));
+}
 
 // int ShortWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -300,6 +332,14 @@ bool UShortWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_
 }
 #endif
 
+const void *UShortWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *UShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i));
+}
+
 // int UShortWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -352,6 +392,14 @@ bool IntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_val
   return true;
 }
 #endif
+
+const void *IntWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *IntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<int>*)readerArrayBase)->At(i));
+}
 
 // int IntWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -410,6 +458,14 @@ bool UIntWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
 }
 #endif
 
+const void *UIntWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *UIntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i));
+}
+
 // int UIntWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -462,6 +518,14 @@ bool LongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_va
   return true;
 }
 #endif
+
+const void *LongWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *LongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i));
+}
 
 // int LongWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -516,6 +580,14 @@ bool ULongWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
+const void *ULongWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *ULongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<ULong64_t>*)readerArrayBase)->At(i));
+}
+
 // int ULongWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -569,6 +641,14 @@ bool FloatWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_v
 }
 #endif
 
+const void *FloatWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *FloatWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<float>*)readerArrayBase)->At(i));
+}
+
 // int FloatWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -621,6 +701,14 @@ bool DoubleWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_
   return true;
 }
 #endif
+
+const void *DoubleWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *DoubleWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<double>*)readerArrayBase)->At(i));
+}
 
 // int DoubleWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -695,6 +783,14 @@ bool CStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro
 }
 #endif
 
+const void *CStringWalker::unpack(const void *address) {
+  return address;
+}
+
+const void *CStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return (void*)(&((TTreeReaderArray<char*>*)readerArrayBase)->At(i));
+}
+
 // int CStringWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -749,6 +845,14 @@ bool StdStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, av
   return true;
 }
 #endif
+
+const void *StdStringWalker::unpack(const void *address) {
+  return ((std::string*)address)->c_str();
+}
+
+const void *StdStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return ((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str();
+}
 
 // int StdStringWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -805,6 +909,14 @@ bool TStringWalker::printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro
   return true;
 }
 #endif
+
+const void *TStringWalker::unpack(const void *address) {
+  return ((TString*)address)->Data();
+}
+
+const void *TStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
+  return ((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data();
+}
 
 // int TStringWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
@@ -967,6 +1079,10 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *MemberWalker::unpack(const void *address) {
+  return (void*)((size_t)address + offset);
+}
+
 // int MemberWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -1124,6 +1240,10 @@ bool ClassWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *ClassWalker::unpack(const void *address) {
+  return nullptr;
+}
+
 // int ClassWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -1198,6 +1318,10 @@ bool PointerWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *PointerWalker::unpack(const void *address) {
+  return nullptr;
+}
+
 // int PointerWalker::getDataSize(void *address, LeafDimension *dim) {
 //   // PointerWalker returns 0 if it contains nullptr, 1 if it contains an item (a "size," in a sense).
 //   void *dereferenced = *((void**)address);
@@ -1259,6 +1383,11 @@ bool TRefWalker::printAvro(void *address, avro_value_t *avrovalue) {
   std::cerr << std::endl << "TREF" << std::endl; return false;
 }
 #endif
+
+const void *TRefWalker::unpack(const void *address) {
+  std::cerr << std::endl << "TREF" << std::endl;
+  return nullptr;
+}
 
 // int TRefWalker::getDataSize(void *address, LeafDimension *dim) {
 //   std::cerr << std::endl << "TREF" << std::endl; return 0;
@@ -1339,6 +1468,10 @@ bool StdVectorWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *StdVectorWalker::unpack(const void *address) {
+  return nullptr;
+}
+
 // int StdVectorWalker::getDataSize(void *address, LeafDimension *dim) {
 //   std::vector<char> *generic = (std::vector<char>*)address;
 //   return generic->size() / walker->sizeOf();
@@ -1411,6 +1544,10 @@ bool StdVectorBoolWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *StdVectorBoolWalker::unpack(const void *address) {
+  return nullptr;
+}
+
 // int StdVectorBoolWalker::getDataSize(void *address, LeafDimension *dim) {
 //   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
 //   return vectorBool->size();
@@ -1480,6 +1617,10 @@ bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
   return true;
 }
 #endif
+
+const void *ArrayWalker::unpack(const void *address) {
+  return nullptr;
+}
 
 // int ArrayWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return numItems;
@@ -1568,6 +1709,10 @@ bool TObjArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *TObjArrayWalker::unpack(const void *address) {
+  return nullptr;
+}
+
 // int TObjArrayWalker::getDataSize(void *address, LeafDimension *dim) {
 //   if (!resolved()) resolve(address);
 //   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
@@ -1629,6 +1774,11 @@ bool TRefArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
   std::cerr << std::endl << "TREFARRAY" << std::endl; return false;
 }
 #endif
+
+const void *TRefArrayWalker::unpack(const void *address) {
+  std::cerr << std::endl << "TREFARRAY" << std::endl;
+  return nullptr;
+}
 
 // int TRefArrayWalker::getDataSize(void *address, LeafDimension *dim) {
 //   std::cerr << std::endl << "TREFARRAY" << std::endl; return 0;
@@ -1704,6 +1854,10 @@ bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
   return true;
 }
 #endif
+
+const void *TClonesArrayWalker::unpack(const void *address) {
+  return nullptr;
+}
 
 // int TClonesArrayWalker::getDataSize(void *address, LeafDimension *dim) {
 //   if (!resolved()) resolve(address);
@@ -1960,6 +2114,10 @@ bool LeafWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *LeafWalker::unpack(const void *address) {
+  return walker->unpack(address);
+}
+
 // int LeafWalker::getDataSize(void *address, LeafDimension *dim) {
 //   if (address != nullptr)
 //     return 0;
@@ -2048,6 +2206,10 @@ bool ReaderValueWalker::printAvro(void *address, avro_value_t *avrovalue) {
 }
 #endif
 
+const void *ReaderValueWalker::unpack(const void *address) {
+  return walker->unpack(address);
+}
+
 // int ReaderValueWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;
 // }
@@ -2104,6 +2266,10 @@ bool RawTBranchWalker::printAvro(void *address, avro_value_t *avrovalue) {
   return walker->printAvro(address, avrovalue);
 }
 #endif
+
+const void *RawTBranchWalker::unpack(const void *address) {
+  return walker->unpack(address);
+}
 
 // int RawTBranchWalker::getDataSize(void *address, LeafDimension *dim) {
 //   return 0;

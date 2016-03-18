@@ -107,6 +107,7 @@ public:
 #ifdef AVRO
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 #endif
+  virtual const void *unpack(const void *address) = 0;
   // virtual int getDataSize(void *address, LeafDimension *dim) = 0;
   // virtual const void *getData(void *address, int index, LeafDimension *dim) = 0;
 };
@@ -128,6 +129,8 @@ public:
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
   virtual bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) = 0;
 #endif
+  virtual const void *unpack(const void *address) = 0;
+  virtual const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i) = 0;
   // virtual int getDataSize(void *address, LeafDimension *dim) = 0;
   // virtual const void *getData(void *address, int index, LeafDimension *dim) = 0;
   virtual TTreeReaderValueBase *readerValue(TTreeReader *reader) = 0;
@@ -147,6 +150,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -166,6 +171,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -185,6 +192,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -204,6 +213,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -223,6 +234,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -242,6 +255,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -262,6 +277,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -281,6 +298,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -300,6 +319,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -319,6 +340,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -338,6 +361,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -370,6 +395,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -388,6 +415,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -406,6 +435,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
+  const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
@@ -435,6 +466,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -471,6 +503,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -495,6 +528,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -519,6 +553,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -545,6 +580,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -571,6 +607,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -596,6 +633,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -623,6 +661,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -649,6 +688,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -675,6 +715,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };
@@ -737,6 +778,7 @@ public:
   int printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue);
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   void reset(TTreeReader *reader);
@@ -771,6 +813,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
   void reset(TTreeReader *reader);
@@ -797,6 +840,7 @@ public:
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
+  const void *unpack(const void *address);
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
 };

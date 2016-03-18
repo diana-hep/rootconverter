@@ -183,6 +183,7 @@ package reader {
                 case F(fieldName, schema) :: rest2 =>
                   stack = rest2
                   fields = (fieldName, schema) :: fields
+                case _ =>
               }
 
               println("fields", fields)
