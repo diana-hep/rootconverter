@@ -88,11 +88,7 @@ void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {
 
 int getDataSize(const void *dataProvider, const void *address) {
   DataProvider *dp = (DataProvider*)dataProvider;
-  int out = dp->getDataSize(address);
-
-  std::cout << "getDataSize " << dp << " " << out << std::endl;
-
-  return out;
+  return dp->getDataSize(address);
 }
 
 const void *getData(const void *dataProvider, const void *address, int index) {
