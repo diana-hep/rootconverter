@@ -49,6 +49,19 @@ class DefaultSuite extends FlatSpec with Matchers {
     var midTime = System.currentTimeMillis
     println(s"init ${midTime - beforeTime}")
 
+    var counter = 0
+    var start = System.nanoTime
+    while (true) {
+      // RootReaderCPPLibrary.ping(treeWalker)
+      counter += 1
+
+      if (counter % 100000 == 0) {
+        val now = System.nanoTime
+        println(s"${now - start} ns -> ${(now - start)/100000} ns per call")
+        start = now
+      }
+    }
+
     while (true) {
       RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
       midTime = System.currentTimeMillis

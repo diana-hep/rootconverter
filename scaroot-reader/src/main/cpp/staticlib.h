@@ -29,6 +29,8 @@ extern "C" {
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
   int getDataSize(const void *fieldWalker, const void *address);
   const void *getData(const void *fieldWalker, const void *address, int index);
+
+  const void *ping(const void *pong);
 }
 
 #endif // STATICLIB_H

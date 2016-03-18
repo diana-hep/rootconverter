@@ -95,3 +95,7 @@ const void *getData(const void *dataProvider, const void *address, int index) {
   DataProvider *dp = (DataProvider*)dataProvider;
   return dp->getData(address, index);
 }
+
+const void *ping(const void *pong) {
+  return pong;
+}
