@@ -44,22 +44,19 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     println(schema)
     
-    // val s = schema[Test](treeWalker)
-    // println(s)
+    var i = 0
+    while (!done) {
+      RootReaderCPPLibrary.printJSON(treeWalker)
+      // RootReaderCPPLibrary.printAvro(treeWalker)
 
-    // var i = 0
-    // while (!done) {
-    //   // RootReaderCPPLibrary.printJSON(treeWalker)
-    //   // RootReaderCPPLibrary.printAvro(treeWalker)
+      println(s"entry $i")
+      val result = schema.interpret(Pointer.NULL)
+      println(result)
 
-    //   println(s"entry $i")
-    //   val result = s.interpret(Pointer.NULL)
-    //   println(result)
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
 
-    //   done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-
-    //   i += 1
-    //   if (i > 10) done = true
-    // }
+      i += 1
+      if (i > 10) done = true
+    }
   }
 }

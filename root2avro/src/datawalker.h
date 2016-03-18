@@ -712,7 +712,7 @@ public:
   int flatSize();
 };
 
-class LeafWalker : public ExtractableWalker, DataProvider {
+class LeafWalker : public ExtractableWalker {
 public:
   PrimitiveWalker *walker;
   TTreeReaderValueBase *readerValue;
@@ -739,8 +739,6 @@ public:
 #endif
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
-  int getDataSize(const void *address) { std::cout << std::endl << "FIXME LeafWalker" << std::endl; return 0; }
-  const void *getData(const void *address, int index) { std::cout << std::endl << "FIXME LeafWalker" << std::endl; return nullptr; }
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -870,8 +868,8 @@ public:
   bool printAvro();
   void closeAvro();
 #endif
-  int getDataSize(const void *address) { std::cout << std::endl << "FIXME TreeWalker" << std::endl; return 0; }
-  const void *getData(const void *address, int index) { std::cout << std::endl << "FIXME TreeWalker" << std::endl; return nullptr; }
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
 };
 
 #endif // DATAWALKER_H

@@ -104,7 +104,29 @@ package reader {
   object Schema {
     def apply[TYPE](treeWalker: Pointer, customizations: Seq[Customization] = Nil, tmp: CustomClass[TYPE]): Schema[TYPE] = {
       sealed trait StackElement
-      case class S(schemaInstruction: Int, data: Pointer) extends StackElement
+      case class S(schemaInstruction: Int, data: Pointer) extends StackElement {
+        override def toString() = schemaInstruction match {
+          case SchemaInstruction.SchemaBool() => s"S(SchemaBool, $data)"
+          case SchemaInstruction.SchemaChar() => s"S(SchemaChar, $data)"
+          case SchemaInstruction.SchemaUChar() => s"S(SchemaUChar, $data)"
+          case SchemaInstruction.SchemaShort() => s"S(SchemaShort, $data)"
+          case SchemaInstruction.SchemaUShort() => s"S(SchemaUShort, $data)"
+          case SchemaInstruction.SchemaInt() => s"S(SchemaInt, $data)"
+          case SchemaInstruction.SchemaUInt() => s"S(SchemaUInt, $data)"
+          case SchemaInstruction.SchemaLong() => s"S(SchemaLong, $data)"
+          case SchemaInstruction.SchemaULong() => s"S(SchemaULong, $data)"
+          case SchemaInstruction.SchemaFloat() => s"S(SchemaFloat, $data)"
+          case SchemaInstruction.SchemaDouble() => s"S(SchemaDouble, $data)"
+          case SchemaInstruction.SchemaString() => s"S(SchemaString, $data)"
+          case SchemaInstruction.SchemaClassName() => s"S(SchemaClassName, ${data.getString(0)})"
+          case SchemaInstruction.SchemaClassPointer() => s"S(SchemaClassPointer, $data)"
+          case SchemaInstruction.SchemaClassFieldName() => s"S(SchemaClassFieldName, ${data.getString(0)})"
+          case SchemaInstruction.SchemaClassEnd() => s"S(SchemaClassEnd, $data)"
+          case SchemaInstruction.SchemaClassReference() => s"S(SchemaClassReference, $data)"
+          case SchemaInstruction.SchemaPointer() => s"S(SchemaPointer, $data)"
+          case SchemaInstruction.SchemaSequence() => s"S(SchemaSequence, $data)"
+        }
+      }
       case class F(name: String, schema: Schema[_]) extends StackElement
 
       var stack: List[StackElement] = Nil
@@ -113,6 +135,8 @@ package reader {
       object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
         def apply(schemaInstruction: Int, data: Pointer) {
           stack = S(schemaInstruction, data) :: stack
+
+          println(stack)
 
           stack match {
             case S(SchemaInstruction.SchemaBool(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
@@ -154,14 +178,14 @@ package reader {
             case S(SchemaInstruction.SchemaClassEnd(), _) :: rest1 =>
               stack = rest1
 
-              def popFields(): List[(String, Schema[_])] = stack match {
+              var fields: List[(String, Schema[_])] = Nil
+              while (stack.head.isInstanceOf[F]) stack match {
                 case F(fieldName, schema) :: rest2 =>
                   stack = rest2
-                  (fieldName, schema) :: popFields()
-                case _ =>
-                  Nil
+                  fields = (fieldName, schema) :: fields
               }
-              val fields = popFields()
+
+              println("fields", fields)
 
               stack match {
                 case S(SchemaInstruction.SchemaClassPointer(), dataProvider) :: S(SchemaInstruction.SchemaClassName(), className) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest3 =>
@@ -286,6 +310,9 @@ package reader {
         subSchemas += q"""
           private val $name: (Schema[$tpe], Int) = {
             val index = allPossibleFields.indexWhere(_._1 == $nameString)
+
+println("setting up " + $nameString + " " + index.toString)
+
             if (index == -1)
               throw new IllegalArgumentException("Scala class has field \"" + $nameString + "\", but this field is not in the Avro schema.")
             else

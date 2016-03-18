@@ -2367,3 +2367,13 @@ void TreeWalker::closeAvro() {
     avro_file_writer_close(avroWriter);
 }
 #endif // AVRO
+
+int TreeWalker::getDataSize(const void *address) {
+  return fields.size();
+}
+
+const void *TreeWalker::getData(const void *address, int index) {
+  std::cout << "TreeWalker::getData " << fields[index]->fieldName << " " << fields[index]->getAddress() << std::endl;
+
+  return fields[index]->getAddress();
+}
