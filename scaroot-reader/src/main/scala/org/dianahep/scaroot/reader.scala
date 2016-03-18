@@ -1,13 +1,14 @@
 package org.dianahep.scaroot
 
 import scala.collection.mutable.Builder
+import scala.language.existentials
 import scala.language.experimental.macros
 import scala.language.higherKinds
 import scala.reflect.classTag
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe.WeakTypeTag
 // import scala.reflect.macros.blackbox.Context
 import scala.reflect.macros.Context
+import scala.reflect.runtime.universe.WeakTypeTag
 
 import com.sun.jna.Pointer
 
@@ -102,169 +103,254 @@ package reader {
       import scala.reflect.runtime.universe._
       Literal(Constant(raw)).toString
     }
+    private[reader] def customClassName = getClass.getName.split('.').last
   }
 
   case class CustomBool[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomChar[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomUChar[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomShort[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomUShort[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomInt[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomUInt[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomLong[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomULong[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomFloat[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomDouble[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomString[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
-  class CustomClass[TYPE : ClassTag](val in: List[String] = Nil, val is: Option[String] = None) extends Custom {
+  class CustomClass[TYPE : ClassTag : SchemaClassMaker](val in: List[String] = Nil, val is: Option[String] = None) extends Custom {
     def ::(x: String) = CustomClass(x :: in, is)
     def ::(x: Symbol) = CustomClass(x.name :: in, is)
     def named(x: String) = CustomClass(in, Some(x))
     def named(x: Symbol) = CustomClass(in, Some(x.name))
     override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}CustomClass[${classTag[TYPE].runtimeClass.getName}]${is.map(" named " + escape(_)).mkString}"""
+
+    val schemaClassMaker = implicitly[SchemaClassMaker[TYPE]]
   }
   object CustomClass {
-    def apply[TYPE : ClassTag] = new CustomClass[TYPE](Nil, None)
-    def apply[TYPE : ClassTag](in: List[String] = Nil, is: Option[String] = None) = new CustomClass[TYPE](in, is)
+    def apply[TYPE : ClassTag : SchemaClassMaker] = new CustomClass[TYPE](Nil, None)
+    def apply[TYPE : ClassTag : SchemaClassMaker](in: List[String] = Nil, is: Option[String] = None) = new CustomClass[TYPE](in, is)
     def unapply[TYPE](x: CustomClass[TYPE]) = Some((x.in, x.is))
   }
 
   case class CustomPointer[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
   case class CustomSequence[BUILDER <: Builder[_, _] : ClassTag](f: Int => BUILDER, in: List[String] = Nil) extends Custom {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
-    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}${getClass.getName}[${classTag[BUILDER].runtimeClass.getName}]"""
+    override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[BUILDER].runtimeClass.getName}]"""
   }
 
   // Immutable schemas that can extract and convert data using interpreters.
 
   sealed trait Schema[TYPE] {
     def interpret(data: Pointer): TYPE
+    private[reader] def schemaClassName = getClass.getName.split('.').last
+  }
+
+  object Schema {
+    def schema[TYPE](treeWalker: Pointer, tmp: CustomClass[TYPE])(implicit customizations: Seq[Custom] = Nil): Schema[TYPE] = {
+      import SchemaInstruction._
+      sealed trait StackElement
+      case class S(schemaInstruction: Int, data: Pointer) extends StackElement
+      case class F(name: String, schema: Schema[_]) extends StackElement
+
+      var stack: List[StackElement] = Nil
+      var result: Schema[TYPE] = null
+
+      object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
+        def apply(schemaInstruction: Int, data: Pointer) {
+          stack = S(schemaInstruction, data) :: stack
+
+          stack match {
+            case S(SchemaBool(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaBool(walker, interpreter = Default.bool)) :: rest
+
+            case S(SchemaChar(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaChar(walker, interpreter = Default.char)) :: rest
+
+            case S(SchemaUChar(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaUChar(walker, interpreter = Default.uchar)) :: rest
+
+            case S(SchemaShort(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaShort(walker, interpreter = Default.short)) :: rest
+
+            case S(SchemaUShort(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaUShort(walker, interpreter = Default.ushort)) :: rest
+
+            case S(SchemaInt(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaInt(walker, interpreter = Default.int)) :: rest
+
+            case S(SchemaUInt(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaUInt(walker, interpreter = Default.uint)) :: rest
+
+            case S(SchemaLong(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaLong(walker, interpreter = Default.long)) :: rest
+
+            case S(SchemaULong(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaULong(walker, interpreter = Default.ulong)) :: rest
+
+            case S(SchemaFloat(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaFloat(walker, interpreter = Default.float)) :: rest
+
+            case S(SchemaDouble(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaDouble(walker, interpreter = Default.double)) :: rest
+
+            case S(SchemaString(), _) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest =>
+              stack = F(fieldName.getString(0), new SchemaString(walker, interpreter = Default.string)) :: rest
+
+            case S(SchemaClassEnd(), _) :: rest1 =>
+              stack = rest1
+
+              def popFields(): List[(String, Schema[_])] = stack match {
+                case F(fieldName, schema) :: rest2 =>
+                  stack = rest2
+                  (fieldName, schema) :: popFields()
+                case _ =>
+                  Nil
+              }
+              val fields = popFields()
+
+              stack match {
+                case S(SchemaClassName(), className) :: S(SchemaClassField(), walker) :: S(SchemaClassFieldName(), fieldName) :: rest3 =>
+                  stack = F(fieldName.getString(0), tmp.schemaClassMaker(walker, className.getString(0), fields)) :: rest3
+
+                case S(SchemaClassName(), className) :: Nil =>
+                  result = tmp.schemaClassMaker(Pointer.NULL, className.getString(0), fields)
+              }
+
+            case _ =>
+          }
+        }
+      }
+
+      RootReaderCPPLibrary.buildSchema(treeWalker, schemaBuilder)
+      result
+    }
   }
 
   class SchemaBool[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaChar[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaUChar[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaShort[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaUShort[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaUInt[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaLong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaULong[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaFloat[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaDouble[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   class SchemaString[TYPE : ClassTag](walker: Pointer, interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL))
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
   }
 
   trait SchemaClass[TYPE] extends Schema[TYPE] {
@@ -272,36 +358,13 @@ package reader {
     def fields: Map[String, Schema[_]]
   }
 
-  class SchemaPointer[TYPE : ClassTag](walker: Pointer, nullable: Schema[TYPE]) extends Schema[Option[TYPE]] {
-    def interpret(data: Pointer): Option[TYPE] = {
-      val result = RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL)
-      if (result == Pointer.NULL)
-        None.asInstanceOf[Option[TYPE]]
-      else
-        Some(nullable.interpret(result)).asInstanceOf[Option[TYPE]]
-    }
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]"
+  trait SchemaClassMaker[TYPE] {
+    def apply(walker: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[TYPE]
   }
+  object SchemaClassMaker {
+    implicit def materialize[TYPE]: SchemaClassMaker[TYPE] = macro materializeImpl[TYPE]
 
-  class SchemaSequence[ITEMS, TYPE : ClassTag](walker: Pointer, dim: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
-    def interpret(data: Pointer): TYPE = {
-      val size = RootReaderCPPLibrary.getDataSize(walker, data, dim)
-      val listBuilder = builder(size)
-      var index = 0
-      while (index < size) {
-        val subdata = RootReaderCPPLibrary.getData(walker, data, index, dim)
-        listBuilder += items.interpret(subdata)
-        index += 1
-      }
-      listBuilder.result
-    }
-    override def toString() = s"${getClass.getName}[${classTag[TYPE].runtimeClass.getName}]($items)"
-  }
-
-  object Schema {
-    def schemaClassFrom[TYPE](walker: Pointer, className: String, fields: List[(String, Schema[_])]): SchemaClass[TYPE] = macro schemaClassFromImpl[TYPE]
-
-    def schemaClassFromImpl[TYPE](c: Context)(walker: c.Expr[Pointer], className: c.Expr[String], fields: c.Expr[List[(String, Schema[_])]])(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaClass[TYPE]] = {
+    def materializeImpl[TYPE](c: Context)(implicit t: c.WeakTypeTag[TYPE]): c.Expr[SchemaClassMaker[TYPE]] = {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
 
@@ -343,32 +406,59 @@ package reader {
       println("four")
 
       val makeNew =
-        if (dataClass =:= typeOf[GenericClass])
-          q"new $dataClass($className)(fields.map(_._1))(..${gets.result})"
-        else
+        // if (dataClass =:= typeOf[GenericClass])
+        //   q"new $dataClass($className)(fields.map(_._1))(..${gets.result})"
+        // else
           q"new $dataClass(..${gets.result})"
 
       println("five")
 
-      c.Expr[SchemaClass[TYPE]](q"""
+      val out = c.Expr[SchemaClassMaker[TYPE]](q"""
         import com.sun.jna.Pointer
-        import org.dianahep.scaroot.reader.Schema
+        import org.dianahep.scaroot.reader._
 
-        val allPossibleFields = $fields
+        new SchemaClassMaker[$dataClass] {
+          def apply(walker: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[$dataClass] =
+            new SchemaClass[$dataClass] {
+              ..${subSchemas.result}
 
-        new SchemaClass[$dataClass] {
-          private val walker: Pointer = $walker
+              def name = className
+              def fields = Map(..${fieldPairs.result})
 
-          ..${subSchemas.result}
+              def interpret(data: Pointer): $dataClass = $makeNew
 
-          def name = $className
-          def fields = Map(..${fieldPairs.result})
-
-          def interpret(data: Pointer): $dataClass = $makeNew
-
-          override def toString() = "SchemaClass[" + classOf[$dataClass].getName + "](" + List(..${reprs.result}).mkString(", ") + ")"
-        }
+              override def toString() = "SchemaClass[" + classOf[$dataClass].getName + "](" + List(..${reprs.result}).mkString(", ") + ")"
+            }
+          }
       """)
+      println(out)
+      out
     }
+  }
+
+  class SchemaPointer[TYPE : ClassTag](walker: Pointer, nullable: Schema[TYPE]) extends Schema[Option[TYPE]] {
+    def interpret(data: Pointer): Option[TYPE] = {
+      val result = RootReaderCPPLibrary.getData(walker, data, 0, Pointer.NULL)
+      if (result == Pointer.NULL)
+        None.asInstanceOf[Option[TYPE]]
+      else
+        Some(nullable.interpret(result)).asInstanceOf[Option[TYPE]]
+    }
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]"
+  }
+
+  class SchemaSequence[ITEMS, TYPE : ClassTag](walker: Pointer, dim: Pointer, builder: Int => Builder[ITEMS, TYPE], items: Schema[ITEMS]) extends Schema[TYPE] {
+    def interpret(data: Pointer): TYPE = {
+      val size = RootReaderCPPLibrary.getDataSize(walker, data, dim)
+      val listBuilder = builder(size)
+      var index = 0
+      while (index < size) {
+        val subdata = RootReaderCPPLibrary.getData(walker, data, index, dim)
+        listBuilder += items.interpret(subdata)
+        index += 1
+      }
+      listBuilder.result
+    }
+    override def toString() = s"$schemaClassName[${classTag[TYPE].runtimeClass.getName}]($items)"
   }
 }
