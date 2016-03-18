@@ -67,8 +67,8 @@ enum SchemaInstruction {
   SchemaString         = 11,
 
   SchemaClassName      = 12,
-  SchemaClassFieldName = 13,
-  SchemaClassField     = 14,
+  SchemaClassPointer   = 13,
+  SchemaClassFieldName = 14,
   SchemaClassEnd       = 15,
   SchemaClassReference = 16,
 
@@ -78,6 +78,12 @@ enum SchemaInstruction {
 };
 
 typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *data);
+
+class DataProvider {
+public:
+  virtual int getDataSize(const void *address) = 0;
+  virtual const void *getData(const void *address, int index) = 0;
+};
 
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
@@ -706,7 +712,7 @@ public:
   int flatSize();
 };
 
-class LeafWalker : public ExtractableWalker {
+class LeafWalker : public ExtractableWalker, DataProvider {
 public:
   PrimitiveWalker *walker;
   TTreeReaderValueBase *readerValue;
@@ -733,6 +739,8 @@ public:
 #endif
   // int getDataSize(void *address, LeafDimension *dim);
   // const void *getData(void *address, int index, LeafDimension *dim);
+  int getDataSize(const void *address) { std::cout << std::endl << "FIXME LeafWalker" << std::endl; return 0; }
+  const void *getData(const void *address, int index) { std::cout << std::endl << "FIXME LeafWalker" << std::endl; return nullptr; }
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -821,7 +829,7 @@ public:
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-class TreeWalker {
+class TreeWalker : public DataProvider {
 public:
   std::string fileLocation;
   std::string treeLocation;
@@ -862,6 +870,8 @@ public:
   bool printAvro();
   void closeAvro();
 #endif
+  int getDataSize(const void *address) { std::cout << std::endl << "FIXME TreeWalker" << std::endl; return 0; }
+  const void *getData(const void *address, int index) { std::cout << std::endl << "FIXME TreeWalker" << std::endl; return nullptr; }
 };
 
 #endif // DATAWALKER_H

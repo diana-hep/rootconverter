@@ -953,7 +953,6 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
 
 void MemberWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
   schemaBuilder(SchemaClassFieldName, fieldName.c_str());
-  schemaBuilder(SchemaClassField, this);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1092,6 +1091,7 @@ void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
     memo.insert(className);
 
     schemaBuilder(SchemaClassName, className.c_str());
+    schemaBuilder(SchemaClassPointer, this);
 
     for (auto iter = members.begin();  iter != members.end();  ++iter)
       (*iter)->buildSchema(schemaBuilder, memo);
@@ -2293,10 +2293,10 @@ void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
   std::set<std::string> memo;
 
   schemaBuilder(SchemaClassName, reader->GetTree()->GetName());
+  schemaBuilder(SchemaClassPointer, this);
 
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
     schemaBuilder(SchemaClassFieldName, (*iter)->fieldName.c_str());
-    schemaBuilder(SchemaClassField, *iter);
     (*iter)->buildSchema(schemaBuilder, memo);
   }
 
