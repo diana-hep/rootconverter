@@ -94,7 +94,7 @@ public:
   virtual const std::type_info *typeId() = 0;
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
-  virtual void resolve(void *address) = 0;
+  virtual void resolve(const void *address) = 0;
   virtual std::string repr(int indent, std::set<std::string> &memo) = 0;
   virtual std::string avroTypeName() = 0;
   virtual std::string avroSchema(int indent, std::set<std::string> &memo) = 0;
@@ -113,7 +113,7 @@ public:
   PrimitiveWalker(std::string fieldName, std::string typeName);
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroSchema(int indent, std::set<std::string> &memo);
   virtual void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) = 0;
@@ -346,7 +346,7 @@ public:
   AnyStringWalker(std::string fieldName, std::string typeName);
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -423,7 +423,7 @@ public:
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -458,7 +458,7 @@ public:
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -472,16 +472,28 @@ public:
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
+class PointerWalker;
+
+class PointerWalkerDataProvider : public DataProvider {
+public:
+  PointerWalker *pointerWalker;
+
+  PointerWalkerDataProvider(PointerWalker *pointerWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class PointerWalker : public FieldWalker {
 public:
   FieldWalker *walker;
+  PointerWalkerDataProvider dataProvider;
 
   PointerWalker(std::string fieldName, FieldWalker *walker);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -504,7 +516,7 @@ public:
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -528,20 +540,19 @@ public:
   int getDataSize(const void *address);
   const void *getData(const void *address, int index);
 };
-
 class StdVectorWalker : public FieldWalker {
 private:
   const std::type_info *typeId_;
 public:
   FieldWalker *walker;
-  StdVectorWalkerDataProvider *dataProvider;
+  StdVectorWalkerDataProvider dataProvider;
 
   StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -555,18 +566,30 @@ public:
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
 
+class StdVectorBoolWalker;
+
+class StdVectorBoolWalkerDataProvider : public DataProvider {
+public:
+  StdVectorBoolWalker *stdVectorBoolWalker;
+  static const bool FALSE = false;
+  static const bool TRUE = true;
+
+  StdVectorBoolWalkerDataProvider(StdVectorBoolWalker *stdVectorBoolWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class StdVectorBoolWalker : public FieldWalker {
 public:
   FieldWalker *walker;
-  const bool FALSE = false;
-  const bool TRUE = true;
+  StdVectorBoolWalkerDataProvider dataProvider;
 
   StdVectorBoolWalker(std::string fieldName);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -580,17 +603,29 @@ public:
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
+class ArrayWalker;
+
+class ArrayWalkerDataProvider : public DataProvider {
+public:
+  ArrayWalker *arrayWalker;
+
+  ArrayWalkerDataProvider(ArrayWalker *arrayWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class ArrayWalker : public FieldWalker {
 public:
   FieldWalker *walker;
   int numItems;
+  ArrayWalkerDataProvider dataProvider;
 
   ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -604,19 +639,31 @@ public:
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
+class TObjArrayWalker;
+
+class TObjArrayWalkerDataProvider : public DataProvider {
+public:
+  TObjArrayWalker *tObjArrayWalker;
+
+  TObjArrayWalkerDataProvider(TObjArrayWalker *tObjArrayWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class TObjArrayWalker : public FieldWalker {
 public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
   FieldWalker *walker;
   TClass *classToAssert;
+  TObjArrayWalkerDataProvider dataProvider;
 
   TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -641,7 +688,7 @@ public:
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -666,7 +713,7 @@ public:
   const std::type_info *typeId();
   bool empty();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -731,7 +778,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -766,7 +813,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
@@ -791,7 +838,7 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   bool resolved();
-  void resolve(void *address);
+  void resolve(const void *address);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);

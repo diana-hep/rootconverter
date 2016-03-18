@@ -38,7 +38,7 @@ bool PrimitiveWalker::empty() { return false; }
 
 bool PrimitiveWalker::resolved() { return true; }
 
-void PrimitiveWalker::resolve(void *address) { }
+void PrimitiveWalker::resolve(const void *address) { }
 
 std::string PrimitiveWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + typeName + std::string("\"");
@@ -617,7 +617,7 @@ bool AnyStringWalker::empty() { return false; }
 
 bool AnyStringWalker::resolved() { return true; }
 
-void AnyStringWalker::resolve(void *address) { }
+void AnyStringWalker::resolve(const void *address) { }
 
 std::string AnyStringWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + typeName + std::string("\"");
@@ -890,8 +890,8 @@ bool MemberWalker::empty() { return walker->empty(); }
 
 bool MemberWalker::resolved() { return walker->resolved(); }
 
-void MemberWalker::resolve(void *address) {
-    walker->resolve((void*)((size_t)address + offset));
+void MemberWalker::resolve(const void *address) {
+    walker->resolve((const void*)((size_t)address + offset));
   }
 
 std::string MemberWalker::repr(int indent, std::set<std::string> &memo) {
@@ -984,7 +984,7 @@ bool ClassWalker::resolved() {
   return true;
 }
 
-void ClassWalker::resolve(void *address) {
+void ClassWalker::resolve(const void *address) {
   for (auto iter = members.begin();  iter != members.end();  ++iter)
     (*iter)->resolve(address);
 }
@@ -1084,7 +1084,25 @@ const void *ClassWalker::unpack(const void *address) {
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
-PointerWalker::PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker) { }
+PointerWalkerDataProvider::PointerWalkerDataProvider(PointerWalker *pointerWalker) : pointerWalker(pointerWalker) { }
+
+int PointerWalkerDataProvider::getDataSize(const void *address) {
+  void *dereferenced = *((void**)address);
+  if (dereferenced == nullptr)
+    return 0;
+  else
+    return 1;
+}
+
+const void *PointerWalkerDataProvider::getData(const void *address, int index) {
+  void *dereferenced = *((void**)address);
+  if (dereferenced == nullptr)
+    return nullptr;
+  else
+    return pointerWalker->walker->unpack(dereferenced);
+}
+
+PointerWalker::PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker), dataProvider(this) { }
 
 size_t PointerWalker::sizeOf() { return sizeof(void*); }
 
@@ -1094,7 +1112,7 @@ bool PointerWalker::empty() { return walker->empty(); }
 
 bool PointerWalker::resolved() { return walker->resolved(); }
 
-void PointerWalker::resolve(void *address) { walker->resolve(*((void**)address)); }
+void PointerWalker::resolve(const void *address) { walker->resolve(*((void**)address)); }
 
 std::string PointerWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("{\"*\": ") + walker->repr(indent, memo) + std::string("}");
@@ -1149,7 +1167,7 @@ bool PointerWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *PointerWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
@@ -1166,7 +1184,7 @@ bool TRefWalker::empty() { return true; }
 
 bool TRefWalker::resolved() { return true; }
 
-void TRefWalker::resolve(void *address) { }
+void TRefWalker::resolve(const void *address) { }
 
 std::string TRefWalker::repr(int indent, std::set<std::string> &memo) {
   std::cerr << std::endl << "TREF" << std::endl;
@@ -1220,7 +1238,7 @@ const void *StdVectorWalkerDataProvider::getData(const void *address, int index)
 StdVectorWalker::StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker) :
   FieldWalker(fieldName, typeName),
   walker(walker),
-  dataProvider(new StdVectorWalkerDataProvider(this)),
+  dataProvider(this),
   typeId_(TClass::GetClass(typeName.c_str())->GetTypeInfo()) { }
 
 size_t StdVectorWalker::sizeOf() { return sizeof(std::vector<char>); }
@@ -1231,7 +1249,7 @@ bool StdVectorWalker::empty() { return false; }
 
 bool StdVectorWalker::resolved() { return walker->resolved(); }
 
-void StdVectorWalker::resolve(void *address) {
+void StdVectorWalker::resolve(const void *address) {
   std::vector<char> *generic = (std::vector<char>*)address;
   int numItems = generic->size() / walker->sizeOf();
   void *ptr = generic->data();
@@ -1252,7 +1270,7 @@ std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, dataProvider);
+  schemaBuilder(SchemaSequence, &dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1293,9 +1311,25 @@ const void *StdVectorWalker::unpack(const void *address) {
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
 
+StdVectorBoolWalkerDataProvider::StdVectorBoolWalkerDataProvider(StdVectorBoolWalker *stdVectorBoolWalker) : stdVectorBoolWalker(stdVectorBoolWalker) { }
+
+int StdVectorBoolWalkerDataProvider::getDataSize(const void *address) {
+  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+  return vectorBool->size();
+}
+
+const void *StdVectorBoolWalkerDataProvider::getData(const void *address, int index) {
+  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+  if (vectorBool->at(index))
+    return &TRUE;
+  else
+    return &FALSE;
+}
+
 StdVectorBoolWalker::StdVectorBoolWalker(std::string fieldName) :
   FieldWalker(fieldName, "vector<bool>"),
-  walker(new BoolWalker(fieldName)) { }
+  walker(new BoolWalker(fieldName)),
+  dataProvider(this) { }
 
 size_t StdVectorBoolWalker::sizeOf() { return sizeof(std::vector<bool>); }
 
@@ -1305,7 +1339,7 @@ bool StdVectorBoolWalker::empty() { return false; }
 
 bool StdVectorBoolWalker::resolved() { return true; }
 
-void StdVectorBoolWalker::resolve(void *address) { }
+void StdVectorBoolWalker::resolve(const void *address) { }
 
 std::string StdVectorBoolWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("{\"std::vector\": ") + walker->repr(indent, memo) + std::string("}");
@@ -1353,13 +1387,23 @@ bool StdVectorBoolWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *StdVectorBoolWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
+ArrayWalkerDataProvider::ArrayWalkerDataProvider(ArrayWalker *arrayWalker) : arrayWalker(arrayWalker) { }
+
+int ArrayWalkerDataProvider::getDataSize(const void *address) {
+  return arrayWalker->numItems;
+}
+
+const void *ArrayWalkerDataProvider::getData(const void *address, int index) {
+  return arrayWalker->walker->unpack((void*)((size_t)address + index * arrayWalker->walker->sizeOf()));
+}
+
 ArrayWalker::ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems) :
-  FieldWalker(fieldName, "[]"), walker(walker), numItems(numItems) { }
+  FieldWalker(fieldName, "[]"), walker(walker), numItems(numItems), dataProvider(this) { }
 
 size_t ArrayWalker::sizeOf() { return 0; }
 
@@ -1369,7 +1413,7 @@ bool ArrayWalker::empty() { return false; }
 
 bool ArrayWalker::resolved() { return walker->resolved(); }
 
-void ArrayWalker::resolve(void *address) { walker->resolve(address); }
+void ArrayWalker::resolve(const void *address) { walker->resolve(address); }
 
 std::string ArrayWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("{\"[]\": {\"numItems\": ") + std::to_string(numItems) + std::string(", \"sizeOf\": ") + std::to_string(walker->sizeOf()) + std::string(", \"type\": ") + walker->repr(indent, memo) + std::string("}}");
@@ -1414,13 +1458,33 @@ bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *ArrayWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
+TObjArrayWalkerDataProvider::TObjArrayWalkerDataProvider(TObjArrayWalker *tObjArrayWalker) : tObjArrayWalker(tObjArrayWalker) { }
+
+int TObjArrayWalkerDataProvider::getDataSize(const void *address) {
+  if (!tObjArrayWalker->resolved()) tObjArrayWalker->resolve(address);
+  if (!tObjArrayWalker->resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+  TObjArray *array = (TObjArray*)address;
+  if (!array->AssertClass(tObjArrayWalker->classToAssert))
+    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+  return array->GetEntries();
+}
+
+const void *TObjArrayWalkerDataProvider::getData(const void *address, int index) {
+  if (!tObjArrayWalker->resolved()) tObjArrayWalker->resolve(address);
+  if (!tObjArrayWalker->resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+  TObjArray *array = (TObjArray*)address;
+  if (!array->AssertClass(tObjArrayWalker->classToAssert))
+    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+  return tObjArrayWalker->walker->unpack((const void*)array->At(index));
+}
+
 TObjArrayWalker::TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), classToAssert(nullptr) { }
+  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), classToAssert(nullptr), dataProvider(this) { }
 
 size_t TObjArrayWalker::sizeOf() { return sizeof(TObjArray); }
 
@@ -1430,7 +1494,7 @@ bool TObjArrayWalker::empty() { return resolved() ? walker->empty() : false; }
 
 bool TObjArrayWalker::resolved() { return walker != nullptr; }
 
-void TObjArrayWalker::resolve(void *address) {
+void TObjArrayWalker::resolve(const void *address) {
   TObjArray *array = (TObjArray*)address;
   if (!array->IsEmpty()) {
     classToAssert = TClass::GetClass(array->First()->ClassName());
@@ -1465,7 +1529,7 @@ void TObjArrayWalker::printJSON(void *address) {
     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
 
   std::cout << "[";
-  TIter nextItem = (TClonesArray*)address;
+  TIter nextItem = array;
   bool first = true;
   for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
     if (first) first = false; else std::cout << ", ";
@@ -1484,7 +1548,7 @@ bool TObjArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
   if (!array->AssertClass(classToAssert))
     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
 
-  TIter nextItem = (TClonesArray*)address;
+  TIter nextItem = array;
   for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
     avro_value_t element;
     avro_value_append(avrovalue, &element, nullptr);
@@ -1497,7 +1561,7 @@ bool TObjArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *TObjArrayWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
@@ -1514,7 +1578,7 @@ bool TRefArrayWalker::empty() { return true; }
 
 bool TRefArrayWalker::resolved() { return true; }
 
-void TRefArrayWalker::resolve(void *address) { }
+void TRefArrayWalker::resolve(const void *address) { }
 
 std::string TRefArrayWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"TREFARRAY\"");
@@ -1562,7 +1626,7 @@ bool TClonesArrayWalker::empty() { return resolved() ? walker->empty() : false; 
 
 bool TClonesArrayWalker::resolved() { return walker != nullptr; }
 
-void TClonesArrayWalker::resolve(void *address) {
+void TClonesArrayWalker::resolve(const void *address) {
   TClonesArray *array = (TClonesArray*)address;
   walker = new ClassWalker(fieldName, array->GetClass(), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
@@ -1775,7 +1839,7 @@ const std::type_info *LeafWalker::typeId() { return walker->typeId(); }
 
 bool LeafWalker::resolved() { return true; }
 
-void LeafWalker::resolve(void *address) { }
+void LeafWalker::resolve(const void *address) { }
 
 std::string LeafWalker::repr(int indent, std::set<std::string> &memo) {
   std::string out;
@@ -1913,7 +1977,7 @@ const std::type_info *ReaderValueWalker::typeId() { return walker->typeId(); }
 
 bool ReaderValueWalker::resolved() { return walker->resolved(); }
 
-void ReaderValueWalker::resolve(void *address) { walker->resolve(address); }
+void ReaderValueWalker::resolve(const void *address) { walker->resolve(address); }
 
 std::string ReaderValueWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TTreeReaderValue\", \"type\": ") + walker->repr(indent, memo) + std::string("}");
@@ -1966,7 +2030,7 @@ const std::type_info *RawTBranchWalker::typeId() { return walker->typeId(); }
 
 bool RawTBranchWalker::resolved() { return true; }
 
-void RawTBranchWalker::resolve(void *address) { }
+void RawTBranchWalker::resolve(const void *address) { }
 
 std::string RawTBranchWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + fieldName + std::string("\": {\"extractor\": \"TBranch\", \"type\": ") + typeName + std::string("}");
