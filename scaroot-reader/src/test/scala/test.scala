@@ -17,15 +17,15 @@ import com.sun.jna.Pointer
 import org.dianahep.scaroot.reader._
 
 // case class Test(x: Int, y: Double, z: String)
-case class Test(x: Seq[Boolean])
+// case class Test(x: Seq[Boolean])
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
     // val libs = RootReaderCPPLibrary.addVectorString(Pointer.NULL, "../root2avro/test_Event/Event_cxx.so")
     // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
 
-    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
-    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/vectorBool.root", "t", "", Pointer.NULL);
+    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
+    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/vectorBool.root", "t", "", Pointer.NULL);
     if (RootReaderCPPLibrary.valid(treeWalker) == 0)
       throw new Exception(RootReaderCPPLibrary.errorMessage(treeWalker))
 
@@ -40,9 +40,9 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     // println(RootReaderCPPLibrary.repr(treeWalker))
 
-    val customizations = List(CustomClass[Test])
+    val customizations = List[Customization]()
 
-    val schema = Schema(treeWalker, customizations, customizations.head)
+    val schema = Schema[GenericClass](treeWalker, customizations)
 
     println(schema)
     

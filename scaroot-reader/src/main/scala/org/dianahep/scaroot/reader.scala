@@ -47,9 +47,13 @@ package reader {
     val SchemaSequence = new SchemaInstruction(18, "SchemaSequence")
   }
 
-  class GenericClass(val name: String)(fieldNames: String*)(fieldValues: Any*) {
-    private val lookup = (fieldNames zip fieldValues).toMap
-    def apply(field: String): Any = lookup(field)
+  class GenericClass(val fields: Map[String, Any]) {
+    def apply(field: String): Any = fields(field)
+    override def toString() = s"""GenericClass(Map(${fields.map({case (k, v) => "\"" + k + "\"" + " -> " + v.toString}).mkString(", ")}))"""
+  }
+  object GenericClass {
+    def apply(fields: Map[String, Any]) = new GenericClass(fields)
+    def unapply(x: GenericClass) = Some(x.fields)
   }
 
   // Custom interpreters for data. (Use '# for arrays.)
@@ -102,7 +106,7 @@ package reader {
   }
 
   object Schema {
-    def apply[TYPE](treeWalker: Pointer, customizations: Seq[Customization] = Nil, tmp: CustomClass[TYPE]): Schema[TYPE] = {
+    def apply[TYPE](treeWalker: Pointer, customizations: Seq[Customization] = Nil): Schema[TYPE] = {
       sealed trait StackElement
       case class I(schemaInstruction: Int, data: Pointer) extends StackElement {
         override def toString() = schemaInstruction match {
@@ -169,7 +173,10 @@ package reader {
 
               stack match {
                 case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), className) :: rest3 =>
-                  stack = S(tmp.schemaClassMaker(dataProvider, className.getString(0), fields)) :: rest3
+                  // val schemaClass = customClass.schemaClassMaker(dataProvider, className.getString(0), fields)
+                  val schemaClass = SchemaClassMakerGeneric(dataProvider, className.getString(0), fields)
+
+                  stack = S(schemaClass) :: rest3
               }
 
             case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
@@ -307,14 +314,6 @@ println("setting up " + $nameString + " " + index.toString)
 
       println("four")
 
-      val makeNew =
-        // if (dataClass =:= typeOf[GenericClass])
-        //   q"new $dataClass($className)(fields.map(_._1))(..${gets.result})"
-        // else
-          q"new $dataClass(..${gets.result})"
-
-      println("five")
-
       val out = c.Expr[SchemaClassMaker[TYPE]](q"""
         import com.sun.jna.Pointer
         import org.dianahep.scaroot.reader._
@@ -327,7 +326,7 @@ println("setting up " + $nameString + " " + index.toString)
               def name = className
               def fields = Map(..${fieldPairs.result})
 
-              def interpret(data: Pointer): $dataClass = $makeNew
+              def interpret(data: Pointer): $dataClass = new $dataClass(..${gets.result})
 
               override def toString() = "SchemaClass[" + classOf[$dataClass].getName + "](" + List(..${reprs.result}).mkString(", ") + ")"
             }
@@ -336,6 +335,19 @@ println("setting up " + $nameString + " " + index.toString)
       println(out)
       out
     }
+  }
+
+  object SchemaClassMakerGeneric extends SchemaClassMaker[GenericClass] {
+    def apply(dataProvider: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[GenericClass] =
+      new SchemaClass[GenericClass] {
+        def name = className
+        def fields = allPossibleFields.toMap
+        private def lookup = allPossibleFields.zipWithIndex.toMap
+
+        def interpret(data: Pointer): GenericClass = new GenericClass(lookup.map({case ((n, s), i) => (n, s.interpret(RootReaderCPPLibrary.getData(dataProvider, data, i)))}))
+
+        override def toString() = "SchemaClass[GenericClass](" + fields.map({case (n, s) => n + ": " + s.toString}).mkString(", ") + ")"
+      }
   }
 
   case class SchemaPointer[TYPE](nullable: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
@@ -392,7 +404,10 @@ println("setting up " + $nameString + " " + index.toString)
       data.getByteArray(0, end)
     }
 
-    def fixed(size: Int) = {data: Pointer => data.getByteBuffer(0, size)}
-    def enum[ENUM <: Enumeration](enumeration: ENUM) = {data: Pointer => enumeration.apply(data.getInt(0))}
+    def fixedByteBuffer(size: Int) = {data: Pointer => data.getByteBuffer(0, size)}
+
+    def fixedByteArray(size: Int) = {data: Pointer => data.getByteArray(0, size)}
+
+    def enumFromInt[ENUM <: Enumeration](enumeration: ENUM) = {data: Pointer => enumeration.apply(data.getInt(0))}
   }
 }
