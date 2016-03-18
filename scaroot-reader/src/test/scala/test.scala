@@ -16,15 +16,16 @@ import com.sun.jna.Pointer
 
 import org.dianahep.scaroot.reader._
 
-case class Test(x: Int, y: Double, z: String)
+// case class Test(x: Int, y: Double, z: String)
+case class Test(d: Int, x: Seq[Seq[Int]])
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
     // val libs = RootReaderCPPLibrary.addVectorString(Pointer.NULL, "../root2avro/test_Event/Event_cxx.so")
     // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
 
-    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
-    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/arrayInt.root", "t", "", Pointer.NULL);
+    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
+    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/arrayArrayInt2.root", "t", "", Pointer.NULL);
     if (RootReaderCPPLibrary.valid(treeWalker) == 0)
       throw new Exception(RootReaderCPPLibrary.errorMessage(treeWalker))
 
@@ -47,10 +48,11 @@ class DefaultSuite extends FlatSpec with Matchers {
     
     var i = 0
     while (!done) {
+      println(s"entry $i")
+
       RootReaderCPPLibrary.printJSON(treeWalker)
       // RootReaderCPPLibrary.printAvro(treeWalker)
 
-      println(s"entry $i")
       val result = schema.interpret(Pointer.NULL)
       println(result)
 

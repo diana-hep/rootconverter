@@ -1884,9 +1884,9 @@ bool ExtractableWalker::empty() { return false; }
 
 //// LeafDimension
 
-LeafDimension::LeafDimension(LeafDimension *next, int size) : next_(next), size_(size), counter(nullptr), counterReaderValue(nullptr) { }
+LeafDimension::LeafDimension(LeafWalker *leafWalker, LeafDimension *next, int size) : leafWalker(leafWalker), next_(next), size_(size), counter(nullptr), counterReaderValue(nullptr) { }
 
-LeafDimension::LeafDimension(LeafDimension *next, IntWalker *walker, TTreeReader *reader) : next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue(reader)) { }
+LeafDimension::LeafDimension(LeafWalker *leafWalker, LeafDimension *next, IntWalker *walker, TTreeReader *reader) : leafWalker(leafWalker), next_(next), size_(-1), counter(walker), counterReaderValue(counter->readerValue(reader)) { }
 
 void LeafDimension::reset(TTreeReader *reader) {
   if (counterReaderValue != nullptr) {
@@ -1921,6 +1921,22 @@ int LeafDimension::flatSize() {
   return out;
 }
 
+int LeafDimension::getDataSize(const void *address) {
+  return size();
+}
+
+const void *LeafDimension::getData(const void *address, int index) {
+  getDataLastIndex = index;
+  if (next() != nullptr)
+    return nullptr;
+  else {
+    int readerIndex = getDataLastIndex;
+    for (LeafDimension *d = leafWalker->dims;  d != this;  d = d->next())
+      readerIndex += d->getDataLastIndex * d->next()->flatSize();
+    return leafWalker->walker->unpack(leafWalker->readerArray, readerIndex);
+  }
+}
+
 //// LeafWalker
 
 LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree, TTreeReader *reader) :
@@ -1950,9 +1966,9 @@ LeafWalker::LeafWalker(TLeaf *tleaf, TTree *ttree, TTreeReader *reader) :
   dims = nullptr;
   for (int i = dimensions - 1;  i >= 0;  i--) {
     if (ttree->GetLeaf(strdims[i].c_str()) != nullptr)
-      dims = new LeafDimension(dims, new IntWalker(strdims[i].c_str()), reader);
+      dims = new LeafDimension(this, dims, new IntWalker(strdims[i].c_str()), reader);
     else
-      dims = new LeafDimension(dims, intdims[i]);
+      dims = new LeafDimension(this, dims, intdims[i]);
   }
 
   if (dimensions == 0)
@@ -2539,7 +2555,5 @@ int TreeWalker::getDataSize(const void *address) {
 }
 
 const void *TreeWalker::getData(const void *address, int index) {
-  std::cout << "TreeWalker::getData " << fields[index]->fieldName << " " << fields[index]->getAddress() << std::endl;
-
-  return fields[index]->getAddress();
+  return fields[index]->unpack(fields[index]->getAddress());
 }

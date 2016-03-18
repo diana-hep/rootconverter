@@ -49,7 +49,7 @@ using namespace ROOT::Internal;
 
 //// forwards
 class ClassWalker;
-class LeafDimension;
+class LeafWalker;
 
 // Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
 enum SchemaInstruction {
@@ -737,20 +737,24 @@ public:
 
 ///////////////////////////////////////////////////////////////////// LeafWalker
 
-class LeafDimension {
+class LeafDimension : public DataProvider {
 private:
+  LeafWalker *leafWalker;
   LeafDimension *next_;
   int size_;
   IntWalker *counter;
   TTreeReaderValueBase *counterReaderValue;
+  int getDataLastIndex = -999;
 public:
-  LeafDimension(LeafDimension *next, int size);
-  LeafDimension(LeafDimension *next, IntWalker *counter, TTreeReader *reader);
+  LeafDimension(LeafWalker *leafWalker, LeafDimension *next, int size);
+  LeafDimension(LeafWalker *leafWalker, LeafDimension *next, IntWalker *counter, TTreeReader *reader);
   void reset(TTreeReader *reader);
   std::string repr();
   LeafDimension *next();   // linked list makes the recursive function in LeafWalker easier to understand
   int size();
   int flatSize();
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
 };
 
 class LeafWalker : public ExtractableWalker {
