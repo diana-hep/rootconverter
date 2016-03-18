@@ -24,6 +24,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
 
     val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
+    // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/arrayInt.root", "t", "", Pointer.NULL);
     if (RootReaderCPPLibrary.valid(treeWalker) == 0)
       throw new Exception(RootReaderCPPLibrary.errorMessage(treeWalker))
 

@@ -104,97 +104,72 @@ package reader {
   object Schema {
     def apply[TYPE](treeWalker: Pointer, customizations: Seq[Customization] = Nil, tmp: CustomClass[TYPE]): Schema[TYPE] = {
       sealed trait StackElement
-      case class S(schemaInstruction: Int, data: Pointer) extends StackElement {
+      case class I(schemaInstruction: Int, data: Pointer) extends StackElement {
         override def toString() = schemaInstruction match {
-          case SchemaInstruction.SchemaBool() => s"S(SchemaBool, $data)"
-          case SchemaInstruction.SchemaChar() => s"S(SchemaChar, $data)"
-          case SchemaInstruction.SchemaUChar() => s"S(SchemaUChar, $data)"
-          case SchemaInstruction.SchemaShort() => s"S(SchemaShort, $data)"
-          case SchemaInstruction.SchemaUShort() => s"S(SchemaUShort, $data)"
-          case SchemaInstruction.SchemaInt() => s"S(SchemaInt, $data)"
-          case SchemaInstruction.SchemaUInt() => s"S(SchemaUInt, $data)"
-          case SchemaInstruction.SchemaLong() => s"S(SchemaLong, $data)"
-          case SchemaInstruction.SchemaULong() => s"S(SchemaULong, $data)"
-          case SchemaInstruction.SchemaFloat() => s"S(SchemaFloat, $data)"
-          case SchemaInstruction.SchemaDouble() => s"S(SchemaDouble, $data)"
-          case SchemaInstruction.SchemaString() => s"S(SchemaString, $data)"
-          case SchemaInstruction.SchemaClassName() => s"S(SchemaClassName, ${data.getString(0)})"
-          case SchemaInstruction.SchemaClassPointer() => s"S(SchemaClassPointer, $data)"
-          case SchemaInstruction.SchemaClassFieldName() => s"S(SchemaClassFieldName, ${data.getString(0)})"
-          case SchemaInstruction.SchemaClassEnd() => s"S(SchemaClassEnd, $data)"
-          case SchemaInstruction.SchemaClassReference() => s"S(SchemaClassReference, $data)"
-          case SchemaInstruction.SchemaPointer() => s"S(SchemaPointer, $data)"
-          case SchemaInstruction.SchemaSequence() => s"S(SchemaSequence, $data)"
+          case SchemaInstruction.SchemaBool() => s"I(SchemaBool, $data)"
+          case SchemaInstruction.SchemaChar() => s"I(SchemaChar, $data)"
+          case SchemaInstruction.SchemaUChar() => s"I(SchemaUChar, $data)"
+          case SchemaInstruction.SchemaShort() => s"I(SchemaShort, $data)"
+          case SchemaInstruction.SchemaUShort() => s"I(SchemaUShort, $data)"
+          case SchemaInstruction.SchemaInt() => s"I(SchemaInt, $data)"
+          case SchemaInstruction.SchemaUInt() => s"I(SchemaUInt, $data)"
+          case SchemaInstruction.SchemaLong() => s"I(SchemaLong, $data)"
+          case SchemaInstruction.SchemaULong() => s"I(SchemaULong, $data)"
+          case SchemaInstruction.SchemaFloat() => s"I(SchemaFloat, $data)"
+          case SchemaInstruction.SchemaDouble() => s"I(SchemaDouble, $data)"
+          case SchemaInstruction.SchemaString() => s"I(SchemaString, $data)"
+          case SchemaInstruction.SchemaClassName() => s"I(SchemaClassName, ${data.getString(0)})"
+          case SchemaInstruction.SchemaClassPointer() => s"I(SchemaClassPointer, $data)"
+          case SchemaInstruction.SchemaClassFieldName() => s"I(SchemaClassFieldName, ${data.getString(0)})"
+          case SchemaInstruction.SchemaClassEnd() => s"I(SchemaClassEnd, $data)"
+          case SchemaInstruction.SchemaClassReference() => s"I(SchemaClassReference, $data)"
+          case SchemaInstruction.SchemaPointer() => s"I(SchemaPointer, $data)"
+          case SchemaInstruction.SchemaSequence() => s"I(SchemaSequence, $data)"
         }
       }
-      case class F(name: String, schema: Schema[_]) extends StackElement
+      case class S(schema: Schema[_]) extends StackElement
 
       var stack: List[StackElement] = Nil
-      var result: Schema[TYPE] = null
 
       object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
         def apply(schemaInstruction: Int, data: Pointer) {
-          stack = S(schemaInstruction, data) :: stack
+          stack = I(schemaInstruction, data) :: stack
 
           println(stack)
 
           stack match {
-            case S(SchemaInstruction.SchemaBool(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaBool()) :: rest
+            case I(SchemaInstruction.SchemaBool(), _)   :: rest => stack = S(SchemaBool())   :: rest
+            case I(SchemaInstruction.SchemaChar(), _)   :: rest => stack = S(SchemaChar())   :: rest
+            case I(SchemaInstruction.SchemaUChar(), _)  :: rest => stack = S(SchemaUChar())  :: rest
+            case I(SchemaInstruction.SchemaShort(), _)  :: rest => stack = S(SchemaShort())  :: rest
+            case I(SchemaInstruction.SchemaUShort(), _) :: rest => stack = S(SchemaUShort()) :: rest
+            case I(SchemaInstruction.SchemaInt(), _)    :: rest => stack = S(SchemaInt())    :: rest
+            case I(SchemaInstruction.SchemaUInt(), _)   :: rest => stack = S(SchemaUInt())   :: rest
+            case I(SchemaInstruction.SchemaLong(), _)   :: rest => stack = S(SchemaLong())   :: rest
+            case I(SchemaInstruction.SchemaULong(), _)  :: rest => stack = S(SchemaULong())  :: rest
+            case I(SchemaInstruction.SchemaFloat(), _)  :: rest => stack = S(SchemaFloat())  :: rest
+            case I(SchemaInstruction.SchemaDouble(), _) :: rest => stack = S(SchemaDouble()) :: rest
+            case I(SchemaInstruction.SchemaString(), _) :: rest => stack = S(SchemaString()) :: rest
 
-            case S(SchemaInstruction.SchemaChar(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaChar()) :: rest
-
-            case S(SchemaInstruction.SchemaUChar(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaUChar()) :: rest
-
-            case S(SchemaInstruction.SchemaShort(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaShort()) :: rest
-
-            case S(SchemaInstruction.SchemaUShort(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaUShort()) :: rest
-
-            case S(SchemaInstruction.SchemaInt(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaInt()) :: rest
-
-            case S(SchemaInstruction.SchemaUInt(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaUInt()) :: rest
-
-            case S(SchemaInstruction.SchemaLong(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaLong()) :: rest
-
-            case S(SchemaInstruction.SchemaULong(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaULong()) :: rest
-
-            case S(SchemaInstruction.SchemaFloat(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaFloat()) :: rest
-
-            case S(SchemaInstruction.SchemaDouble(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaDouble()) :: rest
-
-            case S(SchemaInstruction.SchemaString(), _) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest =>
-              stack = F(fieldName.getString(0), new SchemaString()) :: rest
-
-            case S(SchemaInstruction.SchemaClassEnd(), _) :: rest1 =>
+            case I(SchemaInstruction.SchemaClassEnd(), _) :: rest1 =>
               stack = rest1
 
               var fields: List[(String, Schema[_])] = Nil
-              while (stack.head.isInstanceOf[F]) stack match {
-                case F(fieldName, schema) :: rest2 =>
+              var done = false
+
+              while (!done) stack match {
+                case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest2 =>
                   stack = rest2
-                  fields = (fieldName, schema) :: fields
+                  fields = (fieldName.getString(0), schema) :: fields
                 case _ =>
+                  done = true
               }
 
               println("fields", fields)
 
               stack match {
-                case S(SchemaInstruction.SchemaClassPointer(), dataProvider) :: S(SchemaInstruction.SchemaClassName(), className) :: S(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest3 =>
-                  stack = F(fieldName.getString(0), tmp.schemaClassMaker(dataProvider, className.getString(0), fields)) :: rest3
-
-                case S(SchemaInstruction.SchemaClassPointer(), dataProvider) :: S(SchemaInstruction.SchemaClassName(), className) :: Nil =>
-                  stack = Nil
-                  result = tmp.schemaClassMaker(dataProvider, className.getString(0), fields)
+                case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), className) :: rest3 =>
+                  stack = S(tmp.schemaClassMaker(dataProvider, className.getString(0), fields)) :: rest3
               }
 
             case _ =>
@@ -203,6 +178,8 @@ package reader {
       }
 
       RootReaderCPPLibrary.buildSchema(treeWalker, schemaBuilder)
+
+      val S(result: Schema[TYPE]) :: Nil = stack
       result
     }
   }
