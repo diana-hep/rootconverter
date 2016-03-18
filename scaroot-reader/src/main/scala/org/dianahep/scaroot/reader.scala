@@ -98,7 +98,6 @@ package reader {
   // Immutable schemas that can extract and convert data using interpreters.
 
   sealed trait Schema[TYPE] {
-    def tag: ClassTag[TYPE]
     def interpret(data: Pointer): TYPE
   }
 
@@ -173,8 +172,8 @@ package reader {
                   stack = S(tmp.schemaClassMaker(dataProvider, className.getString(0), fields)) :: rest3
               }
 
-            // case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
-            //   stack = S(SchemaSequence(items, dataProvider)(ClassTag(items.tag.runtimeClass))) :: rest
+            case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
+              stack = S(SchemaSequence(items, dataProvider)) :: rest
 
             case _ =>
               done1 = true
@@ -189,86 +188,72 @@ package reader {
     }
   }
 
-  case class SchemaCustom[TYPE : ClassTag](interpreter: Pointer => TYPE) extends Schema[TYPE] {
-    val tag = classTag[TYPE]
+  case class SchemaCustom[TYPE](interpreter: Pointer => TYPE) extends Schema[TYPE] {
     def interpret(data: Pointer): TYPE = interpreter(data)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaBool() extends Schema[Boolean] {
-    val tag = classTag[Boolean]
     def interpret(data: Pointer) = data.getByte(0) != 0
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaChar() extends Schema[Byte] {
-    val tag = classTag[Byte]
     def interpret(data: Pointer) = data.getByte(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaUChar() extends Schema[Short] {
-    val tag = classTag[Short]
     def interpret(data: Pointer) = { val out = data.getByte(0); (if (out < 0) 2 * (java.lang.Byte.MAX_VALUE.toShort + 1) + out else out).toShort }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaShort() extends Schema[Short] {
-    val tag = classTag[Short]
     def interpret(data: Pointer) = data.getShort(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaUShort() extends Schema[Int] {
-    val tag = classTag[Int]
     def interpret(data: Pointer) = { val out = data.getShort(0); if (out < 0) 2 * (java.lang.Short.MAX_VALUE.toInt + 1) + out.toInt else out.toInt }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaInt() extends Schema[Int] {
-    val tag = classTag[Int]
     def interpret(data: Pointer) = data.getInt(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaUInt() extends Schema[Long] {
-    val tag = classTag[Long]
     def interpret(data: Pointer) = { val out = data.getInt(0); if (out < 0) 2L * (java.lang.Integer.MAX_VALUE.toLong + 1L) + out.toLong else out.toLong }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaLong() extends Schema[Long] {
-    val tag = classTag[Long]
     def interpret(data: Pointer) = data.getLong(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaULong() extends Schema[Double] {
-    val tag = classTag[Double]
     def interpret(data: Pointer) = { val out = data.getLong(0); if (out < 0) 2.0 * (java.lang.Long.MAX_VALUE.toDouble + 1.0) + out.toDouble else out.toDouble }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaFloat() extends Schema[Float] {
-    val tag = classTag[Float]
     def interpret(data: Pointer) = data.getFloat(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaDouble() extends Schema[Double] {
-    val tag = classTag[Double]
     def interpret(data: Pointer) = data.getDouble(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
   case class SchemaString() extends Schema[String] {
-    val tag = classTag[String]
     def interpret(data: Pointer) = data.getString(0)
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}"
   }
 
-  abstract class SchemaClass[TYPE : ClassTag] extends Schema[TYPE] {
-    val tag = classTag[TYPE]
+  abstract class SchemaClass[TYPE] extends Schema[TYPE] {
     def name: String
     def fields: Map[String, Schema[_]]
   }
@@ -353,8 +338,7 @@ println("setting up " + $nameString + " " + index.toString)
     }
   }
 
-  case class SchemaPointer[TYPE : ClassTag](nullable: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
-    val tag = classTag[TYPE]
+  case class SchemaPointer[TYPE](nullable: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
     def interpret(data: Pointer): Option[TYPE] = {
       val result = RootReaderCPPLibrary.getData(dataProvider, data, 0)
       if (result == Pointer.NULL)
@@ -362,31 +346,30 @@ println("setting up " + $nameString + " " + index.toString)
       else
         Some(nullable.interpret(result)).asInstanceOf[Option[TYPE]]
     }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]($nullable)"
+    override def toString() = s"${getClass.getName.split('.').last}($nullable)"
   }
 
-  case class SchemaSequence[ITEMS, TYPE <: Iterable[ITEMS] : ClassTag](items: Schema[ITEMS], dataProvider: Pointer, builder: Int => Builder[ITEMS, TYPE] = (SchemaSequence.defaultBuilder _)) extends Schema[TYPE] {
-    val tag = classTag[TYPE]
-    def interpret(data: Pointer): TYPE = {
+  case class SchemaSequence[TYPE](items: Schema[TYPE], dataProvider: Pointer, builder: Int => Builder[TYPE, Iterable[TYPE]] = SchemaSequence.defaultBuilder[TYPE, Builder[TYPE, Iterable[TYPE]]]) extends Schema[Iterable[TYPE]] {
+    def interpret(data: Pointer): Iterable[TYPE] = {
       val size = RootReaderCPPLibrary.getDataSize(dataProvider, data)
       val listBuilder = builder(size)
       var index = 0
       while (index < size) {
         val subdata = RootReaderCPPLibrary.getData(dataProvider, data, index)
-        listBuilder += items.interpret(subdata)
+        listBuilder += items.interpret(subdata).asInstanceOf[TYPE]
         index += 1
       }
-      listBuilder.result
+      listBuilder.result.asInstanceOf[Iterable[TYPE]]
     }
-    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]($items)"
+    override def toString() = s"${getClass.getName.split('.').last}($items)"
   }
   object SchemaSequence {
-    def defaultBuilder[ITEMS, Seq[ITEMS], BUILDER <: Builder[ITEMS, Seq[ITEMS]]](size: Int) = {
+    def defaultBuilder[TYPE, BUILDER <: Builder[TYPE, Iterable[TYPE]]] = {size: Int =>
       val builder =
         if (size < 10)    // FIXME: optimize this
-          List.newBuilder[ITEMS].asInstanceOf[Builder[ITEMS, Seq[ITEMS]]]
+          List.newBuilder[TYPE].asInstanceOf[Builder[TYPE, Iterable[TYPE]]]
         else
-          Vector.newBuilder[ITEMS].asInstanceOf[Builder[ITEMS, Seq[ITEMS]]]
+          Vector.newBuilder[TYPE].asInstanceOf[Builder[TYPE, Iterable[TYPE]]]
       builder.sizeHint(size)
       builder
     }
