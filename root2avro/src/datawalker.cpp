@@ -96,17 +96,6 @@ const void *BoolWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&(((TTreeReaderArray<bool>*)readerArrayBase)->At(i)));
 }
 
-// int BoolWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *BoolWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<bool>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *BoolWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<bool>(*reader, fieldName.c_str());
 }
@@ -156,17 +145,6 @@ const void *CharWalker::unpack(const void *address) {
 const void *CharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<char>*)readerArrayBase)->At(i));
 }
-
-// int CharWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *CharWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<char>*)address)->At(index);
-// }
 
 TTreeReaderValueBase *CharWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<char>(*reader, fieldName.c_str());
@@ -218,17 +196,6 @@ const void *UCharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
 }
 
-// int UCharWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *UCharWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<unsigned char>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *UCharWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned char>(*reader, fieldName.c_str());
 }
@@ -278,17 +245,6 @@ const void *ShortWalker::unpack(const void *address) {
 const void *ShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<short>*)readerArrayBase)->At(i));
 }
-
-// int ShortWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *ShortWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<short>*)address)->At(index);
-// }
 
 TTreeReaderValueBase *ShortWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<short>(*reader, fieldName.c_str());
@@ -340,17 +296,6 @@ const void *UShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i));
 }
 
-// int UShortWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *UShortWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<unsigned short>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *UShortWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned short>(*reader, fieldName.c_str());
 }
@@ -400,17 +345,6 @@ const void *IntWalker::unpack(const void *address) {
 const void *IntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<int>*)readerArrayBase)->At(i));
 }
-
-// int IntWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *IntWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<int>*)address)->At(index);
-// }
 
 TTreeReaderValueBase *IntWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<int>(*reader, fieldName.c_str());
@@ -466,17 +400,6 @@ const void *UIntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i));
 }
 
-// int UIntWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *UIntWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<unsigned int>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *UIntWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned int>(*reader, fieldName.c_str());
 }
@@ -526,17 +449,6 @@ const void *LongWalker::unpack(const void *address) {
 const void *LongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i));
 }
-
-// int LongWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *LongWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<Long64_t>*)address)->At(index);
-// }
 
 TTreeReaderValueBase *LongWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<Long64_t>(*reader, fieldName.c_str());
@@ -588,17 +500,6 @@ const void *ULongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<ULong64_t>*)readerArrayBase)->At(i));
 }
 
-// int ULongWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *ULongWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<ULong64_t>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *ULongWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<ULong64_t>(*reader, fieldName.c_str());
 }
@@ -649,17 +550,6 @@ const void *FloatWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<float>*)readerArrayBase)->At(i));
 }
 
-// int FloatWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *FloatWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<float>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *FloatWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<float>(*reader, fieldName.c_str());
 }
@@ -709,17 +599,6 @@ const void *DoubleWalker::unpack(const void *address) {
 const void *DoubleWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<double>*)readerArrayBase)->At(i));
 }
-
-// int DoubleWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *DoubleWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<double>*)address)->At(index);
-// }
 
 TTreeReaderValueBase *DoubleWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<double>(*reader, fieldName.c_str());
@@ -791,17 +670,6 @@ const void *CStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) 
   return (void*)(&((TTreeReaderArray<char*>*)readerArrayBase)->At(i));
 }
 
-// int CStringWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *CStringWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return address;
-//   else
-//     return &((TTreeReaderArray<char*>*)address)->At(index);
-// }
-
 TTreeReaderValueBase *CStringWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderArray<char>(*reader, fieldName.c_str());
 }
@@ -853,17 +721,6 @@ const void *StdStringWalker::unpack(const void *address) {
 const void *StdStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return ((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str();
 }
-
-// int StdStringWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *StdStringWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return ((std::string*)address)->c_str();
-//   else
-//     return ((TTreeReaderArray<std::string>*)address)->At(index).c_str();
-// }
 
 TTreeReaderValueBase *StdStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
@@ -917,17 +774,6 @@ const void *TStringWalker::unpack(const void *address) {
 const void *TStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return ((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data();
 }
-
-// int TStringWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *TStringWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (index == -1)
-//     return ((TString*)address)->Data();
-//   else
-//     return ((TTreeReaderArray<TString>*)address)->At(index).Data();
-// }
 
 TTreeReaderValueBase *TStringWalker::readerValue(TTreeReader *reader) {
   // NOTE: ROOT 6.06/00 won't build the following due to "Unknown type and class combination: -1, string" (no dictionary)
@@ -1083,14 +929,6 @@ const void *MemberWalker::unpack(const void *address) {
   return (void*)((size_t)address + offset);
 }
 
-// int MemberWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *MemberWalker::getData(void *address, int index, LeafDimension *dim) {
-//   return (void*)((size_t)address + offset);
-// }
-
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -1244,14 +1082,6 @@ const void *ClassWalker::unpack(const void *address) {
   return nullptr;
 }
 
-// int ClassWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *ClassWalker::getData(void *address, int index, LeafDimension *dim) {
-//   return nullptr;
-// }
-
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
 PointerWalker::PointerWalker(std::string fieldName, FieldWalker *walker) : FieldWalker(fieldName, "*"), walker(walker) { }
@@ -1322,23 +1152,6 @@ const void *PointerWalker::unpack(const void *address) {
   return nullptr;
 }
 
-// int PointerWalker::getDataSize(void *address, LeafDimension *dim) {
-//   // PointerWalker returns 0 if it contains nullptr, 1 if it contains an item (a "size," in a sense).
-//   void *dereferenced = *((void**)address);
-//   if (dereferenced == nullptr)
-//     return 0;
-//   else
-//     return 1;
-// }
-
-// const void *PointerWalker::getData(void *address, int index, LeafDimension *dim) {
-//   void *dereferenced = *((void**)address);
-//   if (dereferenced == nullptr)
-//     return nullptr;
-//   else
-//     return dereferenced;
-// }
-
 ///////////////////////////////////////////////////////////////////// TRefWalker
 
 TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -1389,19 +1202,25 @@ const void *TRefWalker::unpack(const void *address) {
   return nullptr;
 }
 
-// int TRefWalker::getDataSize(void *address, LeafDimension *dim) {
-//   std::cerr << std::endl << "TREF" << std::endl; return 0;
-// }
-
-// const void *TRefWalker::getData(void *address, int index, LeafDimension *dim) {
-//   std::cerr << std::endl << "TREF" << std::endl; return nullptr;
-// }
-
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
+
+StdVectorWalkerDataProvider::StdVectorWalkerDataProvider(StdVectorWalker *stdVectorWalker) : stdVectorWalker(stdVectorWalker) { }
+
+int StdVectorWalkerDataProvider::getDataSize(const void *address) {
+  std::vector<char> *generic = (std::vector<char>*)address;
+  return generic->size() / stdVectorWalker->walker->sizeOf();
+}
+
+const void *StdVectorWalkerDataProvider::getData(const void *address, int index) {
+  std::vector<char> *generic = (std::vector<char>*)address;
+  int numItems = generic->size() / stdVectorWalker->walker->sizeOf();
+  return stdVectorWalker->walker->unpack((void*)((size_t)generic->data() + index * stdVectorWalker->walker->sizeOf()));
+}
 
 StdVectorWalker::StdVectorWalker(std::string fieldName, std::string typeName, FieldWalker *walker) :
   FieldWalker(fieldName, typeName),
   walker(walker),
+  dataProvider(new StdVectorWalkerDataProvider(this)),
   typeId_(TClass::GetClass(typeName.c_str())->GetTypeInfo()) { }
 
 size_t StdVectorWalker::sizeOf() { return sizeof(std::vector<char>); }
@@ -1433,7 +1252,7 @@ std::string StdVectorWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this);
+  schemaBuilder(SchemaSequence, dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1469,19 +1288,8 @@ bool StdVectorWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *StdVectorWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
-
-// int StdVectorWalker::getDataSize(void *address, LeafDimension *dim) {
-//   std::vector<char> *generic = (std::vector<char>*)address;
-//   return generic->size() / walker->sizeOf();
-// }
-
-// const void *StdVectorWalker::getData(void *address, int index, LeafDimension *dim) {
-//   std::vector<char> *generic = (std::vector<char>*)address;
-//   int numItems = generic->size() / walker->sizeOf();
-//   return (void*)((size_t)generic->data() + index * walker->sizeOf());
-// }
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
 
@@ -1548,19 +1356,6 @@ const void *StdVectorBoolWalker::unpack(const void *address) {
   return nullptr;
 }
 
-// int StdVectorBoolWalker::getDataSize(void *address, LeafDimension *dim) {
-//   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
-//   return vectorBool->size();
-// }
-
-// const void *StdVectorBoolWalker::getData(void *address, int index, LeafDimension *dim) {
-//   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
-//   if (vectorBool->at(index))
-//     return (void*)(&TRUE);
-//   else
-//     return (void*)(&FALSE);
-// }
-
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
 ArrayWalker::ArrayWalker(std::string fieldName, FieldWalker *walker, int numItems) :
@@ -1621,14 +1416,6 @@ bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 const void *ArrayWalker::unpack(const void *address) {
   return nullptr;
 }
-
-// int ArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return numItems;
-// }
-
-// const void *ArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-//   return (void*)((size_t)address + index * walker->sizeOf());
-// }
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
 
@@ -1713,24 +1500,6 @@ const void *TObjArrayWalker::unpack(const void *address) {
   return nullptr;
 }
 
-// int TObjArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-//   if (!resolved()) resolve(address);
-//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
-//   TObjArray *array = (TObjArray*)address;
-//   if (!array->AssertClass(classToAssert))
-//     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
-//   return array->GetEntries();
-// }
-
-// const void *TObjArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (!resolved()) resolve(address);
-//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
-//   TObjArray *array = (TObjArray*)address;
-//   if (!array->AssertClass(classToAssert))
-//     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
-//   return (void*)array->At(index);
-// }
-
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
 
 TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -1779,14 +1548,6 @@ const void *TRefArrayWalker::unpack(const void *address) {
   std::cerr << std::endl << "TREFARRAY" << std::endl;
   return nullptr;
 }
-
-// int TRefArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-//   std::cerr << std::endl << "TREFARRAY" << std::endl; return 0;
-// }
-
-// const void *TRefArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-//   std::cerr << std::endl << "TREFARRAY" << std::endl; return nullptr;
-// }
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
@@ -1858,20 +1619,6 @@ bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 const void *TClonesArrayWalker::unpack(const void *address) {
   return nullptr;
 }
-
-// int TClonesArrayWalker::getDataSize(void *address, LeafDimension *dim) {
-//   if (!resolved()) resolve(address);
-//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
-//   TClonesArray *array = (TClonesArray*)address;
-//   return array->GetEntries();
-// }
-
-// const void *TClonesArrayWalker::getData(void *address, int index, LeafDimension *dim) {
-//   if (!resolved()) resolve(address);
-//   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
-//   TClonesArray *array = (TClonesArray*)address;
-//   return (void*)array->At(index);
-// }
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
 
@@ -2055,14 +1802,8 @@ std::string LeafWalker::avroSchema(int indent, std::set<std::string> &memo) {
 }
 
 void LeafWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  for (LeafDimension *d = dims;  d != nullptr;  d = d->next()) {
-    std::cout << "LeafWalker::buildSchema adding LeafDimension" << std::endl;
-
+  for (LeafDimension *d = dims;  d != nullptr;  d = d->next())
     schemaBuilder(SchemaSequence, d);
-  }
-
-  std::cout << "LeafWalker::buildSchema" << std::endl;
-
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -2134,29 +1875,6 @@ const void *LeafWalker::unpack(const void *address) {
   return walker->unpack(address);
 }
 
-// int LeafWalker::getDataSize(void *address, LeafDimension *dim) {
-//   if (address != nullptr)
-//     return 0;
-//   else
-//     return dim->size();
-// }
-
-// const void *LeafWalker::getData(void *address, int index, LeafDimension *dim) {
-//   std::cout << "LeafWalker::getData " << address << " " << index << " " << dim << std::endl;
-
-//   if (readerValue != nullptr) {
-//     std::cout << "HERE " << readerValue->GetAddress() << std::endl;
-
-//     return walker->getData(readerValue->GetAddress(), -1, dim);
-//   }
-//   else {
-//     int readerIndex = index;
-//     for (LeafDimension *d = dims;  d != dim;  d = d->next())
-//       readerIndex += d->size();
-//     return walker->getData(readerArray, readerIndex, nullptr);
-//   }
-// }
-
 void LeafWalker::reset(TTreeReader *reader) {
   // FIXME: delete old readerValue/readerArray?
   if (dimensions == 0)
@@ -2226,14 +1944,6 @@ const void *ReaderValueWalker::unpack(const void *address) {
   return walker->unpack(address);
 }
 
-// int ReaderValueWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *ReaderValueWalker::getData(void *address, int index, LeafDimension *dim) {
-//   return getAddress();
-// }
-
 void ReaderValueWalker::reset(TTreeReader *reader) {
   // FIXME: delete old value?
   value = new GenericReaderValue(fieldName, typeName, reader, walker);
@@ -2286,18 +1996,6 @@ bool RawTBranchWalker::printAvro(void *address, avro_value_t *avrovalue) {
 const void *RawTBranchWalker::unpack(const void *address) {
   return walker->unpack(address);
 }
-
-// int RawTBranchWalker::getDataSize(void *address, LeafDimension *dim) {
-//   return 0;
-// }
-
-// const void *RawTBranchWalker::getData(void *address, int index, LeafDimension *dim) {
-//   return address;
-// }
-// // FIXME: you probably (almost certainly) want to give RawTBranchStdStringWalker and RawTBranchTStringWalker
-// // custom ::getData methods that know how to pull c_str() or Data() out of the object.
-// // But you'll find that in the unit testing...
-
 
 //// RawTBranchStdStringWalker
 
