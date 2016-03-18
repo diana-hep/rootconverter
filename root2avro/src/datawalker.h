@@ -437,6 +437,15 @@ public:
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
+class ClassWalkerDataProvider : public DataProvider {
+public:
+  ClassWalker *classWalker;
+
+  ClassWalkerDataProvider(ClassWalker *classWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class ClassWalker : public FieldWalker {
 private:
   size_t sizeOf_;
@@ -446,6 +455,7 @@ public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
   std::vector<MemberWalker*> members;
+  ClassWalkerDataProvider dataProvider;
 
   ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   void fill();    // has side-effects, must be called soon after constructor

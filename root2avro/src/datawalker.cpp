@@ -926,13 +926,28 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *MemberWalker::unpack(const void *address) {
-  return nullptr;   //  (void*)((size_t)address + offset);
+  return (void*)((size_t)address + offset);
 }
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
 
+ClassWalkerDataProvider::ClassWalkerDataProvider(ClassWalker *classWalker) : classWalker(classWalker) { }
+
+int ClassWalkerDataProvider::getDataSize(const void *address) {
+  return classWalker->members.size();
+}
+
+const void *ClassWalkerDataProvider::getData(const void *address, int index) {
+  MemberWalker *memberWalker = classWalker->members[index];
+  return memberWalker->unpack(address);
+}
+
 ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-  FieldWalker(fieldName, dropCppNamespace(tclass->GetName())), tclass(tclass), avroNamespace(addCppNamespace(tclass->GetName(), avroNamespace)), defs(defs) { }
+  FieldWalker(fieldName, dropCppNamespace(tclass->GetName())),
+  tclass(tclass),
+  avroNamespace(addCppNamespace(tclass->GetName(), avroNamespace)),
+  defs(defs),
+  dataProvider(this) { }
 
 void ClassWalker::fill() {
   TIter nextMember = tclass->GetListOfDataMembers();
@@ -1045,7 +1060,7 @@ void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
     memo.insert(className);
 
     schemaBuilder(SchemaClassName, className.c_str());
-    schemaBuilder(SchemaClassPointer, this);
+    schemaBuilder(SchemaClassPointer, &dataProvider);
 
     for (auto iter = members.begin();  iter != members.end();  ++iter)
       (*iter)->buildSchema(schemaBuilder, memo);
@@ -1079,7 +1094,7 @@ bool ClassWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *ClassWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// PointerWalker

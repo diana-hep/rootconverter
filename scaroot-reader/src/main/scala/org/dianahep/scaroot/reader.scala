@@ -1,5 +1,6 @@
 package org.dianahep.scaroot
 
+import scala.collection.mutable
 import scala.collection.mutable.Builder
 import scala.language.existentials
 import scala.language.experimental.macros
@@ -134,6 +135,7 @@ package reader {
       case class S(schema: Schema[_]) extends StackElement
 
       var stack: List[StackElement] = Nil
+      val schemaClasses = mutable.Map[String, Schema[_]]()
 
       object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
         def apply(schemaInstruction: Int, data: Pointer) {
@@ -162,9 +164,9 @@ package reader {
               var fields: List[(String, Schema[_])] = Nil
               var done2 = false
               while (!done2) stack match {
-                case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest2 =>
+                case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldNamePtr) :: rest2 =>
                   stack = rest2
-                  fields = (fieldName.getString(0), schema) :: fields
+                  fields = (fieldNamePtr.getString(0), schema) :: fields
                 case _ =>
                   done2 = true
               }
@@ -172,12 +174,22 @@ package reader {
               println("fields", fields)
 
               stack match {
-                case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), className) :: rest3 =>
-                  // val schemaClass = customClass.schemaClassMaker(dataProvider, className.getString(0), fields)
-                  val schemaClass = SchemaClassMakerGeneric(dataProvider, className.getString(0), fields)
+                case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), classNamePtr) :: rest3 =>
+                  val className = classNamePtr.getString(0)
+
+                  // val schemaClass = customClass.schemaClassMaker(dataProvider, className, fields)
+                  val schemaClass = SchemaClassMakerGeneric(dataProvider, className, fields)
+                  schemaClasses(className) = schemaClass
 
                   stack = S(schemaClass) :: rest3
               }
+
+            case I(SchemaInstruction.SchemaClassReference(), classNamePtr) :: rest =>
+              val schemaClass = schemaClasses(classNamePtr.getString(0))
+              stack = S(schemaClass) :: rest
+
+            case S(referent) :: I(SchemaInstruction.SchemaPointer(), dataProvider) :: rest =>
+              stack = S(SchemaPointer(referent, dataProvider)) :: rest
 
             case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
               stack = S(SchemaSequence(items, dataProvider)) :: rest
@@ -350,15 +362,15 @@ println("setting up " + $nameString + " " + index.toString)
       }
   }
 
-  case class SchemaPointer[TYPE](nullable: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
+  case class SchemaPointer[TYPE](referent: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
     def interpret(data: Pointer): Option[TYPE] = {
       val result = RootReaderCPPLibrary.getData(dataProvider, data, 0)
       if (result == Pointer.NULL)
         None.asInstanceOf[Option[TYPE]]
       else
-        Some(nullable.interpret(result)).asInstanceOf[Option[TYPE]]
+        Some(referent.interpret(result)).asInstanceOf[Option[TYPE]]
     }
-    override def toString() = s"${getClass.getName.split('.').last}($nullable)"
+    override def toString() = s"${getClass.getName.split('.').last}($referent)"
   }
 
   case class SchemaSequence[TYPE](items: Schema[TYPE], dataProvider: Pointer, builder: Int => Builder[TYPE, Iterable[TYPE]] = SchemaSequence.defaultBuilder[TYPE, Builder[TYPE, Iterable[TYPE]]]) extends Schema[Iterable[TYPE]] {
