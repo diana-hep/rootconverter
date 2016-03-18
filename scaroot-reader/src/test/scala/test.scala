@@ -40,7 +40,7 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val customizations = List(CustomClass[Test])
 
-    val schema = customizations.head.schemaClassMaker(Pointer.NULL, "Test", List("x" -> new SchemaInt(Pointer.NULL, Default.int), "y" -> new SchemaDouble(Pointer.NULL, Default.double), "z" -> new SchemaString(Pointer.NULL, Default.string)))
+    val schema = Schema(treeWalker, customizations, customizations.head)
 
     println(schema)
     

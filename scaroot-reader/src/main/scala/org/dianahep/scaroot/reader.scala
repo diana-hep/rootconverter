@@ -213,7 +213,7 @@ package reader {
   }
 
   object Schema {
-    def schema[TYPE](treeWalker: Pointer, tmp: CustomClass[TYPE])(implicit customizations: Seq[Custom] = Nil): Schema[TYPE] = {
+    def apply[TYPE](treeWalker: Pointer, customizations: Seq[Custom] = Nil, tmp: CustomClass[TYPE]): Schema[TYPE] = {
       import SchemaInstruction._
       sealed trait StackElement
       case class S(schemaInstruction: Int, data: Pointer) extends StackElement
