@@ -98,6 +98,7 @@ package reader {
   // Immutable schemas that can extract and convert data using interpreters.
 
   sealed trait Schema[TYPE] {
+    def tag: ClassTag[TYPE]
     def interpret(data: Pointer): TYPE
   }
 
@@ -137,32 +138,32 @@ package reader {
 
           println(stack)
 
-          stack match {
-            case I(SchemaInstruction.SchemaBool(), _)   :: rest => stack = S(SchemaBool())   :: rest
-            case I(SchemaInstruction.SchemaChar(), _)   :: rest => stack = S(SchemaChar())   :: rest
-            case I(SchemaInstruction.SchemaUChar(), _)  :: rest => stack = S(SchemaUChar())  :: rest
-            case I(SchemaInstruction.SchemaShort(), _)  :: rest => stack = S(SchemaShort())  :: rest
-            case I(SchemaInstruction.SchemaUShort(), _) :: rest => stack = S(SchemaUShort()) :: rest
-            case I(SchemaInstruction.SchemaInt(), _)    :: rest => stack = S(SchemaInt())    :: rest
-            case I(SchemaInstruction.SchemaUInt(), _)   :: rest => stack = S(SchemaUInt())   :: rest
-            case I(SchemaInstruction.SchemaLong(), _)   :: rest => stack = S(SchemaLong())   :: rest
-            case I(SchemaInstruction.SchemaULong(), _)  :: rest => stack = S(SchemaULong())  :: rest
-            case I(SchemaInstruction.SchemaFloat(), _)  :: rest => stack = S(SchemaFloat())  :: rest
-            case I(SchemaInstruction.SchemaDouble(), _) :: rest => stack = S(SchemaDouble()) :: rest
-            case I(SchemaInstruction.SchemaString(), _) :: rest => stack = S(SchemaString()) :: rest
+          var done1 = false
+          while (!done1) stack match {
+            case I(SchemaInstruction.SchemaBool(), _)   :: rest  =>  stack = S(SchemaBool())   :: rest
+            case I(SchemaInstruction.SchemaChar(), _)   :: rest  =>  stack = S(SchemaChar())   :: rest
+            case I(SchemaInstruction.SchemaUChar(), _)  :: rest  =>  stack = S(SchemaUChar())  :: rest
+            case I(SchemaInstruction.SchemaShort(), _)  :: rest  =>  stack = S(SchemaShort())  :: rest
+            case I(SchemaInstruction.SchemaUShort(), _) :: rest  =>  stack = S(SchemaUShort()) :: rest
+            case I(SchemaInstruction.SchemaInt(), _)    :: rest  =>  stack = S(SchemaInt())    :: rest
+            case I(SchemaInstruction.SchemaUInt(), _)   :: rest  =>  stack = S(SchemaUInt())   :: rest
+            case I(SchemaInstruction.SchemaLong(), _)   :: rest  =>  stack = S(SchemaLong())   :: rest
+            case I(SchemaInstruction.SchemaULong(), _)  :: rest  =>  stack = S(SchemaULong())  :: rest
+            case I(SchemaInstruction.SchemaFloat(), _)  :: rest  =>  stack = S(SchemaFloat())  :: rest
+            case I(SchemaInstruction.SchemaDouble(), _) :: rest  =>  stack = S(SchemaDouble()) :: rest
+            case I(SchemaInstruction.SchemaString(), _) :: rest  =>  stack = S(SchemaString()) :: rest
 
             case I(SchemaInstruction.SchemaClassEnd(), _) :: rest1 =>
               stack = rest1
 
               var fields: List[(String, Schema[_])] = Nil
-              var done = false
-
-              while (!done) stack match {
+              var done2 = false
+              while (!done2) stack match {
                 case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldName) :: rest2 =>
                   stack = rest2
                   fields = (fieldName.getString(0), schema) :: fields
                 case _ =>
-                  done = true
+                  done2 = true
               }
 
               println("fields", fields)
@@ -172,7 +173,11 @@ package reader {
                   stack = S(tmp.schemaClassMaker(dataProvider, className.getString(0), fields)) :: rest3
               }
 
+            // case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
+            //   stack = S(SchemaSequence(items, dataProvider)(ClassTag(items.tag.runtimeClass))) :: rest
+
             case _ =>
+              done1 = true
           }
         }
       }
@@ -185,71 +190,85 @@ package reader {
   }
 
   case class SchemaCustom[TYPE : ClassTag](interpreter: Pointer => TYPE) extends Schema[TYPE] {
+    val tag = classTag[TYPE]
     def interpret(data: Pointer): TYPE = interpreter(data)
-    override def toString() = s"${getClass.getName.split('.').last}[${classTag[TYPE].runtimeClass.getName}]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaBool() extends Schema[Boolean] {
+    val tag = classTag[Boolean]
     def interpret(data: Pointer) = data.getByte(0) != 0
-    override def toString() = s"${getClass.getName.split('.').last}[Boolean]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaChar() extends Schema[Byte] {
+    val tag = classTag[Byte]
     def interpret(data: Pointer) = data.getByte(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Char]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaUChar() extends Schema[Short] {
+    val tag = classTag[Short]
     def interpret(data: Pointer) = { val out = data.getByte(0); (if (out < 0) 2 * (java.lang.Byte.MAX_VALUE.toShort + 1) + out else out).toShort }
-    override def toString() = s"${getClass.getName.split('.').last}[UChar]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaShort() extends Schema[Short] {
+    val tag = classTag[Short]
     def interpret(data: Pointer) = data.getShort(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Short]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaUShort() extends Schema[Int] {
+    val tag = classTag[Int]
     def interpret(data: Pointer) = { val out = data.getShort(0); if (out < 0) 2 * (java.lang.Short.MAX_VALUE.toInt + 1) + out.toInt else out.toInt }
-    override def toString() = s"${getClass.getName.split('.').last}[UShort]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaInt() extends Schema[Int] {
+    val tag = classTag[Int]
     def interpret(data: Pointer) = data.getInt(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Int]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaUInt() extends Schema[Long] {
+    val tag = classTag[Long]
     def interpret(data: Pointer) = { val out = data.getInt(0); if (out < 0) 2L * (java.lang.Integer.MAX_VALUE.toLong + 1L) + out.toLong else out.toLong }
-    override def toString() = s"${getClass.getName.split('.').last}[UInt]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaLong() extends Schema[Long] {
+    val tag = classTag[Long]
     def interpret(data: Pointer) = data.getLong(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Long]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaULong() extends Schema[Double] {
+    val tag = classTag[Double]
     def interpret(data: Pointer) = { val out = data.getLong(0); if (out < 0) 2.0 * (java.lang.Long.MAX_VALUE.toDouble + 1.0) + out.toDouble else out.toDouble }
-    override def toString() = s"${getClass.getName.split('.').last}[ULong]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaFloat() extends Schema[Float] {
+    val tag = classTag[Float]
     def interpret(data: Pointer) = data.getFloat(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Float]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaDouble() extends Schema[Double] {
+    val tag = classTag[Double]
     def interpret(data: Pointer) = data.getDouble(0)
-    override def toString() = s"${getClass.getName.split('.').last}[Double]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
   case class SchemaString() extends Schema[String] {
+    val tag = classTag[String]
     def interpret(data: Pointer) = data.getString(0)
-    override def toString() = s"${getClass.getName.split('.').last}[String]"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]"
   }
 
-  trait SchemaClass[TYPE] extends Schema[TYPE] {
+  abstract class SchemaClass[TYPE : ClassTag] extends Schema[TYPE] {
+    val tag = classTag[TYPE]
     def name: String
     def fields: Map[String, Schema[_]]
   }
@@ -335,6 +354,7 @@ println("setting up " + $nameString + " " + index.toString)
   }
 
   case class SchemaPointer[TYPE : ClassTag](nullable: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
+    val tag = classTag[TYPE]
     def interpret(data: Pointer): Option[TYPE] = {
       val result = RootReaderCPPLibrary.getData(dataProvider, data, 0)
       if (result == Pointer.NULL)
@@ -342,10 +362,11 @@ println("setting up " + $nameString + " " + index.toString)
       else
         Some(nullable.interpret(result)).asInstanceOf[Option[TYPE]]
     }
-    override def toString() = s"${getClass.getName.split('.').last}[${classTag[TYPE].runtimeClass.getName}]($nullable)"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]($nullable)"
   }
 
-  case class SchemaSequence[ITEMS, TYPE : ClassTag](items: Schema[ITEMS], dataProvider: Pointer, builder: Int => Builder[ITEMS, TYPE] = (SchemaSequence.defaultBuilder _)) extends Schema[TYPE] {
+  case class SchemaSequence[ITEMS, TYPE <: Iterable[ITEMS] : ClassTag](items: Schema[ITEMS], dataProvider: Pointer, builder: Int => Builder[ITEMS, TYPE] = (SchemaSequence.defaultBuilder _)) extends Schema[TYPE] {
+    val tag = classTag[TYPE]
     def interpret(data: Pointer): TYPE = {
       val size = RootReaderCPPLibrary.getDataSize(dataProvider, data)
       val listBuilder = builder(size)
@@ -357,7 +378,7 @@ println("setting up " + $nameString + " " + index.toString)
       }
       listBuilder.result
     }
-    override def toString() = s"${getClass.getName.split('.').last}[${classTag[TYPE].runtimeClass.getName}]($items)"
+    override def toString() = s"${getClass.getName.split('.').last}[${tag.runtimeClass.getName}]($items)"
   }
   object SchemaSequence {
     def defaultBuilder[ITEMS, Seq[ITEMS], BUILDER <: Builder[ITEMS, Seq[ITEMS]]](size: Int) = {
