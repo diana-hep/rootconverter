@@ -39,6 +39,7 @@
 #include <TRefArray.h>
 #include <TRef.h>
 #include <TString.h>
+#include <TSystem.h>
 #include <TTree.h>
 #include <TTreeReaderArray.h>
 #include <TTreeReader.h>

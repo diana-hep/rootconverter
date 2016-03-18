@@ -1145,7 +1145,7 @@ void PointerWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::strin
   FieldWalker *subWalker = walker;
   for (PointerWalker *pointerWalker = dynamic_cast<PointerWalker*>(subWalker);  pointerWalker != nullptr;  subWalker = pointerWalker->walker);
 
-  schemaBuilder(SchemaPointer, this);
+  schemaBuilder(SchemaPointer, &dataProvider);
   subWalker->buildSchema(schemaBuilder, memo);
 }
 
@@ -2145,6 +2145,9 @@ void *RawTBranchTStringWalker::getAddress() {
 TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace, std::vector<std::string> libs) :
   fileLocation(fileLocation), treeLocation(treeLocation), avroNamespace(avroNamespace)
 {
+  // avoid segmentation faults due to conflicting signals in ROOT and the JVM
+  gSystem->ResetSignals();
+
   // load the libraries needed to interpret the data
   for (int i = 0;  i < libs.size();  i++)
     gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());

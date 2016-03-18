@@ -21,6 +21,8 @@ import org.dianahep.scaroot.reader._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
+    val beforeTime = System.currentTimeMillis
+
     val libs = RootReaderCPPLibrary.addVectorString(Pointer.NULL, "../root2avro/test_Event/Event_cxx.so")
     val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
 
@@ -36,30 +38,42 @@ class DefaultSuite extends FlatSpec with Matchers {
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
     }
 
-    RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
-
     // println(RootReaderCPPLibrary.repr(treeWalker))
 
     val customizations = List[Customization]()
 
     val schema = Schema[GenericClass](treeWalker, customizations)
 
-    println(schema)
+    // println(schema)
     
-    var i = 0
-    while (!done) {
-      println(s"entry $i")
+    var midTime = System.currentTimeMillis
+    println(s"init ${midTime - beforeTime}")
 
-      // RootReaderCPPLibrary.printJSON(treeWalker)
-      // RootReaderCPPLibrary.printAvro(treeWalker)
+    while (true) {
+      RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
+      midTime = System.currentTimeMillis
+      done = false
 
-      val result = schema.interpret(Pointer.NULL)
-      println(result)
+      var i = 0
+      while (!done) {
+        if (i % 100 == 0)
+          println(s"entry $i")
 
-      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+        // RootReaderCPPLibrary.printJSON(treeWalker)
+        // RootReaderCPPLibrary.printAvro(treeWalker)
 
-      i += 1
-      if (i > 10) done = true
+        val result = schema.interpret(Pointer.NULL)
+        // println(result)
+
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+
+        i += 1
+        // if (i > 10) done = true
+      }
+
+      val endTime = System.currentTimeMillis
+
+      println(s"loop ${endTime - midTime} items $i")
     }
   }
 }
