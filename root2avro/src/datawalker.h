@@ -571,8 +571,8 @@ class StdVectorBoolWalker;
 class StdVectorBoolWalkerDataProvider : public DataProvider {
 public:
   StdVectorBoolWalker *stdVectorBoolWalker;
-  static const bool FALSE = false;
-  static const bool TRUE = true;
+  const bool FALSE = false;
+  const bool TRUE = true;
 
   StdVectorBoolWalkerDataProvider(StdVectorBoolWalker *stdVectorBoolWalker);
   int getDataSize(const void *address);
@@ -702,11 +702,23 @@ public:
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
+class TClonesArrayWalker;
+
+class TClonesArrayWalkerDataProvider : public DataProvider {
+public:
+  TClonesArrayWalker *tClonesArrayWalker;
+
+  TClonesArrayWalkerDataProvider(TClonesArrayWalker *tClonesArrayWalker);
+  int getDataSize(const void *address);
+  const void *getData(const void *address, int index);
+};
+
 class TClonesArrayWalker : public FieldWalker {
 public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
   FieldWalker *walker;
+  TClonesArrayWalkerDataProvider dataProvider;
 
   TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();

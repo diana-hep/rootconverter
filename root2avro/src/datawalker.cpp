@@ -926,7 +926,7 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *MemberWalker::unpack(const void *address) {
-  return (void*)((size_t)address + offset);
+  return nullptr;   //  (void*)((size_t)address + offset);
 }
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -1615,8 +1615,24 @@ const void *TRefArrayWalker::unpack(const void *address) {
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
 
+TClonesArrayWalkerDataProvider::TClonesArrayWalkerDataProvider(TClonesArrayWalker *tClonesArrayWalker) : tClonesArrayWalker(tClonesArrayWalker) { }
+
+int TClonesArrayWalkerDataProvider::getDataSize(const void *address) {
+  if (!tClonesArrayWalker->resolved()) tClonesArrayWalker->resolve(address);
+  if (!tClonesArrayWalker->resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+  TClonesArray *array = (TClonesArray*)address;
+  return array->GetEntries();
+}
+
+const void *TClonesArrayWalkerDataProvider::getData(const void *address, int index) {
+  if (!tClonesArrayWalker->resolved()) tClonesArrayWalker->resolve(address);
+  if (!tClonesArrayWalker->resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+  TClonesArray *array = (TClonesArray*)address;
+  return tClonesArrayWalker->walker->unpack((void*)array->At(index));
+}
+
 TClonesArrayWalker::TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
-  FieldWalker(fieldName, "TClonesArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
+  FieldWalker(fieldName, "TClonesArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), dataProvider(this) { }
 
 size_t TClonesArrayWalker::sizeOf() { return sizeof(TClonesArray); }
 
@@ -1681,7 +1697,7 @@ bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *TClonesArrayWalker::unpack(const void *address) {
-  return nullptr;
+  return address;
 }
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
@@ -2317,5 +2333,6 @@ int TreeWalker::getDataSize(const void *address) {
 }
 
 const void *TreeWalker::getData(const void *address, int index) {
-  return fields[index]->unpack(fields[index]->getAddress());
+  ExtractableWalker *field = fields[index];
+  return field->unpack(field->getAddress());
 }
