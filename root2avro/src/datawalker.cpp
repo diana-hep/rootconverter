@@ -1352,7 +1352,7 @@ std::string StdVectorBoolWalker::avroSchema(int indent, std::set<std::string> &m
 }
 
 void StdVectorBoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this);
+  schemaBuilder(SchemaSequence, &dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1426,7 +1426,7 @@ std::string ArrayWalker::avroSchema(int indent, std::set<std::string> &memo) {
 }
 
 void ArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this);
+  schemaBuilder(SchemaSequence, &dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1517,7 +1517,7 @@ std::string TObjArrayWalker::avroSchema(int indent, std::set<std::string> &memo)
 }
 
 void TObjArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this);
+  schemaBuilder(SchemaSequence, &dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 
@@ -1663,7 +1663,7 @@ std::string TClonesArrayWalker::avroSchema(int indent, std::set<std::string> &me
 }
 
 void TClonesArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
-  schemaBuilder(SchemaSequence, this);
+  schemaBuilder(SchemaSequence, &dataProvider);
   walker->buildSchema(schemaBuilder, memo);
 }
 

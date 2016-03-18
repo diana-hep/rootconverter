@@ -17,7 +17,7 @@ import com.sun.jna.Pointer
 import org.dianahep.scaroot.reader._
 
 // case class Test(x: Int, y: Double, z: String)
-case class Test(x: Seq[String])
+case class Test(x: Seq[Boolean])
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
@@ -25,7 +25,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/test_Event/Event.root", "T", "", libs);
 
     // val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/multipleLeaves.root", "t", "", Pointer.NULL);
-    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/vectorString4.root", "t", "", Pointer.NULL);
+    val treeWalker = RootReaderCPPLibrary.newTreeWalker("../root2avro/build/vectorBool.root", "t", "", Pointer.NULL);
     if (RootReaderCPPLibrary.valid(treeWalker) == 0)
       throw new Exception(RootReaderCPPLibrary.errorMessage(treeWalker))
 
