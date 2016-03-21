@@ -96,6 +96,26 @@ const void *BoolWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&(((TTreeReaderArray<bool>*)readerArrayBase)->At(i)));
 }
 
+void *BoolWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  if (*((bool*)address))
+    *((bool*)ptr) = 1;
+  else
+    *((bool*)ptr) = 0;
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *BoolWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  if (((TTreeReaderArray<bool>*)readerArrayBase)->At(i))
+    *((bool*)ptr) = 1;
+  else
+    *((bool*)ptr) = 0;
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *BoolWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<bool>(*reader, fieldName.c_str());
 }
@@ -144,6 +164,20 @@ const void *CharWalker::unpack(const void *address) {
 
 const void *CharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<char>*)readerArrayBase)->At(i));
+}
+
+void *CharWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((char*)ptr) = *((char*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *CharWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((char*)ptr) = ((TTreeReaderArray<char>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
 }
 
 TTreeReaderValueBase *CharWalker::readerValue(TTreeReader *reader) {
@@ -196,6 +230,20 @@ const void *UCharWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
 }
 
+void *UCharWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((unsigned char*)ptr) = *((unsigned char*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *UCharWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((unsigned char*)ptr) = ((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *UCharWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned char>(*reader, fieldName.c_str());
 }
@@ -244,6 +292,20 @@ const void *ShortWalker::unpack(const void *address) {
 
 const void *ShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<short>*)readerArrayBase)->At(i));
+}
+
+void *ShortWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((short*)ptr) = *((short*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *ShortWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((short*)ptr) = ((TTreeReaderArray<short>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
 }
 
 TTreeReaderValueBase *ShortWalker::readerValue(TTreeReader *reader) {
@@ -296,6 +358,20 @@ const void *UShortWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i));
 }
 
+void *UShortWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((unsigned short*)ptr) = *((unsigned short*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *UShortWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((unsigned short*)ptr) = ((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *UShortWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned short>(*reader, fieldName.c_str());
 }
@@ -344,6 +420,20 @@ const void *IntWalker::unpack(const void *address) {
 
 const void *IntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<int>*)readerArrayBase)->At(i));
+}
+
+void *IntWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((int*)ptr) = *((int*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *IntWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((int*)ptr) = ((TTreeReaderArray<int>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
 }
 
 TTreeReaderValueBase *IntWalker::readerValue(TTreeReader *reader) {
@@ -400,6 +490,19 @@ const void *UIntWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i));
 }
 
+void *UIntWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *UIntWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((unsigned int*)ptr) = ((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *UIntWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<unsigned int>(*reader, fieldName.c_str());
 }
@@ -448,6 +551,20 @@ const void *LongWalker::unpack(const void *address) {
 
 const void *LongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i));
+}
+
+void *LongWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((Long64_t*)ptr) = *((Long64_t*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *LongWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((Long64_t*)ptr) = ((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
 }
 
 TTreeReaderValueBase *LongWalker::readerValue(TTreeReader *reader) {
@@ -500,6 +617,20 @@ const void *ULongWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<ULong64_t>*)readerArrayBase)->At(i));
 }
 
+void *ULongWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((ULong64_t*)ptr) = *((ULong64_t*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *ULongWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((ULong64_t*)ptr) = ((TTreeReaderArray<ULong64_t>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *ULongWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<ULong64_t>(*reader, fieldName.c_str());
 }
@@ -550,6 +681,20 @@ const void *FloatWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<float>*)readerArrayBase)->At(i));
 }
 
+void *FloatWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((float*)ptr) = *((float*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *FloatWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((float*)ptr) = ((TTreeReaderArray<float>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
 TTreeReaderValueBase *FloatWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderValue<float>(*reader, fieldName.c_str());
 }
@@ -598,6 +743,20 @@ const void *DoubleWalker::unpack(const void *address) {
 
 const void *DoubleWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return (void*)(&((TTreeReaderArray<double>*)readerArrayBase)->At(i));
+}
+
+void *DoubleWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((double*)ptr) = *((double*)address);
+  return (void*)((size_t)ptr + sizeOf());
+}
+
+void *DoubleWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeOf())
+    return nullptr;
+  *((double*)ptr) = ((TTreeReaderArray<double>*)readerArrayBase)->At(i);
+  return (void*)((size_t)ptr + sizeOf());
 }
 
 TTreeReaderValueBase *DoubleWalker::readerValue(TTreeReader *reader) {
@@ -670,6 +829,28 @@ const void *CStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) 
   return (void*)(&((TTreeReaderArray<char*>*)readerArrayBase)->At(i));
 }
 
+void *CStringWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  const char *string = (char*)address;
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len*sizeof(char))
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
+}
+
+void *CStringWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  const char *string = ((TTreeReaderArray<char*>*)readerArrayBase)->At(i);
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len)
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
+}
+
 TTreeReaderValueBase *CStringWalker::readerValue(TTreeReader *reader) {
   return new TTreeReaderArray<char>(*reader, fieldName.c_str());
 }
@@ -720,6 +901,28 @@ const void *StdStringWalker::unpack(const void *address) {
 
 const void *StdStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return ((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str();
+}
+
+void *StdStringWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  const char *string = ((std::string*)address)->c_str();
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len)
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
+}
+
+void *StdStringWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  const char *string = ((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str();
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len)
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
 }
 
 TTreeReaderValueBase *StdStringWalker::readerValue(TTreeReader *reader) {
@@ -773,6 +976,28 @@ const void *TStringWalker::unpack(const void *address) {
 
 const void *TStringWalker::unpack(TTreeReaderArrayBase *readerArrayBase, int i) {
   return ((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data();
+}
+
+void *TStringWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  const char *string = ((TString*)address)->Data();
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len)
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
+}
+
+void *TStringWalker::copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) {
+  const char *string = ((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data();
+  size_t len = strlen(string);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + len)
+    return nullptr;
+  *((int*)ptr) = (int)len;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  strncpy((char*)ptr, string, len);
+  return (void*)((size_t)ptr + len);
 }
 
 TTreeReaderValueBase *TStringWalker::readerValue(TTreeReader *reader) {
@@ -927,6 +1152,10 @@ bool MemberWalker::printAvro(void *address, avro_value_t *avrovalue) {
 
 const void *MemberWalker::unpack(const void *address) {
   return (void*)((size_t)address + offset);
+}
+
+void *MemberWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  return walker->copyToBuffer(ptr, limit, (void*)((size_t)address + offset));
 }
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -1097,6 +1326,12 @@ const void *ClassWalker::unpack(const void *address) {
   return address;
 }
 
+void *ClassWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  for (auto iter = members.begin();  iter != members.end();  ++iter)
+    ptr = (*iter)->copyToBuffer(ptr, limit, address);
+  return ptr;
+}
+
 ///////////////////////////////////////////////////////////////////// PointerWalker
 
 PointerWalkerDataProvider::PointerWalkerDataProvider(PointerWalker *pointerWalker) : pointerWalker(pointerWalker) { }
@@ -1185,6 +1420,22 @@ const void *PointerWalker::unpack(const void *address) {
   return address;
 }
 
+void *PointerWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  void *dereferenced = *((void**)address);
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(char))
+    return nullptr;
+  if (dereferenced == nullptr) {
+    *((char*)ptr) = 0;
+    ptr = (void*)((size_t)ptr + sizeof(char));
+  }
+  else {
+    *((char*)ptr) = 1;
+    ptr = (void*)((size_t)ptr + sizeof(char));
+    ptr = walker->copyToBuffer(ptr, limit, dereferenced);
+  }
+  return ptr;
+}
+
 ///////////////////////////////////////////////////////////////////// TRefWalker
 
 TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -1231,6 +1482,11 @@ bool TRefWalker::printAvro(void *address, avro_value_t *avrovalue) {
 #endif
 
 const void *TRefWalker::unpack(const void *address) {
+  std::cerr << std::endl << "TREF" << std::endl;
+  return nullptr;
+}
+
+void *TRefWalker::copyToBuffer(void *ptr, void *limit, void *address) {
   std::cerr << std::endl << "TREF" << std::endl;
   return nullptr;
 }
@@ -1324,6 +1580,21 @@ const void *StdVectorWalker::unpack(const void *address) {
   return address;
 }
 
+void *StdVectorWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  std::vector<char> *generic = (std::vector<char>*)address;
+  int numItems = generic->size() / walker->sizeOf();
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int))
+    return nullptr;
+  *((int*)ptr) = numItems;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  void *p = generic->data();
+  for (int i = 0;  i < numItems;  i++) {                     // see above
+    ptr = walker->copyToBuffer(ptr, limit, p);
+    p = (void*)((size_t)p + walker->sizeOf());
+  }
+  return ptr;
+}
+
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
 
 StdVectorBoolWalkerDataProvider::StdVectorBoolWalkerDataProvider(StdVectorBoolWalker *stdVectorBoolWalker) : stdVectorBoolWalker(stdVectorBoolWalker) { }
@@ -1405,6 +1676,23 @@ const void *StdVectorBoolWalker::unpack(const void *address) {
   return address;
 }
 
+void *StdVectorBoolWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  std::vector<bool> *vectorBool = (std::vector<bool>*)address;
+  int numItems = vectorBool->size();
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int) + numItems*sizeof(bool))
+    return nullptr;
+  *((int*)ptr) = numItems;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  for (int i = 0;  i < numItems;  i++) {
+    if (vectorBool->at(i))
+      *((bool*)ptr) = 1;
+    else
+      *((bool*)ptr) = 0;
+    ptr = (void*)((size_t)ptr + sizeof(bool));
+  }
+  return ptr;
+}
+
 ///////////////////////////////////////////////////////////////////// ArrayWalker
 
 ArrayWalkerDataProvider::ArrayWalkerDataProvider(ArrayWalker *arrayWalker) : arrayWalker(arrayWalker) { }
@@ -1474,6 +1762,19 @@ bool ArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 
 const void *ArrayWalker::unpack(const void *address) {
   return address;
+}
+
+void *ArrayWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int))
+    return nullptr;
+  *((int*)ptr) = numItems;
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  void *p = address;
+  for (int i = 0;  i < numItems;  i++) {
+    ptr = walker->copyToBuffer(ptr, limit, p);
+    p = (void*)((size_t)p + walker->sizeOf());
+  }
+  return ptr;
 }
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
@@ -1579,6 +1880,22 @@ const void *TObjArrayWalker::unpack(const void *address) {
   return address;
 }
 
+void *TObjArrayWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
+  TObjArray *array = (TObjArray*)address;
+  if (!array->AssertClass(classToAssert))
+    throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int))
+    return nullptr;
+  *((int*)ptr) = array->GetEntries();
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  TIter nextItem = array;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem())
+    ptr = walker->copyToBuffer(ptr, limit, item);
+  return ptr;
+}
+
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
 
 TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
@@ -1625,6 +1942,11 @@ bool TRefArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 
 const void *TRefArrayWalker::unpack(const void *address) {
   std::cerr << std::endl << "TREFARRAY" << std::endl;
+  return nullptr;
+}
+
+void *TRefArrayWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  std::cerr << std::endl << "TREF" << std::endl;
   return nullptr;
 }
 
@@ -1713,6 +2035,20 @@ bool TClonesArrayWalker::printAvro(void *address, avro_value_t *avrovalue) {
 
 const void *TClonesArrayWalker::unpack(const void *address) {
   return address;
+}
+
+void *TClonesArrayWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (!resolved()) resolve(address);
+  if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
+  TObjArray *array = (TObjArray*)address;
+  if (ptr == nullptr  ||  (size_t)limit - (size_t)ptr < sizeof(int))
+    return nullptr;
+  *((int*)ptr) = array->GetEntries();
+  ptr = (void*)((size_t)ptr + sizeof(int));
+  TIter nextItem = array;
+  for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem())
+    ptr = walker->copyToBuffer(ptr, limit, item);
+  return ptr;
 }
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
@@ -1970,6 +2306,35 @@ const void *LeafWalker::unpack(const void *address) {
   return walker->unpack(address);
 }
 
+int LeafWalker::copyToBufferDeep(void **ptr, void *limit, int readerIndex, int readerSize, LeafDimension *dim) {
+  int dimSize = dim->size();
+
+  if (*ptr == nullptr  ||  (size_t)limit - (size_t)(*ptr) < sizeof(int))
+    *ptr = nullptr;
+  else {
+    *((int*)(*ptr)) = dimSize;
+    *ptr = (void*)((size_t)(*ptr) + sizeof(int));
+  }
+
+  for (int dimIndex = 0;  dimIndex < dimSize  &&  readerIndex < readerSize;  dimIndex++) {
+    if (dim->next() == nullptr) {
+      *ptr = walker->copyToBuffer(*ptr, limit, readerArray, readerIndex);
+      readerIndex += 1;
+    }
+    else
+      readerIndex = copyToBufferDeep(ptr, limit, readerIndex, readerSize, dim->next());
+  }
+
+  return readerIndex;
+}
+
+void *LeafWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  if (address != nullptr)
+    return walker->copyToBuffer(ptr, limit, address);
+  else
+    copyToBufferDeep(&ptr, limit, 0, dims->flatSize(), dims);
+}
+
 void LeafWalker::reset(TTreeReader *reader) {
   // FIXME: delete old readerValue/readerArray?
   if (dimensions == 0)
@@ -2039,6 +2404,10 @@ const void *ReaderValueWalker::unpack(const void *address) {
   return walker->unpack(address);
 }
 
+void *ReaderValueWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  return walker->copyToBuffer(ptr, limit, address);
+}
+
 void ReaderValueWalker::reset(TTreeReader *reader) {
   // FIXME: delete old value?
   value = new GenericReaderValue(fieldName, typeName, reader, walker);
@@ -2090,6 +2459,10 @@ bool RawTBranchWalker::printAvro(void *address, avro_value_t *avrovalue) {
 
 const void *RawTBranchWalker::unpack(const void *address) {
   return walker->unpack(address);
+}
+
+void *RawTBranchWalker::copyToBuffer(void *ptr, void *limit, void *address) {
+  return walker->copyToBuffer(ptr, limit, address);
 }
 
 //// RawTBranchStdStringWalker
@@ -2353,4 +2726,29 @@ int TreeWalker::getDataSize(const void *address) {
 const void *TreeWalker::getData(const void *address, int index) {
   ExtractableWalker *field = fields[index];
   return field->unpack(field->getAddress());
+}
+
+void TreeWalker::copyToBuffer(int number, void *buffer, size_t size) {
+  void *ptr = buffer;
+  void *limit = (void*)((size_t)buffer + size);
+
+  timespec req, rem;
+  req.tv_sec = 0;
+  req.tv_nsec = 0;
+  rem.tv_sec = 0;
+  rem.tv_nsec = 0;
+
+  for (int i = 0;  i < number;  i++) {
+    // Simple lock between C++ and Java: the first byte denotes the
+    // reading vs writing state of the buffer.
+    //   * Only Java (reader) can set the byte to StatusWriting.
+    //   * Only C++ (writer) can set the byte to StatusReading.
+    while (*((char*)buffer) == StatusReading)
+      nanosleep(&req, &rem);  // nanosleep (even with 0 ns) keeps the poll from taking 100% CPU
+
+    ptr = (void*)((size_t)buffer + sizeof(char));
+
+    for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+      ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
+  }
 }

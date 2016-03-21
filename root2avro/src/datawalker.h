@@ -1,6 +1,9 @@
 #ifndef DATAWALKER_H
 #define DATAWALKER_H
 
+// C includes
+#include <time.h>
+
 // C++ includes
 #include <iomanip>
 #include <iostream>
@@ -48,7 +51,7 @@
 using namespace ROOT::Internal;
 // using namespace ROOT;
 
-// Must be kept in-sync with scaroot-reader/src/main/scala/org/dianahep/scaroot/reader.scala!
+// Must be kept in-sync with scaroot-flatreader/src/main/scala/org/dianahep/scaroot/flatreader.scala!
 enum SchemaInstruction {
   SchemaBool           = 0,
   SchemaChar           = 1,
@@ -82,6 +85,15 @@ public:
   virtual const void *getData(const void *address, int index) = 0;
 };
 
+enum BufferStatus {
+  StatusReading        = 0,
+  StatusWriting        = 1,
+  StatusTooSmall       = 2,
+};
+
+#define MAX_STRING_LENGTH 2147483647
+#define MAX_SEQUENCE_LENGTH 2147483647
+
 ///////////////////////////////////////////////////////////////////// FieldWalker
 
 class FieldWalker {
@@ -105,6 +117,7 @@ public:
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 #endif
   virtual const void *unpack(const void *address) = 0;
+  virtual void *copyToBuffer(void *ptr, void *limit, void *address) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
@@ -126,6 +139,8 @@ public:
 #endif
   virtual const void *unpack(const void *address) = 0;
   virtual const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i) = 0;
+  virtual void *copyToBuffer(void *ptr, void *limit, void *address) = 0;
+  virtual void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i) = 0;
   virtual TTreeReaderValueBase *readerValue(TTreeReader *reader) = 0;
   virtual TTreeReaderArrayBase *readerArray(TTreeReader *reader) = 0;
 };
@@ -145,6 +160,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -164,6 +181,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -183,6 +202,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -202,6 +223,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -221,6 +244,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -240,6 +265,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
   int value(TTreeReaderValueBase *readerValue);
@@ -260,6 +287,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -279,6 +308,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -298,6 +329,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -317,6 +350,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -336,6 +371,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -368,6 +405,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -386,6 +425,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -404,6 +445,8 @@ public:
 #endif
   const void *unpack(const void *address);
   const void *unpack(TTreeReaderArrayBase *readerArrayBase, int i);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
+  void *copyToBuffer(void *ptr, void *limit, TTreeReaderArrayBase *readerArrayBase, int i);
   TTreeReaderValueBase *readerValue(TTreeReader *reader);
   TTreeReaderArrayBase *readerArray(TTreeReader *reader);
 };
@@ -434,6 +477,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// ClassWalker
@@ -479,6 +523,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// PointerWalker
@@ -514,6 +559,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
@@ -537,6 +583,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorWalker
@@ -573,6 +620,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// StdVectorBoolWalker
@@ -610,6 +658,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// ArrayWalker
@@ -646,6 +695,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// TObjArrayWalker
@@ -684,6 +734,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
@@ -709,6 +760,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// TClonesArrayWalker
@@ -746,6 +798,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 ///////////////////////////////////////////////////////////////////// ExtractableWalker
@@ -813,6 +866,8 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  int copyToBufferDeep(void **ptr, void *limit, int readerIndex, int readerSize, LeafDimension *dim);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -846,6 +901,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
   void reset(TTreeReader *reader);
   void *getAddress();
 };
@@ -871,6 +927,7 @@ public:
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
   const void *unpack(const void *address);
+  void *copyToBuffer(void *ptr, void *limit, void *address);
 };
 
 class RawTBranchStdStringWalker : public RawTBranchWalker {
@@ -942,6 +999,7 @@ public:
 #endif
   int getDataSize(const void *address);
   const void *getData(const void *address, int index);
+  void copyToBuffer(int number, void *buffer, size_t size);
 };
 
 #endif // DATAWALKER_H
