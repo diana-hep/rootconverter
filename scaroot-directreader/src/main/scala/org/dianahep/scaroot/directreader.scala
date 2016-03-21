@@ -65,6 +65,11 @@ package directreader {
       Literal(Constant(raw)).toString
     }
     private[directreader] def customClassName = getClass.getName.split('.').last
+
+    def in: List[String]
+    def is: Option[String] = None
+    def matches(in: List[String], is: Option[String]) =
+      (this.in.isEmpty  ||  this.in == in)  &&  (this.is.isEmpty  ||  this.is == is)
   }
 
   case class Custom[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Customization {
@@ -73,7 +78,7 @@ package directreader {
     override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
   }
 
-  class CustomClass[TYPE : ClassTag : SchemaClassMaker](val in: List[String] = Nil, val is: Option[String] = None) extends Customization {
+  class CustomClass[TYPE : ClassTag : SchemaClassMaker](val in: List[String] = Nil, override val is: Option[String] = None) extends Customization {
     def ::(x: String) = CustomClass(x :: in, is)
     def ::(x: Symbol) = CustomClass(x.name :: in, is)
     def named(x: String) = CustomClass(in, Some(x))
@@ -102,67 +107,59 @@ package directreader {
 
   // Immutable schemas that can extract and convert data using interpreters.
 
-  sealed trait Schema[TYPE] {
+  sealed trait Schema[+TYPE] {
     def interpret(data: Pointer): TYPE
   }
 
   object Schema {
     def apply[TYPE](treeWalker: Pointer, customizations: Seq[Customization] = Nil): Schema[TYPE] = {
       sealed trait StackElement
-      case class I(schemaInstruction: Int, data: Pointer) extends StackElement {
-        override def toString() = schemaInstruction match {
-          case SchemaInstruction.SchemaBool() => s"I(SchemaBool, $data)"
-          case SchemaInstruction.SchemaChar() => s"I(SchemaChar, $data)"
-          case SchemaInstruction.SchemaUChar() => s"I(SchemaUChar, $data)"
-          case SchemaInstruction.SchemaShort() => s"I(SchemaShort, $data)"
-          case SchemaInstruction.SchemaUShort() => s"I(SchemaUShort, $data)"
-          case SchemaInstruction.SchemaInt() => s"I(SchemaInt, $data)"
-          case SchemaInstruction.SchemaUInt() => s"I(SchemaUInt, $data)"
-          case SchemaInstruction.SchemaLong() => s"I(SchemaLong, $data)"
-          case SchemaInstruction.SchemaULong() => s"I(SchemaULong, $data)"
-          case SchemaInstruction.SchemaFloat() => s"I(SchemaFloat, $data)"
-          case SchemaInstruction.SchemaDouble() => s"I(SchemaDouble, $data)"
-          case SchemaInstruction.SchemaString() => s"I(SchemaString, $data)"
-          case SchemaInstruction.SchemaClassName() => s"I(SchemaClassName, ${data.getString(0)})"
-          case SchemaInstruction.SchemaClassPointer() => s"I(SchemaClassPointer, $data)"
-          case SchemaInstruction.SchemaClassFieldName() => s"I(SchemaClassFieldName, ${data.getString(0)})"
-          case SchemaInstruction.SchemaClassEnd() => s"I(SchemaClassEnd, $data)"
-          case SchemaInstruction.SchemaClassReference() => s"I(SchemaClassReference, $data)"
-          case SchemaInstruction.SchemaPointer() => s"I(SchemaPointer, $data)"
-          case SchemaInstruction.SchemaSequence() => s"I(SchemaSequence, $data)"
-        }
-      }
-      case class S(schema: Schema[_]) extends StackElement
+      case class I(schemaInstruction: Int, data: Pointer, namePath: List[String]) extends StackElement
+      case class S(schema: Schema[_], namePath: List[String]) extends StackElement
 
       var stack: List[StackElement] = Nil
       val schemaClasses = mutable.Map[String, Schema[_]]()
 
       object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
         def apply(schemaInstruction: Int, data: Pointer) {
-          stack = I(schemaInstruction, data) :: stack
+          val oldNamePath: List[String] = stack.collectFirst {case I(SchemaInstruction.SchemaClassFieldName() | SchemaInstruction.SchemaSequence(), _, np) => np} getOrElse(Nil)
+
+          val namePath: List[String] =
+            schemaInstruction match {
+              case SchemaInstruction.SchemaClassFieldName() =>
+                data.getString(0) :: oldNamePath
+              case SchemaInstruction.SchemaSequence() =>
+                "#" :: oldNamePath
+              case _ =>
+                oldNamePath
+            }
+
+          stack = I(schemaInstruction, data, namePath) :: stack
+
+          def findCustom(np: List[String]) = customizations collectFirst {case c @ Custom(f, in) if (c.matches(np.reverse, None)) => SchemaCustom[Any](f)}
 
           var done1 = false
           while (!done1) stack match {
-            case I(SchemaInstruction.SchemaBool(), _)   :: rest  =>  stack = S(SchemaBool())   :: rest
-            case I(SchemaInstruction.SchemaChar(), _)   :: rest  =>  stack = S(SchemaChar())   :: rest
-            case I(SchemaInstruction.SchemaUChar(), _)  :: rest  =>  stack = S(SchemaUChar())  :: rest
-            case I(SchemaInstruction.SchemaShort(), _)  :: rest  =>  stack = S(SchemaShort())  :: rest
-            case I(SchemaInstruction.SchemaUShort(), _) :: rest  =>  stack = S(SchemaUShort()) :: rest
-            case I(SchemaInstruction.SchemaInt(), _)    :: rest  =>  stack = S(SchemaInt())    :: rest
-            case I(SchemaInstruction.SchemaUInt(), _)   :: rest  =>  stack = S(SchemaUInt())   :: rest
-            case I(SchemaInstruction.SchemaLong(), _)   :: rest  =>  stack = S(SchemaLong())   :: rest
-            case I(SchemaInstruction.SchemaULong(), _)  :: rest  =>  stack = S(SchemaULong())  :: rest
-            case I(SchemaInstruction.SchemaFloat(), _)  :: rest  =>  stack = S(SchemaFloat())  :: rest
-            case I(SchemaInstruction.SchemaDouble(), _) :: rest  =>  stack = S(SchemaDouble()) :: rest
-            case I(SchemaInstruction.SchemaString(), _) :: rest  =>  stack = S(SchemaString()) :: rest
+            case I(SchemaInstruction.SchemaBool(), _, np)   :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaBool()), np)   :: rest
+            case I(SchemaInstruction.SchemaChar(), _, np)   :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaChar()), np)   :: rest
+            case I(SchemaInstruction.SchemaUChar(), _, np)  :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaUChar()), np)  :: rest
+            case I(SchemaInstruction.SchemaShort(), _, np)  :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaShort()), np)  :: rest
+            case I(SchemaInstruction.SchemaUShort(), _, np) :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaUShort()), np) :: rest
+            case I(SchemaInstruction.SchemaInt(), _, np)    :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaInt()), np)    :: rest
+            case I(SchemaInstruction.SchemaUInt(), _, np)   :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaUInt()), np)   :: rest
+            case I(SchemaInstruction.SchemaLong(), _, np)   :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaLong()), np)   :: rest
+            case I(SchemaInstruction.SchemaULong(), _, np)  :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaULong()), np)  :: rest
+            case I(SchemaInstruction.SchemaFloat(), _, np)  :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaFloat()), np)  :: rest
+            case I(SchemaInstruction.SchemaDouble(), _, np) :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaDouble()), np) :: rest
+            case I(SchemaInstruction.SchemaString(), _, np) :: rest  =>  stack = S(findCustom(np).getOrElse(SchemaString()), np) :: rest
 
-            case I(SchemaInstruction.SchemaClassEnd(), _) :: rest1 =>
+            case I(SchemaInstruction.SchemaClassEnd(), _, np) :: rest1 =>
               stack = rest1
 
               var fields: List[(String, Schema[_])] = Nil
               var done2 = false
               while (!done2) stack match {
-                case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldNamePtr) :: rest2 =>
+                case S(schema, _) :: I(SchemaInstruction.SchemaClassFieldName(), fieldNamePtr, _) :: rest2 =>
                   stack = rest2
                   fields = (fieldNamePtr.getString(0), schema) :: fields
                 case _ =>
@@ -170,25 +167,35 @@ package directreader {
               }
 
               stack match {
-                case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), classNamePtr) :: rest3 =>
+                case I(SchemaInstruction.SchemaClassPointer(), dataProvider, _) :: I(SchemaInstruction.SchemaClassName(), classNamePtr, np2) :: rest3 =>
                   val className = classNamePtr.getString(0)
 
-                  // val schemaClass = customClass.schemaClassMaker(dataProvider, className, fields)
-                  val schemaClass = SchemaClassMakerGeneric(dataProvider, className, fields)
+                  val customClass = customizations collectFirst {case x: CustomClass[_] if (x.matches(np2.reverse, Some(className))) => x}
+                  val schemaClass = customClass match {
+                    case None => SchemaClassMakerGeneric(dataProvider, className, fields)
+                    case Some(custom) => custom.schemaClassMaker(dataProvider, className, fields)
+                  }
                   schemaClasses(className) = schemaClass
 
-                  stack = S(schemaClass) :: rest3
+                  stack = S(schemaClass, np2) :: rest3
               }
 
-            case I(SchemaInstruction.SchemaClassReference(), classNamePtr) :: rest =>
+            case I(SchemaInstruction.SchemaClassReference(), classNamePtr, np) :: rest =>
               val schemaClass = schemaClasses(classNamePtr.getString(0))
-              stack = S(schemaClass) :: rest
+              stack = S(schemaClass, np) :: rest
 
-            case S(referent) :: I(SchemaInstruction.SchemaPointer(), dataProvider) :: rest =>
-              stack = S(SchemaPointer(referent, dataProvider)) :: rest
+            case S(referent, _) :: I(SchemaInstruction.SchemaPointer(), dataProvider, np2) :: rest =>
+              stack = S(SchemaPointer(referent, dataProvider), np2) :: rest
 
-            case S(items) :: I(SchemaInstruction.SchemaSequence(), dataProvider) :: rest =>
-              stack = S(SchemaSequence(items, dataProvider)) :: rest
+            case S(items, "#" :: np) :: I(SchemaInstruction.SchemaSequence(), dataProvider, _) :: rest =>
+              val schemaSequence =
+                customizations collectFirst {
+                  case c @ CustomSequence(f, in) if (c.matches(np.reverse, None)) =>
+                    SchemaSequence(items, dataProvider, f.asInstanceOf[Int => Builder[Any, Iterable[Any]]])
+                } getOrElse SchemaSequence(items, dataProvider)
+
+              val np2 = rest collectFirst {case I(_, _, x) => x} getOrElse Nil
+              stack = S(schemaSequence, np2) :: rest
 
             case _ =>
               done1 = true
@@ -198,7 +205,7 @@ package directreader {
 
       RootReaderCPPLibrary.buildSchema(treeWalker, schemaBuilder)
 
-      val S(result: Schema[TYPE]) :: Nil = stack
+      val S(result: Schema[TYPE], _) :: Nil = stack
       result
     }
   }
@@ -361,12 +368,14 @@ package directreader {
     def interpret(data: Pointer): Iterable[TYPE] = {
       val size = RootReaderCPPLibrary.getDataSize(dataProvider, data)
       val listBuilder = builder(size)
+
       var index = 0
       while (index < size) {
         val subdata = RootReaderCPPLibrary.getData(dataProvider, data, index)
         listBuilder += items.interpret(subdata).asInstanceOf[TYPE]
         index += 1
       }
+
       listBuilder.result.asInstanceOf[Iterable[TYPE]]
     }
     override def toString() = s"${getClass.getName.split('.').last}($items)"
@@ -381,6 +390,52 @@ package directreader {
       builder.sizeHint(size)
       builder
     }
+  }
+
+  class RootTreeIterator[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, customizations: Seq[Customization] = Nil) extends Iterator[TYPE] {
+    private var libscpp = Pointer.NULL
+    libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
+
+    private var done = true
+    private var treeWalker = Pointer.NULL
+    private var remainingFiles = fileLocations.toList
+    private var schema: Schema[TYPE] = null
+
+    if (!fileLocations.isEmpty) {
+      treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
+      remainingFiles = remainingFiles.tail
+
+      if (RootReaderCPPLibrary.valid(treeWalker) == 0)
+        throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
+
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
+        RootReaderCPPLibrary.resolve(treeWalker)
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      }
+
+      schema = Schema[TYPE](treeWalker, customizations)
+
+      RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
+    }
+
+    def hasNext = !done
+    def next() = {
+      if (!hasNext)
+        throw new RuntimeException("next() called on empty RootTreeIterator (create a new one to run over the data again)")
+
+      val out = schema.interpret(Pointer.NULL)
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      if (done  &&  !remainingFiles.isEmpty) {
+        RootReaderCPPLibrary.reset(treeWalker, remainingFiles.head)
+        remainingFiles = remainingFiles.tail
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      }
+      out
+    }
+  }
+  object RootTreeIterator {
+    def apply[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, customizations: Seq[Customization] = Nil) = new RootTreeIterator[TYPE](fileLocations, treeLocation, libs, customizations)
   }
 
   // Example overrides.
