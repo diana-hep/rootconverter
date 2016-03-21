@@ -44,19 +44,18 @@ class DefaultSuite extends FlatSpec with Matchers {
       RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
     }
 
+    println(RootReaderCPPLibrary.repr(treeWalker))
+
     val size = 64*1024
     val buffer = new Memory(size)
-    buffer.setByte(0, 1)
-    println("before")
-    RootReaderCPPLibrary.copyToBuffer(treeWalker, 1, buffer, new NativeLong(size))
-    println("after")
-    println(buffer.getByte(0))
-    println(buffer.getInt(1))
-    println(buffer.getDouble(1 + 4))
-    val stringSize = buffer.getInt(1 + 4 + 8)
-    println(stringSize)
-    println(new String(buffer.getByteArray(1 + 4 + 8 + 1, stringSize)))
-    println("done")
 
+    while (!done) {
+      buffer.setByte(0, 1)
+      RootReaderCPPLibrary.copyToBuffer(treeWalker, 1, buffer, new NativeLong(size))
+      val stringSize = buffer.getInt(1 + 4 + 8)
+      println(buffer.getByte(0), buffer.getInt(1), buffer.getDouble(1 + 4), stringSize, new String(buffer.getByteArray(1 + 4 + 8 + 4, stringSize), "US-ASCII"))
+
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+    }
   }
 }
