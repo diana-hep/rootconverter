@@ -93,7 +93,7 @@ package directreader {
     def unapply[TYPE](x: CustomClass[TYPE]) = Some((x.in, x.is))
   }
 
-  case class CustomPointer[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Customization {
+  case class CustomPointer[REFERENT : ClassTag, TYPE : ClassTag](f: Option[REFERENT] => TYPE, in: List[String] = Nil) extends Customization {
     def ::(x: String) = this.copy(in = x :: in)
     def ::(x: Symbol) = this.copy(in = x.name :: in)
     override def toString() = s"""${if (in.isEmpty) "" else in.map(escape).mkString(" :: ") + " :: "}$customClassName[${classTag[TYPE].runtimeClass.getName}]"""
@@ -122,7 +122,12 @@ package directreader {
 
       object schemaBuilder extends RootReaderCPPLibrary.SchemaBuilder {
         def apply(schemaInstruction: Int, data: Pointer) {
-          val oldNamePath: List[String] = stack.collectFirst {case I(SchemaInstruction.SchemaClassFieldName() | SchemaInstruction.SchemaSequence(), _, np) => np} getOrElse(Nil)
+          val oldNamePath: List[String] = (schemaInstruction match {
+            case SchemaInstruction.SchemaClassFieldName() =>
+              stack.collectFirst {case I(SchemaInstruction.SchemaClassName(), _, np) => np}
+            case _ =>
+              stack.headOption.collect {case I(_, _, np) => np; case S(_, np) => np }
+          }).getOrElse(Nil)
 
           val namePath: List[String] =
             schemaInstruction match {
@@ -184,8 +189,10 @@ package directreader {
               val schemaClass = schemaClasses(classNamePtr.getString(0))
               stack = S(schemaClass, np) :: rest
 
-            case S(referent, _) :: I(SchemaInstruction.SchemaPointer(), dataProvider, np2) :: rest =>
-              stack = S(SchemaPointer(referent, dataProvider), np2) :: rest
+            case S(referent, _) :: I(SchemaInstruction.SchemaPointer(), dataProvider, np) :: rest =>
+              val policy =
+                customizations collectFirst {case c @ CustomPointer(f, in) if (c.matches(np.reverse, None)) => f} getOrElse({x: Option[Any] => x})
+              stack = S(SchemaPointer(referent, dataProvider, policy.asInstanceOf[Option[Any] => Any]), np) :: rest
 
             case S(items, "#" :: np) :: I(SchemaInstruction.SchemaSequence(), dataProvider, _) :: rest =>
               val schemaSequence =
@@ -353,13 +360,15 @@ package directreader {
       }
   }
 
-  case class SchemaPointer[TYPE](referent: Schema[TYPE], dataProvider: Pointer) extends Schema[Option[TYPE]] {
-    def interpret(data: Pointer): Option[TYPE] = {
+  case class SchemaPointer[REFERENT, TYPE](referent: Schema[REFERENT], dataProvider: Pointer, policy: Option[REFERENT] => TYPE) extends Schema[TYPE] {
+    def interpret(data: Pointer) = {
       val result = RootReaderCPPLibrary.getData(dataProvider, data, 0)
-      if (result == Pointer.NULL)
-        None.asInstanceOf[Option[TYPE]]
-      else
-        Some(referent.interpret(result)).asInstanceOf[Option[TYPE]]
+      val maybe =
+        if (result == Pointer.NULL)
+          None.asInstanceOf[Option[REFERENT]]
+        else
+          Some(referent.interpret(result)).asInstanceOf[Option[REFERENT]]
+      policy(maybe)
     }
     override def toString() = s"${getClass.getName.split('.').last}($referent)"
   }

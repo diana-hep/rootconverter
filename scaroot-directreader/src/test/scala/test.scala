@@ -42,4 +42,19 @@ class DefaultSuite extends FlatSpec with Matchers {
     while (iter.hasNext)
       println(iter.next())
   }
+
+  "Complex example" must "work" in {
+    val customizations = List(
+      'event :: 'fEventName :: CustomPointer {x: Option[String] => x.getOrElse("MISSING")},
+      'event :: 'fTracks :: '# :: 'fPointValue :: CustomPointer {x: Option[Double] => x.map(_.toString).getOrElse("MISSING")},
+      'event :: 'fClosestDistance :: CustomPointer {x: Option[Double] => x.map(_.toString).getOrElse("MISSING")}
+    )
+
+    val iter = RootTreeIterator[GenericClass](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), customizations)
+    var i = 0
+    while (iter.hasNext  &&  i < 10) {
+      println(iter.next())
+      i += 1
+    }
+  }
 }
