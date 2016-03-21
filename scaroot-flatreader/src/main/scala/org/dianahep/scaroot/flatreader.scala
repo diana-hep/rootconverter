@@ -60,11 +60,11 @@ package flatreader {
   // Custom interpreters for data. (Use '# for arrays.)
   
   sealed trait Customization {
-    private[directreader] def escape(raw: String): String = {
+    private[flatreader] def escape(raw: String): String = {
       import scala.reflect.runtime.universe._
       Literal(Constant(raw)).toString
     }
-    private[directreader] def customClassName = getClass.getName.split('.').last
+    private[flatreader] def customClassName = getClass.getName.split('.').last
 
     def in: List[String]
     def is: Option[String] = None
@@ -328,7 +328,7 @@ package flatreader {
 
       c.Expr[SchemaClassMaker[TYPE]](q"""
         import com.sun.jna.Pointer
-        import org.dianahep.scaroot.directreader._
+        import org.dianahep.scaroot.flatreader._
 
         new SchemaClassMaker[$dataClass] {
           def apply(dataProvider: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[$dataClass] =
