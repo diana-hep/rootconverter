@@ -2738,7 +2738,9 @@ void TreeWalker::copyToBuffer(int number, void *buffer, size_t size) {
   rem.tv_sec = 0;
   rem.tv_nsec = 0;
 
-  for (int i = 0;  i < number;  i++) {
+  // Can be used in a single-threaded, blocking way with number == 1
+  // or an indefinite polling loop with number < 0.
+  while (number != 0) {
     // Simple lock between C++ and Java: the first byte denotes the
     // reading vs writing state of the buffer.
     //   * Only Java (reader) can set the byte to StatusWriting.
@@ -2750,5 +2752,12 @@ void TreeWalker::copyToBuffer(int number, void *buffer, size_t size) {
 
     for (auto iter = fields.begin();  iter != fields.end();  ++iter)
       ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
+
+    if (ptr == nullptr)
+      *((char*)buffer) = StatusTooSmall;
+    else
+      *((char*)buffer) = StatusReading;
+
+    if (number >= 0) number -= 1;
   }
 }

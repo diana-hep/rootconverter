@@ -95,3 +95,8 @@ const void *getData(const void *dataProvider, const void *address, int index) {
   DataProvider *dp = (DataProvider*)dataProvider;
   return dp->getData(address, index);
 }
+
+void copyToBuffer(void *treeWalker, int number, void *buffer, long size) {
+  TreeWalker *tw = (TreeWalker*)treeWalker;
+  tw->copyToBuffer(number, buffer, (size_t)size);
+}
