@@ -13,10 +13,10 @@ import scala.reflect.runtime.universe.WeakTypeTag
 
 import com.sun.jna.Pointer
 
-package reader {
+package directreader {
   // Numerical enums from C++ that can be matched in case statements.
   // Also used in a stack to build the schema used at runtime.
-  // Must be kept in-sync with scaroot-reader/src/main/cpp/datawalker.h!
+  // Must be kept in-sync with scaroot-directreader/src/main/cpp/datawalker.h!
 
   sealed class SchemaInstruction(val index: Int, val name: String) {
     def unapply(x: Int) = (x == index)
@@ -60,11 +60,11 @@ package reader {
   // Custom interpreters for data. (Use '# for arrays.)
   
   sealed trait Customization {
-    private[reader] def escape(raw: String): String = {
+    private[directreader] def escape(raw: String): String = {
       import scala.reflect.runtime.universe._
       Literal(Constant(raw)).toString
     }
-    private[reader] def customClassName = getClass.getName.split('.').last
+    private[directreader] def customClassName = getClass.getName.split('.').last
   }
 
   case class Custom[TYPE : ClassTag](f: Pointer => TYPE, in: List[String] = Nil) extends Customization {
@@ -141,8 +141,6 @@ package reader {
         def apply(schemaInstruction: Int, data: Pointer) {
           stack = I(schemaInstruction, data) :: stack
 
-          println(stack)
-
           var done1 = false
           while (!done1) stack match {
             case I(SchemaInstruction.SchemaBool(), _)   :: rest  =>  stack = S(SchemaBool())   :: rest
@@ -170,8 +168,6 @@ package reader {
                 case _ =>
                   done2 = true
               }
-
-              println("fields", fields)
 
               stack match {
                 case I(SchemaInstruction.SchemaClassPointer(), dataProvider) :: I(SchemaInstruction.SchemaClassName(), classNamePtr) :: rest3 =>
@@ -287,20 +283,14 @@ package reader {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
 
-      println("one", dataClass.declarations)
-
       val constructorParams = dataClass.declarations.collectFirst {
         case m: MethodSymbol if (m.isPrimaryConstructor) => m
       }.get.paramss.head
-
-      println("two", constructorParams)
 
       val subSchemas = List.newBuilder[ValDef]
       val reprs = List.newBuilder[Tree]
       val fieldPairs = List.newBuilder[Tree]
       val gets = List.newBuilder[Tree]
-
-      println("three")
 
       constructorParams.foreach {param =>
         val nameString = param.asTerm.name.decodedName.toString
@@ -312,8 +302,6 @@ package reader {
           private val $name: (Schema[$tpe], Int) = {
             val index = allPossibleFields.indexWhere(_._1 == $nameString)
 
-println("setting up " + $nameString + " " + index.toString)
-
             if (index == -1)
               throw new IllegalArgumentException("Scala class has field \"" + $nameString + "\", but this field is not in the Avro schema.")
             else
@@ -324,11 +312,9 @@ println("setting up " + $nameString + " " + index.toString)
         gets += q"""$name._1.interpret(RootReaderCPPLibrary.getData(dataProvider, data, $name._2))"""
       }
 
-      println("four")
-
-      val out = c.Expr[SchemaClassMaker[TYPE]](q"""
+      c.Expr[SchemaClassMaker[TYPE]](q"""
         import com.sun.jna.Pointer
-        import org.dianahep.scaroot.reader._
+        import org.dianahep.scaroot.directreader._
 
         new SchemaClassMaker[$dataClass] {
           def apply(dataProvider: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[$dataClass] =
@@ -344,8 +330,6 @@ println("setting up " + $nameString + " " + index.toString)
             }
           }
       """)
-      println(out)
-      out
     }
   }
 

@@ -14,7 +14,7 @@ import org.scalatest.Matchers
 
 import com.sun.jna.Pointer
 
-import org.dianahep.scaroot.reader._
+import org.dianahep.scaroot.directreader._
 
 // case class Test(x: Int, y: Double, z: String)
 // case class Test(x: Seq[Boolean])
@@ -49,44 +49,29 @@ class DefaultSuite extends FlatSpec with Matchers {
     var midTime = System.currentTimeMillis
     println(s"init ${midTime - beforeTime}")
 
-    var counter = 0
-    var start = System.nanoTime
-    while (true) {
-      // RootReaderCPPLibrary.ping(treeWalker)
-      counter += 1
+    RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
+    midTime = System.currentTimeMillis
+    done = false
 
-      if (counter % 100000 == 0) {
-        val now = System.nanoTime
-        println(s"${now - start} ns -> ${(now - start)/100000} ns per call")
-        start = now
-      }
+    var i = 0
+    while (!done) {
+      if (i % 100 == 0)
+        println(s"entry $i")
+
+      // RootReaderCPPLibrary.printJSON(treeWalker)
+      // RootReaderCPPLibrary.printAvro(treeWalker)
+
+      val result = schema.interpret(Pointer.NULL)
+      // println(result)
+
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+
+      i += 1
+      // if (i > 10) done = true
     }
 
-    while (true) {
-      RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
-      midTime = System.currentTimeMillis
-      done = false
+    val endTime = System.currentTimeMillis
 
-      var i = 0
-      while (!done) {
-        if (i % 100 == 0)
-          println(s"entry $i")
-
-        // RootReaderCPPLibrary.printJSON(treeWalker)
-        // RootReaderCPPLibrary.printAvro(treeWalker)
-
-        val result = schema.interpret(Pointer.NULL)
-        // println(result)
-
-        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-
-        i += 1
-        // if (i > 10) done = true
-      }
-
-      val endTime = System.currentTimeMillis
-
-      println(s"loop ${endTime - midTime} items $i")
-    }
+    println(s"loop ${endTime - midTime} items $i")
   }
 }
