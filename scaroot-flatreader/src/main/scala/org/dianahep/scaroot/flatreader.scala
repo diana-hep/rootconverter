@@ -12,6 +12,7 @@ import scala.reflect.ClassTag
 // import scala.reflect.macros.blackbox.Context
 import scala.reflect.macros.Context
 import scala.reflect.runtime.universe.WeakTypeTag
+import scala.reflect.runtime.universe.Type
 
 import com.sun.jna.Pointer
 
@@ -157,7 +158,7 @@ package flatreader {
     }
   }
 
-  class SequenceFactory[TYPE](factory: Factory[TYPE], builder: Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
+  class SequenceFactory[TYPE](factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       builder.sizeHint(size)
@@ -191,10 +192,12 @@ package flatreader {
   }
 
   trait My[TYPE] extends Serializable {
+    def fieldTypes: Map[String, Type]
     def apply(factories: List[(String, Factory[_])]): ClassFactory[TYPE]
   }
 
   class MyGeneric extends My[Generic] {
+    def fieldTypes = Map[String, Type]()
     def apply(factories: List[(String, Factory[_])]) = new ClassFactory[Generic] {
       def apply(byteBuffer: ByteBuffer) =
         new Generic(factories.map({case (n, f) => (n, f(byteBuffer))}).toMap)
@@ -212,56 +215,43 @@ package flatreader {
         case m: MethodSymbol if (m.isPrimaryConstructor) => m
       }.get.paramss.head
 
-      val holderVars = List.newBuilder[Tree]
-      val fillerFuncs = List.newBuilder[Tree]
-      val getHolders = List.newBuilder[Tree]
+      var i = 0
+      val fieldTypes = List.newBuilder[Tree]
+      val getFields = List.newBuilder[Tree]
 
       constructorParams.foreach {param =>
-        val nameString = param.asTerm.name.decodedName.toString
-        val holderName = stringToTermName("holder_" + nameString)
-        val holderType = param.typeSignature
-
-        val holderVar = q"""var $holderName: $holderType = null.asInstanceOf[$holderType]"""
-
-        val fillerFunc = q"""$nameString -> {x: $holderType => $holderName = x}.asInstanceOf[Any => Unit]"""
-
-        val getHolder = q"""$holderName"""
-
-        holderVars += holderVar
-        fillerFuncs += fillerFunc
-        getHolders += getHolder
+        val name = param.asTerm.name.decodedName.toString
+        val sig = param.typeSignature
+        fieldTypes += q"""name -> typeOf[$sig]"""
+        getFields += q"""factoryArray($i)"""
+        i += 1
       }
       
       val out = c.Expr[My[TYPE]](q"""
         import java.nio.ByteBuffer
+        import scala.reflect.runtime.universe._
         import org.dianahep.scaroot.flatreader._
 
         new My[$dataClass] {
           // What you know at compile time...
-          ..${holderVars.result}
-
-          val fillerFunc = Map(..${fillerFuncs.result})
+          val fieldTypes = Map(..${fieldTypes.result})
 
           def apply(factories: List[(String, Factory[_])]) = {
             // What you know after the schema has been loaded...
-            var i = 0
-            val numFactories = factories.size
-            val fillers = factories.toArray map {case (fieldName, factory) =>
-              fillerFunc.get(fieldName) match {
-                case Some(f) => {byteBuffer: ByteBuffer => f(factory(byteBuffer))}
-                case None => {byteBuffer: ByteBuffer => factory(byteBuffer); ()}
-              }
+            if (fieldTypes.size != factories.size)
+                throw new IllegalArgumentException("Schema and My[class] must specify the same fields (names and types) in the same order; Schema has " + factories.size.toString + " fields and My[class] has " + fieldTypes.size.toString + " fields.")
+
+            (fieldTypes zip factories) foreach {case ((n1, ft), (n2, fac)) =>
+              if (n1 != n2  ||  !fac.valid(ft))
+                throw new IllegalArgumentException("Schema and My[class] must specify the same fields (names and types) in the same order; Schema is " + n2 + " and My[class] is " + n1 + ".")
             }
+
+            val factoryArray = factories.map(_._2).toArray
 
             new ClassFactory[$dataClass] {
               def apply(byteBuffer: ByteBuffer) = {
                 // What has to happen quickly in a tight loop...
-                i = 0
-                while (i < numFactories) {
-                  fillers(i)
-                  i += 1
-                }
-                new $dataClass(..${getHolders.result})
+                new $dataClass(..${getFields.result})
               }
             }
           }
