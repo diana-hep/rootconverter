@@ -13,45 +13,43 @@ import org.dianahep.scaroot.flatreader._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
-    case class Test(one: Int, two: Double, three: String)
+    case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
 
-    val stuff = My[Test]
+    val myclasses = Map("TBits" -> My[TBits])
+    
+    val fileLocations = List("../root2avro/test_Event/Event.root")
+    val treeLocation = "T"
+    val libs = List[String]("../root2avro/test_Event/Event_cxx.so")
+
+    var libscpp = Pointer.NULL
+    libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
+
+    var done = true
+    var treeWalker = Pointer.NULL
+    var remainingFiles = fileLocations.toList
+    var schema: Schema = null
+
+    if (!fileLocations.isEmpty) {
+      treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
+      remainingFiles = remainingFiles.tail
+
+      if (RootReaderCPPLibrary.valid(treeWalker) == 0)
+        throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
+
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
+        RootReaderCPPLibrary.resolve(treeWalker)
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      }
+
+      schema = Schema(treeWalker)
+
+      RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
+    }
+
+    println(schema)
 
 
-
-
-    // val fileLocations = List("../root2avro/build/multipleLeaves.root")
-    // val treeLocation = "t"
-    // val libs = List[String]()
-    // val customizations = List[Customization]()
-
-    // var libscpp = Pointer.NULL
-    // libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
-
-    // var done = true
-    // var treeWalker = Pointer.NULL
-    // var remainingFiles = fileLocations.toList
-    // var schema: Schema[GenericClass] = null
-
-    // if (!fileLocations.isEmpty) {
-    //   treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
-    //   remainingFiles = remainingFiles.tail
-
-    //   if (RootReaderCPPLibrary.valid(treeWalker) == 0)
-    //     throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
-
-    //   done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-    //   while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
-    //     RootReaderCPPLibrary.resolve(treeWalker)
-    //     done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-    //   }
-
-    //   schema = Schema[GenericClass](treeWalker, customizations)
-
-    //   RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
-    // }
-
-    // println(RootReaderCPPLibrary.repr(treeWalker))
 
     // val size = 64*1024
     // val buffer = new Memory(size)
