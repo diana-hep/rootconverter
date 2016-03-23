@@ -7,6 +7,10 @@ import scala.reflect.macros.Context
 import scala.reflect.runtime.universe.Type
 import scala.reflect.runtime.universe.WeakTypeTag
 
+import com.sun.jna.Pointer
+import com.sun.jna.Memory
+import com.sun.jna.NativeLong
+
 import org.dianahep.scaroot.reader.schema._
 import org.dianahep.scaroot.reader.factory._
 
@@ -100,5 +104,71 @@ package reader {
       println(out)
       out
     }
+  }
+
+  /////////////////////////////////////////////////// entry point for iterating over ROOT files
+
+  class RootTreeIterator[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, myclasses: Map[String, My[_]] = Map[String, My[_]]()) extends Iterator[TYPE] {
+    // FIXME: if TYPE is not Generic, add 'treeLocation -> My[TYPE]' to myclasses (note: that macro would have to be materialized implicitly; also, it's safe because this class already has a non-trivial constructor).
+
+    private var libscpp = Pointer.NULL
+    libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
+
+    private var done = true
+    private var treeWalker = Pointer.NULL
+    private var remainingFiles = fileLocations.toList
+
+    val schema: SchemaClass =
+      if (!fileLocations.isEmpty) {
+        treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
+        remainingFiles = remainingFiles.tail
+
+        if (RootReaderCPPLibrary.valid(treeWalker) == 0)
+          throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
+
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+        while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
+          RootReaderCPPLibrary.resolve(treeWalker)
+          done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+        }
+        RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
+
+        Schema(treeWalker)
+      }
+      else
+        throw new RuntimeException("Cannot build RootTreeIterator over an empty set of files.")
+
+    val factory = FactoryClass[TYPE](schema, myclasses)
+
+    private var bufferSize = 64*1024   // FIXME: update this when you encounter errors
+    private var buffer = new Memory(bufferSize)
+
+    def hasNext = !done
+    def next() = {
+      if (done)
+        throw new RuntimeException("next() called on empty RootTreeIterator (create a new one to run over the data again)")
+
+      // FIXME: implement multithreaded mode
+      buffer.setByte(0, 1)
+
+      RootReaderCPPLibrary.copyToBuffer(treeWalker, 1, buffer, new NativeLong(bufferSize))
+      val byteBuffer = buffer.getByteBuffer(0, bufferSize)   // FIXME: does this unnecessarily create objects? Maybe I should make my own custom view of the Pointer, call it MyByteBuffer or something?
+      val statusByte = byteBuffer.get
+      // FIXME: this is where you'd check the status byte to see if the buffer size needs to be increased or wait for the lock to be released in multithreaded mode
+
+      val out = factory(byteBuffer)
+
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      if (done  &&  !remainingFiles.isEmpty) {
+        RootReaderCPPLibrary.reset(treeWalker, remainingFiles.head)
+        remainingFiles = remainingFiles.tail
+        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      }
+
+      out
+    }
+  }
+  object RootTreeIterator {
+    def apply[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, myclasses: Map[String, My[_]] = Map[String, My[_]]()) = new RootTreeIterator[TYPE](fileLocations, treeLocation, libs, myclasses)
   }
 }

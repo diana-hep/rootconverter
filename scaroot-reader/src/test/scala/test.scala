@@ -7,55 +7,22 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
 import com.sun.jna.Pointer
-import com.sun.jna.Memory
-import com.sun.jna.NativeLong
 
 import org.dianahep.scaroot.reader._
-import org.dianahep.scaroot.reader.schema._
-import org.dianahep.scaroot.reader.factory._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
-    case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
-
-    val myclasses = Map("TBits" -> My[TBits])
+    // case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
+    // val myclasses = Map("TBits" -> My[TBits])
     
-    val fileLocations = List("../root2avro/test_Event/Event.root")
-    val treeLocation = "T"
-    val libs = List[String]("../root2avro/test_Event/Event_cxx.so")
+    val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root"), "t")
 
-    var libscpp = Pointer.NULL
-    libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
+    println(iterator.schema)
 
-    var done = true
-    var treeWalker = Pointer.NULL
-    var remainingFiles = fileLocations.toList
-    var schema: SchemaClass = null
+    println(iterator.factory)
 
-    if (!fileLocations.isEmpty) {
-      treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
-      remainingFiles = remainingFiles.tail
-
-      if (RootReaderCPPLibrary.valid(treeWalker) == 0)
-        throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
-
-      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-      while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
-        RootReaderCPPLibrary.resolve(treeWalker)
-        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-      }
-
-      schema = Schema(treeWalker)
-
-      RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
-    }
-
-    println(schema)
-
-    // val factory = Factory[Generic](schema, myclasses)
-    val factory = FactoryClass[Generic](schema, myclasses)
-
-    println(factory)
+    while (iterator.hasNext)
+      println(iterator.next())
 
 
     // val size = 64*1024
