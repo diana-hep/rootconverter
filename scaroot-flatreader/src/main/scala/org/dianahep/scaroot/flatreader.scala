@@ -11,6 +11,8 @@ import scala.language.higherKinds
 import scala.reflect.classTag
 import scala.reflect.ClassTag
 import scala.reflect.macros.Context
+import scala.reflect.runtime.universe.Constant
+import scala.reflect.runtime.universe.Literal
 import scala.reflect.runtime.universe.Type
 import scala.reflect.runtime.universe.typeOf
 import scala.reflect.runtime.universe.TypeRefApi
@@ -57,6 +59,7 @@ package flatreader {
 
   sealed trait Schema {
     def cpp: String  // just for error messages
+    def toString(indent: Int, memo: mutable.Set[String]): String = toString()
   }
   object Schema {
     def apply(treeWalker: Pointer): SchemaClass = {
@@ -166,11 +169,27 @@ package flatreader {
   case object SchemaDouble extends Schema { val cpp = "double" }
   case object SchemaString extends Schema { val cpp = "STRING" }
 
-  case class SchemaClass(name: String, fields: List[(String, Schema)]) extends Schema { def cpp = name }
+  case class SchemaClass(name: String, fields: List[(String, Schema)]) extends Schema {
+    def cpp = name
+    override def toString() = toString(0, mutable.Set[String]())
+    override def toString(indent: Int, memo: mutable.Set[String]) =
+      if (memo contains name)
+        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = <see above>)"""
+      else {
+        memo += name
+        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields map {case (n, s) => "\n" + " " * indent + "  \"" + n + "\" -> " + s.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
+      }
+  }
 
-  case class SchemaPointer(referent: Schema) extends Schema { def cpp = s"POINTER<$referent>" }
+  case class SchemaPointer(referent: Schema) extends Schema {
+    def cpp = s"POINTER<$referent>"
+    override def toString(indent: Int, memo: mutable.Set[String]) = s"""SchemaPointer(${referent.toString(indent, memo)})"""
+  }
 
-  case class SchemaSequence(content: Schema) extends Schema { def cpp = s"SEQUENCE<$content>" }
+  case class SchemaSequence(content: Schema) extends Schema {
+    def cpp = s"SEQUENCE<$content>"
+    override def toString(indent: Int, memo: mutable.Set[String]) = s"""SchemaSequence(${content.toString(indent, memo)})"""
+  }
 
   /////////////////////////////////////////////////// class to use when no My[TYPE] is supplied
 
@@ -182,6 +201,8 @@ package flatreader {
     def apply(fields: Map[String, Any]) = new Generic(fields)
     def unapply(x: Generic) = Some(x.fields)
   }
+
+  /////////////////////////////////////////////////// user-friendly representation of non-String bytes (like Python 3)
 
   class Bytes(array: Array[Byte]) extends Seq[Byte] {
     def apply(idx: Int) = array(idx)
@@ -204,6 +225,7 @@ package flatreader {
 
   trait Factory[+TYPE] {
     def apply(byteBuffer: ByteBuffer): TYPE
+    def toString(indent: Int, memo: mutable.Set[String]): String = toString()
   }
 
   case object FactoryBool extends Factory[Boolean] {
@@ -305,24 +327,7 @@ package flatreader {
       else
         Some(factory(byteBuffer))
     }
-  }
-
-  case class FactoryIterable[TYPE](factory: Factory[TYPE], builder: Int => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
-    def apply(byteBuffer: ByteBuffer) = {
-      val size = byteBuffer.getInt
-      val b = builder(size)
-      0 until size foreach {i => b += factory(byteBuffer)}
-      b.result
-    }
-  }
-
-  case class FactoryArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Array[TYPE]] {
-    def apply(byteBuffer: ByteBuffer) = {
-      val size = byteBuffer.getInt
-      val b = builder(size)
-      0 until size foreach {i => b(i) = factory(byteBuffer)}
-      b
-    }
+    override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryOption(${factory.toString(indent, memo)})"""
   }
 
   case class FactoryWrappedArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Seq[TYPE]] {
@@ -332,9 +337,39 @@ package flatreader {
       0 until size foreach {i => b(i) = factory(byteBuffer)}
       b.toSeq
     }
+    override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryWrappedArray(${factory.toString(indent, memo)})"""
   }
 
-  abstract class FactoryClass[TYPE](val name: String, val factories: List[(String, Factory[_])]) extends Factory[TYPE]
+  case class FactoryArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Array[TYPE]] {
+    def apply(byteBuffer: ByteBuffer) = {
+      val size = byteBuffer.getInt
+      val b = builder(size)
+      0 until size foreach {i => b(i) = factory(byteBuffer)}
+      b
+    }
+    override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryArray(${factory.toString(indent, memo)})"""
+  }
+
+  case class FactoryIterable[TYPE](factory: Factory[TYPE], builder: Int => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
+    def apply(byteBuffer: ByteBuffer) = {
+      val size = byteBuffer.getInt
+      val b = builder(size)
+      0 until size foreach {i => b += factory(byteBuffer)}
+      b.result
+    }
+    override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryIterable(${factory.toString(indent, memo)})"""
+  }
+
+  abstract class FactoryClass[TYPE : ClassTag](val name: String, val factories: List[(String, Factory[_])]) extends Factory[TYPE] {
+    override def toString() = toString(0, mutable.Set[String]())
+    override def toString(indent: Int, memo: mutable.Set[String]): String =
+      if (memo contains name)
+        s"""FactoryClass[${classTag[TYPE]}](name = ${Literal(Constant(name)).toString}, factories = <see above>)"""
+      else {
+        memo += name
+        s"""FactoryClass[${classTag[TYPE]}](name = ${Literal(Constant(name)).toString}, factories = List(${factories map {case (n, f) => "\n" + " " * indent + "  \"" + n + "\" -> " + f.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
+      }
+  }
   object FactoryClass {
     // Scala reflect missing function (it's tpe.typeArgs in Scala 2.11)
 
@@ -515,6 +550,13 @@ package flatreader {
   case class FactoryGeneric(override val name: String, override val factories: List[(String, Factory[_])]) extends FactoryClass[Generic](name, factories) {
     def apply(byteBuffer: ByteBuffer) =
       new Generic(factories.map({case (n, f) => (n, f(byteBuffer))}).toMap)
+    override def toString(indent: Int, memo: mutable.Set[String]): String =
+      if (memo contains name)
+        s"""FactoryGeneric(name = ${Literal(Constant(name)).toString}, factories = <see above>)"""
+      else {
+        memo += name
+        s"""FactoryGeneric(name = ${Literal(Constant(name)).toString}, factories = List(${factories map {case (n, f) => "\n" + " " * indent + "  \"" + n + "\" -> " + f.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
+      }
   }
 
   /////////////////////////////////////////////////// user's class specification (a factory-factory!)

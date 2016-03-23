@@ -50,7 +50,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     println(schema)
 
     // val factory = Factory[Generic](schema, myclasses)
-    val factory = FactoryClass[Generic](schema)
+    val factory = FactoryClass[Generic](schema, myclasses)
 
     println(factory)
 
