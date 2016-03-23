@@ -27,7 +27,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     var done = true
     var treeWalker = Pointer.NULL
     var remainingFiles = fileLocations.toList
-    var schema: Schema = null
+    var schema: SchemaClass = null
 
     if (!fileLocations.isEmpty) {
       treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
@@ -50,7 +50,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     println(schema)
 
     // val factory = Factory[Generic](schema, myclasses)
-    val factory = Factory[Generic](schema)
+    val factory = FactoryClass[Generic](schema)
 
     println(factory)
 
