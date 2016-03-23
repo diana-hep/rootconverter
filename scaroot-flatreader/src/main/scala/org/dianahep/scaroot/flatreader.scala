@@ -2,6 +2,7 @@ package org.dianahep.scaroot
 
 import java.nio.ByteBuffer
 
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 import scala.collection.mutable.Builder
 import scala.language.existentials
@@ -54,7 +55,9 @@ package flatreader {
   /////////////////////////////////////////////////// schemas (type information from ROOT)
   // Note that type information is known only at runtime!
 
-  sealed trait Schema
+  sealed trait Schema {
+    def cpp: String  // just for error messages
+  }
   object Schema {
     def apply(treeWalker: Pointer): Schema = {
       sealed trait StackElement
@@ -150,24 +153,24 @@ package flatreader {
     }
   }
 
-  case object SchemaBool extends Schema
-  case object SchemaChar extends Schema
-  case object SchemaUChar extends Schema
-  case object SchemaShort extends Schema
-  case object SchemaUShort extends Schema
-  case object SchemaInt extends Schema
-  case object SchemaUInt extends Schema
-  case object SchemaLong extends Schema
-  case object SchemaULong extends Schema
-  case object SchemaFloat extends Schema
-  case object SchemaDouble extends Schema
-  case object SchemaString extends Schema
+  case object SchemaBool extends Schema { val cpp = "bool" }
+  case object SchemaChar extends Schema { val cpp = "char" }
+  case object SchemaUChar extends Schema { val cpp = "unsigned char" }
+  case object SchemaShort extends Schema { val cpp = "short" }
+  case object SchemaUShort extends Schema { val cpp = "unsigned short" }
+  case object SchemaInt extends Schema { val cpp = "int" }
+  case object SchemaUInt extends Schema { val cpp = "unsigned int" }
+  case object SchemaLong extends Schema { val cpp = "long" }
+  case object SchemaULong extends Schema { val cpp = "unsigned long" }
+  case object SchemaFloat extends Schema { val cpp = "float" }
+  case object SchemaDouble extends Schema { val cpp = "double" }
+  case object SchemaString extends Schema { val cpp = "STRING" }
 
-  case class SchemaClass(name: String, fields: List[(String, Schema)]) extends Schema
+  case class SchemaClass(name: String, fields: List[(String, Schema)]) extends Schema { def cpp = name }
 
-  case class SchemaPointer(referent: Schema) extends Schema
+  case class SchemaPointer(referent: Schema) extends Schema { def cpp = s"${referent}*" }
 
-  case class SchemaSequence(content: Schema) extends Schema
+  case class SchemaSequence(content: Schema) extends Schema { def cpp = s"SEQUENCE<$content>" }
 
   /////////////////////////////////////////////////// class to use when no My[TYPE] is supplied
 
@@ -180,6 +183,22 @@ package flatreader {
     def unapply(x: Generic) = Some(x.fields)
   }
 
+  class Bytes(array: Array[Byte]) extends Seq[Byte] {
+    def apply(idx: Int) = array(idx)
+    def iterator = Iterator[Byte](array: _*)
+    def length = array.size
+    def decode = new String(array)
+    def decode(charset: String) = new String(array, charset)
+    override def toString() = s"""Bytes(${array.mkString(", ")})"""
+  }
+  object Bytes {
+    def apply(array: Array[Byte]) = new Bytes(array)
+    def apply(iterable: Iterable[Byte]) = new Bytes(iterable.toArray)
+    def apply(bytes: Byte*) = new Bytes(bytes.toArray)
+    def encode(str: String) = new Bytes(str.getBytes)
+    def encode(str: String, charset: String) = new Bytes(str.getBytes(charset))
+  }
+
   /////////////////////////////////////////////////// factories for building data at runtime
   // Note that type information is compiled in!
 
@@ -187,20 +206,163 @@ package flatreader {
     def apply(byteBuffer: ByteBuffer): TYPE
   }
   object Factory {
-    def apply(schema: Schema,
-              myclasses: Map[String, My[_]] = Map[String, My[_]](),
-              translation: Map[(Schema, Type), Factory[_]] = defaultTranslation) = {
-      FactoryBool
+    private def typeArgs(tpe: Type) = tpe match {case TypeRef(_, _, args) => args}
+
+    private def arrayBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => Array.fill[Boolean](size)(false)}
+      else if (tpe =:= typeOf[Char])    {size: Int => Array.fill[Char](size)(' ')}
+      else if (tpe =:= typeOf[Byte])    {size: Int => Array.fill[Byte](size)(0)}
+      else if (tpe =:= typeOf[Short])   {size: Int => Array.fill[Short](size)(0)}
+      else if (tpe =:= typeOf[Int])     {size: Int => Array.fill[Int](size)(0)}
+      else if (tpe =:= typeOf[Long])    {size: Int => Array.fill[Long](size)(0)}
+      else if (tpe =:= typeOf[Float])   {size: Int => Array.fill[Float](size)(0)}
+      else if (tpe =:= typeOf[Double])  {size: Int => Array.fill[Double](size)(0)}
+      else                              {size: Int => Array.fill[AnyRef](size)(null)}
+
+    private def listBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = List.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = List.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = List.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = List.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = List.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = List.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = List.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = List.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = List.newBuilder[AnyRef];  out.sizeHint(size); out}
+
+    private def vectorBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = Vector.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = Vector.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = Vector.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = Vector.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = Vector.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = Vector.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = Vector.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = Vector.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = Vector.newBuilder[AnyRef];  out.sizeHint(size); out}
+
+    private def setBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = Set.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = Set.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = Set.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = Set.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = Set.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = Set.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = Set.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = Set.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = Set.newBuilder[AnyRef];  out.sizeHint(size); out}
+
+    private def sortedSetBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = SortedSet.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = SortedSet.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = SortedSet.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = SortedSet.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = SortedSet.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = SortedSet.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = SortedSet.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = SortedSet.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = SortedSet.newBuilder[AnyRef];  out.sizeHint(size); out}
+
+    private def applyField(schema: Schema, tpe: Type, myclasses: Map[String, My[_]]) = schema match {
+      case SchemaBool   if (typeOf[Boolean]     =:= tpe) => FactoryBool
+      case SchemaChar   if (typeOf[Char]        =:= tpe) => FactoryChar
+      case SchemaUChar  if (typeOf[Char]        =:= tpe) => FactoryChar
+      case SchemaChar   if (typeOf[Byte]   weak_<:< tpe) => FactoryByte
+      case SchemaUChar  if (typeOf[Short]  weak_<:< tpe) => FactoryUByte
+      case SchemaShort  if (typeOf[Short]  weak_<:< tpe) => FactoryShort
+      case SchemaUShort if (typeOf[Int]    weak_<:< tpe) => FactoryUShort
+      case SchemaInt    if (typeOf[Int]    weak_<:< tpe) => FactoryInt
+      case SchemaUInt   if (typeOf[Long]   weak_<:< tpe) => FactoryUInt
+      case SchemaLong   if (typeOf[Long]   weak_<:< tpe) => FactoryLong
+      case SchemaULong  if (typeOf[Double] weak_<:< tpe) => FactoryULong
+      case SchemaFloat  if (typeOf[Float]  weak_<:< tpe) => FactoryFloat
+      case SchemaDouble if (typeOf[Double] weak_<:< tpe) => FactoryDouble
+      case SchemaString if (typeOf[Bytes]       =:= tpe) => FactoryBytes
+      case SchemaString if (typeOf[String]      =:= tpe) => FactoryString("US-ASCII")
+
+      case SchemaClass => apply(schema, myclasses)
+
+      case SchemaPointer(referent) if (tpe <:< typeOf[Option[_]]) =>
+        FactoryOption(applyField(referent, typeArgs(tpe).head, myclasses))
+
+      case SchemaSequence(content) =>
+        if (tpe <:< typeOf[Seq[_]])
+          FactoryWrappedArray(applyField(content, typeArgs(tpe).head, myclasses), arrayBuilder(typeArgs(tpe).head))
+        else if (tpe <:< typeOf[Array[_]])
+          FactoryArray(applyField(content, typeArgs(tpe).head, myclasses), arrayBuilder(typeArgs(tpe).head))
+        else if (tpe <:< typeOf[List[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), listBuilder(typeArgs(tpe).head))
+        else if (tpe <:< typeOf[Vector[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), vectorBuilder(typeArgs(tpe).head))
+        else if (tpe <:< typeOf[Set[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), setBuilder(typeArgs(tpe).head))
+        else if (tpe <:< typeOf[SortedSet[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), sortedSetBuilder(typeArgs(tpe).head))
+        else
+          throw new IllegalArgumentException(s"Currently, only Array[T], List[T], Vector[T], Set[T], and SortedSet[T] can be used as containers, not $tpe.")
     }
 
-    val defaultTranslation = Map[(Schema, Type), Factory[_]](
-      (SchemaBool,  typeOf[Boolean]) -> FactoryBool,
-      (SchemaChar,  typeOf[Char])    -> FactoryChar,
-      (SchemaUChar, typeOf[Char])    -> FactoryChar,
-      (SchemaChar,  typeOf[Byte])    -> FactoryByte,
-      (SchemaUChar, typeOf[Short])   -> FactoryUByte
-      // ...
-    )
+    private def applyGenericField(schema: Schema, myclasses: Map[String, My[_]]) = schema match {
+      case SchemaBool   => FactoryBool
+      case SchemaChar   => FactoryByte
+      case SchemaUChar  => FactoryUByte
+      case SchemaShort  => FactoryShort
+      case SchemaUShort => FactoryUShort
+      case SchemaInt    => FactoryInt
+      case SchemaUInt   => FactoryUInt
+      case SchemaLong   => FactoryLong
+      case SchemaULong  => FactoryULong
+      case SchemaFloat  => FactoryFloat
+      case SchemaDouble => FactoryDouble
+      case SchemaString => FactoryString("US-ASCII")
+      case SchemaClass  => apply(schema, myclasses)
+      case SchemaPointer(referent) => FactoryOption(applyGenericField(referent, myclasses))
+      case SchemaSequence(content) => content match {
+        case SchemaBool   => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Boolean]))
+        case SchemaChar   => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Byte]))
+        case SchemaUChar  => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Short]))
+        case SchemaShort  => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Short]))
+        case SchemaUShort => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Int]))
+        case SchemaInt    => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Int]))
+        case SchemaUInt   => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Long]))
+        case SchemaLong   => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Long]))
+        case SchemaULong  => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Double]))
+        case SchemaFloat  => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Float]))
+        case SchemaDouble => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[Double]))
+        case _            => FactoryWrappedArray(applyGenericField(content, myclasses), arrayBuilder(typeOf[AnyRef]))
+      }
+    }
+
+    def apply[TYPE](schema: Schema, myclasses: Map[String, My[_]] = Map[String, My[_]]()): Factory[TYPE] = schema match {
+      case SchemaClass(name, fields) if (myclasses.keys contains name) =>
+        val my = myclasses(name)
+        if (fields.size != my.fieldTypes.size)
+          throw new IllegalArgumentException(s"ROOT class or TTree $name has ${fields.size} fields but My[${my.name}] has ${my.fieldTypes.size} fields.")
+
+        val factories = fields zip my.fieldTypes map {case ((n1, s), (n2, tpe)) =>
+          if (n1 != n2)
+            throw new IllegalArgumentException(s"ROOT class or TTree $name has a field named $n1 but the corresponding field in My[${my.name}] is named $n2.")
+
+          val fac =
+            try {
+              applyField(s, tpe, myclasses)
+            }
+            catch {
+              case _: MatchError => throw new IllegalArgumentException(s"ROOT class or TTree $name has field $n1 with type ${s.cpp} but My[${my.name}] has field $n2 with incompatible type $tpe.")
+            }
+          (n, fac)
+        }
+
+        my(factories).asInstanceOf[Factory[TYPE]]
+
+      case SchemaClass(name, fields) =>
+        val factories = fields map {case (n, s) => (n, applyGenericField(s, myclasses))}
+
+        FactoryGeneric(name, factories).asInstanceOf[Factory[TYPE]]
+
+      case _ =>
+        throw new IllegalArgumentException("The Factory constructor can only be used on SchemaClass (e.g. the root of a TTree).")
+    }
   }
 
   case object FactoryBool extends Factory[Boolean] {
@@ -253,10 +415,6 @@ package flatreader {
     }
   }
 
-  case class FactoryEnumFromInt[ENUM <: Enumeration](enumeration: ENUM) extends Factory[ENUM#Value] {
-    def apply(byteBuffer: ByteBuffer) = enumeration.apply(byteBuffer.getInt)
-  }
-
   case object FactoryLong extends Factory[Long] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getLong
   }
@@ -279,12 +437,12 @@ package flatreader {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getDouble
   }
 
-  case object FactoryBytes extends Factory[Array[Byte]] {
+  case object FactoryBytes extends Factory[Bytes] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val out = Array.fill[Byte](size)(0)
       byteBuffer.get(out)
-      out
+      new Bytes(out)
     }
   }
 
@@ -298,16 +456,7 @@ package flatreader {
     }
   }
 
-  case class FactoryEnumFromString[ENUM <: Enumeration](enumeration: ENUM) extends Factory[ENUM#Value] {
-    def apply(byteBuffer: ByteBuffer) = {
-      val size = byteBuffer.getInt
-      val out = Array.fill[Byte](size)(0)
-      byteBuffer.get(out)
-      enumeration.withName(new String(out))
-    }
-  }
-
-  case class FactoryOption[TYPE : ClassTag](factory: Factory[TYPE]) extends Factory[Option[TYPE]] {
+  case class FactoryOption[TYPE](factory: Factory[TYPE]) extends Factory[Option[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val discriminant = byteBuffer.get
       if (discriminant == 0)
@@ -315,37 +464,38 @@ package flatreader {
       else
         Some(factory(byteBuffer))
     }
-    override def toString() = s"FactoryOption[${classTag[TYPE].toString}]($factory)"
   }
 
-  class FactorySequence[TYPE : ClassTag](val factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
+  case class FactoryIterable[TYPE](factory: Factory[TYPE], builder: Int => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
-      builder.sizeHint(size)
-      0 until size foreach {i => builder += factory(byteBuffer)}
-      builder.result
+      val b = builder(size)
+      0 until size foreach {i => b += factory(byteBuffer)}
+      b.result
     }
-    override def toString() = s"FactorySequence[${classTag[TYPE].toString}]($factory)"
-  }
-  object FactorySequence {
-    def apply[TYPE : ClassTag](factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) = new FactorySequence[TYPE](factory, builder)
   }
 
-  case class FactoryArray[TYPE : ClassTag](factory: Factory[TYPE]) extends Factory[Array[TYPE]] {
+  case class FactoryArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Array[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
-      val out = Array.fill[TYPE](size)(null.asInstanceOf[TYPE])
-      0 until size foreach {i => out(i) = factory(byteBuffer)}
-      out
+      val b = builder(size)
+      0 until size foreach {i => b(i) = factory(byteBuffer)}
+      b
     }
-    override def toString() = s"FactoryArray[${classTag[TYPE].toString}]($factory)"
   }
 
-  abstract class FactoryClass[TYPE : ClassTag](val factories: List[(String, Factory[_])]) extends Factory[TYPE] {
-    override def toString() = s"FactoryClass[${classTag[TYPE].toString}]($factories)"
+  case class FactoryWrappedArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Seq[TYPE]] {
+    def apply(byteBuffer: ByteBuffer) = {
+      val size = byteBuffer.getInt
+      val b = builder(size)
+      0 until size foreach {i => b(i) = factory(byteBuffer)}
+      b.toSeq
+    }
   }
 
-  case class FactoryGeneric(override val factories: List[(String, Factory[_])]) extends FactoryClass[Generic](factories) {
+  abstract class FactoryClass[TYPE](val name: String, val factories: List[(String, Factory[_])]) extends Factory[TYPE]
+
+  case class FactoryGeneric(name: String, factories: List[(String, Factory[_])]) extends FactoryClass[Generic](name, factories) {
     def apply(byteBuffer: ByteBuffer) =
       new Generic(factories.map({case (n, f) => (n, f(byteBuffer))}).toMap)
   }
@@ -353,6 +503,7 @@ package flatreader {
   /////////////////////////////////////////////////// user's class specification (a factory-factory!)
 
   trait My[TYPE] {
+    def name: String
     def fieldTypes: List[(String, Type)]
     def apply(factories: List[(String, Factory[_])]): FactoryClass[TYPE]
   }
@@ -362,6 +513,7 @@ package flatreader {
     def applyImpl[TYPE : c.WeakTypeTag](c: Context): c.Expr[My[TYPE]] = {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
+      val dataClassName = dataClass.toString
 
       val constructorParams = dataClass.declarations.collectFirst {
         case m: MethodSymbol if (m.isPrimaryConstructor) => m
@@ -386,6 +538,7 @@ package flatreader {
 
         new My[$dataClass] {
           // What you know at compile-time...
+          val name = $dataClassName
           val fieldTypes = List(..${fieldTypes.result})
 
           def apply(factories: List[(String, Factory[_])]) =

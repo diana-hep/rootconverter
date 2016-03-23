@@ -49,6 +49,10 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     println(schema)
 
+    // val factory = Factory[Generic](schema, myclasses)
+    val factory = Factory[Generic](schema)
+
+    println(factory)
 
 
     // val size = 64*1024
