@@ -25,7 +25,6 @@ package flatreader {
     def unapply(x: Int) = (x == index)
     override def toString() = s"SchemaInstruction.$name"
   }
-
   object SchemaInstruction {
     val SchemaBool   = new SchemaInstruction(0, "SchemaBool")
     val SchemaChar   = new SchemaInstruction(1, "SchemaChar")
@@ -57,7 +56,6 @@ package flatreader {
     def apply(field: String): Any = fields(field)
     override def toString() = s"""Generic(Map(${fields.map({case (k, v) => "\"" + k + "\"" + " -> " + v.toString}).mkString(", ")}))"""
   }
-
   object Generic {
     def apply(fields: Map[String, Any]) = new Generic(fields)
     def unapply(x: Generic) = Some(x.fields)
@@ -69,15 +67,19 @@ package flatreader {
     def apply(byteBuffer: ByteBuffer): TYPE
   }
 
-  class BoolFactory extends Factory[Boolean] {
+  case object BoolFactory extends Factory[Boolean] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.get != 0
   }
 
-  class CharFactory extends Factory[Byte] {
+  case object CharFactory extends Factory[Char] {
+    def apply(byteBuffer: ByteBuffer) = byteBuffer.get.toChar
+  }
+
+  case object ByteFactory extends Factory[Byte] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.get
   }
 
-  class UCharFactory extends Factory[Short] {
+  case object UByteFactory extends Factory[Short] {
     def apply(byteBuffer: ByteBuffer) = {
       val out = byteBuffer.get
       if (out < 0)
@@ -87,11 +89,11 @@ package flatreader {
     }
   }
 
-  class ShortFactory extends Factory[Short] {
+  case object ShortFactory extends Factory[Short] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getShort
   }
 
-  class UShortFactory extends Factory[Int] {
+  case object UShortFactory extends Factory[Int] {
     def apply(byteBuffer: ByteBuffer) = {
       val out = byteBuffer.getShort
       if (out < 0)
@@ -101,11 +103,11 @@ package flatreader {
     }
   }
 
-  class IntFactory extends Factory[Int] {
+  case object IntFactory extends Factory[Int] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getInt
   }
 
-  class UIntFactory extends Factory[Long] {
+  case object UIntFactory extends Factory[Long] {
     def apply(byteBuffer: ByteBuffer) = {
       val out = byteBuffer.getInt
       if (out < 0)
@@ -115,11 +117,11 @@ package flatreader {
     }
   }
 
-  class LongFactory extends Factory[Long] {
+  case object LongFactory extends Factory[Long] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getLong
   }
 
-  class ULongFactory extends Factory[Double] {
+  case object ULongFactory extends Factory[Double] {
     def apply(byteBuffer: ByteBuffer) = {
       val out = byteBuffer.getLong
       if (out < 0)
@@ -129,15 +131,15 @@ package flatreader {
     }
   }
 
-  class FloatFactory extends Factory[Float] {
+  case object FloatFactory extends Factory[Float] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getFloat
   }
 
-  class DoubleFactory extends Factory[Double] {
+  case object DoubleFactory extends Factory[Double] {
     def apply(byteBuffer: ByteBuffer) = byteBuffer.getDouble
   }
 
-  class BytesFactory extends Factory[Array[Byte]] {
+  case object BytesFactory extends Factory[Array[Byte]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val out = Array.fill[Byte](size)(0)
@@ -146,9 +148,7 @@ package flatreader {
     }
   }
 
-  trait ClassFactory[TYPE] extends Factory[TYPE]
-
-  class OptionFactory[TYPE](factory: Factory[TYPE]) extends Factory[Option[TYPE]] {
+  case class OptionFactory[TYPE : ClassTag](factory: Factory[TYPE]) extends Factory[Option[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val discriminant = byteBuffer.get
       if (discriminant == 0)
@@ -156,58 +156,51 @@ package flatreader {
       else
         Some(factory(byteBuffer))
     }
+    override def toString() = s"OptionFactory[${classTag[TYPE].toString}]($factory)"
   }
 
-  class SequenceFactory[TYPE](factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
+  class SequenceFactory[TYPE : ClassTag](val factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       builder.sizeHint(size)
       0 until size foreach {i => builder += factory(byteBuffer)}
       builder.result
     }
+    override def toString() = s"SequenceFactory[${classTag[TYPE].toString}]($factory)"
+  }
+  object SequenceFactory {
+    def apply[TYPE : ClassTag](factory: Factory[TYPE], builder: => Builder[TYPE, Iterable[TYPE]]) = new SequenceFactory[TYPE](factory, builder)
   }
 
-  class ArrayFactory[TYPE : ClassTag](factory: Factory[TYPE]) extends Factory[Array[TYPE]] {
+  case class ArrayFactory[TYPE : ClassTag](factory: Factory[TYPE]) extends Factory[Array[TYPE]] {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val out = Array.fill[TYPE](size)(null.asInstanceOf[TYPE])
       0 until size foreach {i => out(i) = factory(byteBuffer)}
       out
     }
+    override def toString() = s"ArrayFactory[${classTag[TYPE].toString}]($factory)"
+  }
+
+  abstract class ClassFactory[TYPE : ClassTag](val factories: List[(String, Factory[_])]) extends Factory[TYPE] {
+    override def toString() = s"ClassFactory[${classTag[TYPE].toString}]($factories)"
+  }
+
+  case class GenericFactory(override val factories: List[(String, Factory[_])]) extends ClassFactory[Generic](factories) {
+    def apply(byteBuffer: ByteBuffer) =
+      new Generic(factories.map({case (n, f) => (n, f(byteBuffer))}).toMap)
   }
 
   /////////////////////////////////////////////////// helper functions for user's constructors
 
-  class IntToEnum[ENUM <: Enumeration](val enumeration: ENUM) extends Function1[Int, ENUM#Value] {
-    def apply(x: Int) = enumeration.apply(x)
-  }
-
-  class BytesToString(val charset: String = "US-ASCII") extends Function1[Array[Byte], String] {
-    // FIXME: it might be more efficient to get a Charset object from that string, first.
-    def apply(x: Array[Byte]) = new String(x, charset)
-  }
-
-  class BytesToEnum[ENUM <: Enumeration](val enumeration: ENUM) extends Function1[Array[Byte], ENUM#Value] {
-    def apply(x: Array[Byte]) = enumeration.withName(new String(x))
-  }
-
-  trait My[TYPE] extends Serializable {
-    def fieldTypes: Map[String, Type]
+  trait My[TYPE] {
+    def fieldTypes: List[(String, Type)]
     def apply(factories: List[(String, Factory[_])]): ClassFactory[TYPE]
   }
-
-  class MyGeneric extends My[Generic] {
-    def fieldTypes = Map[String, Type]()
-    def apply(factories: List[(String, Factory[_])]) = new ClassFactory[Generic] {
-      def apply(byteBuffer: ByteBuffer) =
-        new Generic(factories.map({case (n, f) => (n, f(byteBuffer))}).toMap)
-    }
-  }
-
   object My {
-    def apply[TYPE]: My[TYPE] = macro materializeImpl[TYPE]
+    def apply[TYPE]: My[TYPE] = macro applyImpl[TYPE]
 
-    def materializeImpl[TYPE](c: Context)(implicit t: c.WeakTypeTag[TYPE]): c.Expr[My[TYPE]] = {
+    def applyImpl[TYPE : c.WeakTypeTag](c: Context): c.Expr[My[TYPE]] = {
       import c.universe._
       val dataClass = weakTypeOf[TYPE]
 
@@ -221,44 +214,50 @@ package flatreader {
 
       constructorParams.foreach {param =>
         val name = param.asTerm.name.decodedName.toString
-        val sig = param.typeSignature
-        fieldTypes += q"""name -> typeOf[$sig]"""
-        getFields += q"""factoryArray($i)"""
+        val tpe = param.typeSignature
+        fieldTypes += q"""$name -> typeOf[$tpe]"""
+        getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](byteBuffer)"""
         i += 1
       }
-      
+
       val out = c.Expr[My[TYPE]](q"""
         import java.nio.ByteBuffer
         import scala.reflect.runtime.universe._
         import org.dianahep.scaroot.flatreader._
 
         new My[$dataClass] {
-          // What you know at compile time...
-          val fieldTypes = Map(..${fieldTypes.result})
+          // What you know at compile-time...
+          val fieldTypes = List(..${fieldTypes.result})
 
-          def apply(factories: List[(String, Factory[_])]) = {
-            // What you know after the schema has been loaded...
-            if (fieldTypes.size != factories.size)
-                throw new IllegalArgumentException("Schema and My[class] must specify the same fields (names and types) in the same order; Schema has " + factories.size.toString + " fields and My[class] has " + fieldTypes.size.toString + " fields.")
+          def apply(factories: List[(String, Factory[_])]) =
+            new ClassFactory[$dataClass](factories) {
+              // What you know when you read a ROOT schema...
+              // (I'll do the type-checking in the factory-builder, not here. Better error messages that way.)
 
-            (fieldTypes zip factories) foreach {case ((n1, ft), (n2, fac)) =>
-              if (n1 != n2  ||  !fac.valid(ft))
-                throw new IllegalArgumentException("Schema and My[class] must specify the same fields (names and types) in the same order; Schema is " + n2 + " and My[class] is " + n1 + ".")
-            }
+              val factoryArray = factories.map(_._2).toArray
 
-            val factoryArray = factories.map(_._2).toArray
-
-            new ClassFactory[$dataClass] {
+              // Fast runtime loop...
               def apply(byteBuffer: ByteBuffer) = {
-                // What has to happen quickly in a tight loop...
                 new $dataClass(..${getFields.result})
               }
             }
-          }
         }
       """)
       println(out)
       out
     }
+  }
+
+  class IntToEnum[ENUM <: Enumeration](val enumeration: ENUM) extends Function1[Int, ENUM#Value] {
+    def apply(x: Int) = enumeration.apply(x)
+  }
+
+  class BytesToString(val charset: String = "US-ASCII") extends Function1[Array[Byte], String] {
+    // FIXME: it might be more efficient to get a Charset object from that string, first.
+    def apply(x: Array[Byte]) = new String(x, charset)
+  }
+
+  class BytesToEnum[ENUM <: Enumeration](val enumeration: ENUM) extends Function1[Array[Byte], ENUM#Value] {
+    def apply(x: Array[Byte]) = enumeration.withName(new String(x))
   }
 }
