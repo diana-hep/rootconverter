@@ -7,7 +7,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
 import com.sun.jna.Pointer
-import org.dianahep.scaroot.directreader._
+import org.dianahep.scaroot.oldreader._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "GenericClass" must "work" in {

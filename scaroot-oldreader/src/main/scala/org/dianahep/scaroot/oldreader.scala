@@ -13,10 +13,10 @@ import scala.reflect.runtime.universe.WeakTypeTag
 
 import com.sun.jna.Pointer
 
-package directreader {
+package oldreader {
   // Numerical enums from C++ that can be matched in case statements.
   // Also used in a stack to build the schema used at runtime.
-  // Must be kept in-sync with scaroot-directreader/src/main/cpp/datawalker.h!
+  // Must be kept in-sync with scaroot-oldreader/src/main/cpp/datawalker.h!
 
   sealed class SchemaInstruction(val index: Int, val name: String) {
     def unapply(x: Int) = (x == index)
@@ -60,11 +60,11 @@ package directreader {
   // Custom interpreters for data. (Use '# for arrays.)
   
   sealed trait Customization {
-    private[directreader] def escape(raw: String): String = {
+    private[oldreader] def escape(raw: String): String = {
       import scala.reflect.runtime.universe._
       Literal(Constant(raw)).toString
     }
-    private[directreader] def customClassName = getClass.getName.split('.').last
+    private[oldreader] def customClassName = getClass.getName.split('.').last
 
     def in: List[String]
     def is: Option[String] = None
@@ -328,7 +328,7 @@ package directreader {
 
       c.Expr[SchemaClassMaker[TYPE]](q"""
         import com.sun.jna.Pointer
-        import org.dianahep.scaroot.directreader._
+        import org.dianahep.scaroot.oldreader._
 
         new SchemaClassMaker[$dataClass] {
           def apply(dataProvider: Pointer, className: String, allPossibleFields: List[(String, Schema[_])]): SchemaClass[$dataClass] =

@@ -1,12 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <name>directreader</name>
+  <name>oldreader</name>
   <description>Access ROOT TTree data in Scala by directly pulling values.</description>
   <inceptionYear>2016</inceptionYear>
 
   <groupId>org.diana-hep</groupId>
-  <artifactId>scaroot-directreader</artifactId>
+  <artifactId>scaroot-oldreader</artifactId>
   <version>0.1</version>
   <packaging>jar</packaging>
 
@@ -153,7 +153,7 @@
           <classifier>scala_${scala.tools.version}-root_${root.version}</classifier>
           <archive>
             <manifest>
-              <mainClass>org.dianahep.scaroot.directreader.Main</mainClass>
+              <mainClass>org.dianahep.scaroot.oldreader.Main</mainClass>
               <addClasspath>true</addClasspath>
               <classpathPrefix>./lib</classpathPrefix>
             </manifest>
