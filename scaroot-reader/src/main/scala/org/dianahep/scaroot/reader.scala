@@ -117,6 +117,15 @@ package reader {
                                run: Long = 1L,
                                skip: Long = 0L) extends Iterator[TYPE] {
 
+    if (start < 0)
+      throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
+    if (end >= 0  &&  start >= end)
+      throw new IllegalArgumentException(s"If an ending index is given (greater than or equal to zero), then start ($start) must be less than end ($end).")
+    if (run < 1)
+      throw new IllegalArgumentException(s"The run ($run) must be strictly greater than zero.")
+    if (skip < 0)
+      throw new IllegalArgumentException(s"The skip ($skip) must be greater than or equal to zero.")
+
     // FIXME: if TYPE is not Generic, add 'treeLocation -> My[TYPE]' to myclasses (note: that macro would have to be materialized implicitly; also, it's safe because this class already has a non-trivial constructor).
 
     private var libscpp = Pointer.NULL
@@ -129,6 +138,7 @@ package reader {
     private var entryIndex = 0L
     private var fileIndex = 0
     private var entryInFileIndex = 0L
+    private var pattern = 0L
 
     private var entriesInFileArray = Array.fill[Long](fileLocations.size)(-1L)   // opening files is expensive
     private def entriesInFile(i: Int) = {
@@ -143,6 +153,8 @@ package reader {
 
     // Go to a random position (not a common feature for an Iterator to have, but useful, particularly for implementing "start").
     def setIndex(index: Long) {
+      if (index < start  ||  (end >= 0  &&  index >= end))
+        throw new IllegalArgumentException(s"The index ($index) must be between start ($start) and end ($end).")
       entryIndex = 0L
       fileIndex = 0
       entryInFileIndex = 0L
@@ -162,6 +174,7 @@ package reader {
         }
       }
       RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+      pattern = (entryIndex - start) % (run + skip)
     }
 
     def reset() { setIndex(0L) }  // synonym
@@ -178,6 +191,9 @@ package reader {
         else
           RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
       }
+      if (end >= 0  &&  entryIndex >= end)
+        done = true
+      pattern = (entryIndex - start) % (run + skip)
     }
 
     val schema: SchemaClass =
@@ -239,6 +255,8 @@ package reader {
 
       // Increment the counter and see if it's time to step to the next file.
       incrementIndex()
+      while (pattern >= run  &&  !done)
+        incrementIndex()      // inefficient if skip is large, but that's not our use-case
 
       out
     }

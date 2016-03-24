@@ -80,78 +80,36 @@ class DefaultSuite extends FlatSpec with Matchers {
     // }
 
     {
-      println("no explicit start")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t")
+      println("2 - 3 with start = 0")
+      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 0, run = 2, skip = 3)
       while (iterator.hasNext)
         println(iterator.next())
     }
 
     {
-      println("start 0")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 0L)
+      println("2 - 3 with start = 1")
+      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 1, run = 2, skip = 3)
       while (iterator.hasNext)
         println(iterator.next())
     }
 
     {
-      println("start 1")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 1L)
+      println("2 - 3 with start = 2")
+      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 2, run = 2, skip = 3)
       while (iterator.hasNext)
         println(iterator.next())
     }
 
     {
-      println("start 2")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 2L)
+      println("2 - 3 with start = 3")
+      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 3, run = 2, skip = 3)
       while (iterator.hasNext)
         println(iterator.next())
     }
 
     {
-      println("start 3")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 3L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 4")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 4L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 5")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 5L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 6")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 6L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 7")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 7L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 8")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 8L)
-      while (iterator.hasNext)
-        println(iterator.next())
-    }
-
-    {
-      println("start 9")
-      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 9L)
+      println("2 - 3 with start = 4")
+      val iterator = RootTreeIterator[Generic](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", start = 4, run = 2, skip = 3)
       while (iterator.hasNext)
         println(iterator.next())
     }
