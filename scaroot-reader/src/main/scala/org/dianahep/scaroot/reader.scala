@@ -76,7 +76,10 @@ package reader {
       }
 
       val out = c.Expr[My[TYPE]](q"""
+        import java.nio.ByteBuffer
+
         import scala.reflect.runtime.universe.typeOf
+
         import org.dianahep.scaroot.reader._
         import org.dianahep.scaroot.reader.schema._
         import org.dianahep.scaroot.reader.factory._
@@ -140,7 +143,7 @@ package reader {
 
     private var bufferSize = 128*1024   // FIXME: update this when you encounter errors
     private var buffer = new Memory(bufferSize)
-    private var byteBuffer = new ByteBuffer(buffer, bufferSize)
+    private var byteBuffer = buffer.getByteBuffer(0, bufferSize)
 
     def hasNext = !done
     def next() = {
