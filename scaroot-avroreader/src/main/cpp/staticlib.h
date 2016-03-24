@@ -29,7 +29,7 @@ extern "C" {
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
   int getDataSize(const void *fieldWalker, const void *address);
   const void *getData(const void *fieldWalker, const void *address, int index);
-  void copyToBuffer(void *treeWalker, int number, void *buffer, long size);
+  void copyToBuffer(void *treeWalker, int64_t entry, void *buffer, long size);
 }
 
 #endif // STATICLIB_H

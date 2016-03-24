@@ -999,7 +999,7 @@ public:
 #endif
   int getDataSize(const void *address);
   const void *getData(const void *address, int index);
-  void copyToBuffer(int number, void *buffer, size_t size);
+  void copyToBuffer(int64_t entry, void *buffer, size_t size);
 };
 
 #endif // DATAWALKER_H

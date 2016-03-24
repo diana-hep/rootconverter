@@ -2728,36 +2728,32 @@ const void *TreeWalker::getData(const void *address, int index) {
   return field->unpack(field->getAddress());
 }
 
-void TreeWalker::copyToBuffer(int number, void *buffer, size_t size) {
+void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
+  // Sanity check lock between C++ and Java: the first byte denotes the
+  // reading vs writing state of the buffer.
+  // Don't rely on this: treat copyToBuffer as a blocking call and do all
+  // parallelization in Java (with wait() and notify()).
+  while (*((char*)buffer) != StatusWriting) {
+    timespec req, rem;
+    req.tv_sec = 0;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 1;
+    nanosleep(&req, &rem);  // nanosleep (even with 0 ns) keeps the poll from taking 100% CPU
+  }
+
   void *ptr = buffer;
   void *limit = (void*)((size_t)buffer + size);
 
-  timespec req, rem;
-  req.tv_sec = 0;
-  req.tv_nsec = 0;
-  rem.tv_sec = 0;
-  rem.tv_nsec = 0;
+  ptr = (void*)((size_t)buffer + sizeof(char));
 
-  // Can be used in a single-threaded, blocking way with number == 1
-  // or an indefinite polling loop with number < 0.
-  while (number != 0) {
-    // Simple lock between C++ and Java: the first byte denotes the
-    // reading vs writing state of the buffer.
-    //   * Only Java (reader) can set the byte to StatusWriting.
-    //   * Only C++ (writer) can set the byte to StatusReading.
-    while (*((char*)buffer) == StatusReading)
-      nanosleep(&req, &rem);  // nanosleep (even with 0 ns) keeps the poll from taking 100% CPU
+  reader->SetEntry(entry);
 
-    ptr = (void*)((size_t)buffer + sizeof(char));
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+    ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
 
-    for (auto iter = fields.begin();  iter != fields.end();  ++iter)
-      ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
-
-    if (ptr == nullptr)
-      *((char*)buffer) = StatusTooSmall;
-    else
-      *((char*)buffer) = StatusReading;
-
-    if (number >= 0) number -= 1;
-  }
+  if (ptr == nullptr)
+    *((char*)buffer) = StatusTooSmall;
+  else
+    *((char*)buffer) = StatusReading;
 }

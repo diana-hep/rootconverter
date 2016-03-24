@@ -130,7 +130,6 @@ package reader {
           RootReaderCPPLibrary.resolve(treeWalker)
           done = (RootReaderCPPLibrary.next(treeWalker) == 0)
         }
-        RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, 0L)
 
         Schema(treeWalker)
       }
@@ -139,19 +138,22 @@ package reader {
 
     val factory = FactoryClass[TYPE](schema, myclasses)
 
-    private var bufferSize = 128*1024   // FIXME: update this when you encounter errors
-    private var buffer = new Memory(bufferSize)
-    private var byteBuffer = buffer.getByteBuffer(0, bufferSize)
+    private var entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
+    private var entryInFileIndex = 0L
+    RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, entryInFileIndex)
+
+    private var bufferSize = new NativeLong(128*1024)   // FIXME: update this when you encounter errors
+    private var buffer = new Memory(bufferSize.longValue)
+    private var byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
 
     def hasNext = !done
     def next() = {
       if (done)
         throw new RuntimeException("next() called on empty RootTreeIterator (create a new one to run over the data again)")
 
-      // FIXME: implement multithreaded mode
       buffer.setByte(0, 1)
 
-      RootReaderCPPLibrary.copyToBuffer(treeWalker, 1, buffer, new NativeLong(bufferSize))
+      RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, buffer, bufferSize)
       byteBuffer.rewind()
       val statusByte = byteBuffer.get
       // println(s"statusByte $statusByte")
@@ -160,22 +162,27 @@ package reader {
 
       val out = factory(byteBuffer)
 
-      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-      if (done) {
+      entryInFileIndex += 1L
+      if (entryInFileIndex >= entriesInFile) {
         fileIndex += 1
         if (fileIndex < fileLocations.size) {
           RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
-          done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+          entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
+          entryInFileIndex = 0L
         }
+        else
+          done = true
       }
 
       out
     }
 
     def reset() {
+      done = false
       fileIndex = 0
       RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
-      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
+      entryInFileIndex = 0L
     }
   }
   object RootTreeIterator {
