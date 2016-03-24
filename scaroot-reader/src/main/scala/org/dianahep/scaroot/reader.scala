@@ -46,7 +46,7 @@ package reader {
 
   /////////////////////////////////////////////////// user's class specification (a factory-factory!)
 
-  trait My[TYPE] {
+  abstract class My[TYPE] {
     def name: String
     def fieldTypes: List[(String, Type)]
     def apply(factories: List[(String, Factory[_])]): FactoryClass[TYPE]
@@ -70,15 +70,15 @@ package reader {
       constructorParams.foreach {param =>
         val name = param.asTerm.name.decodedName.toString
         val tpe = param.typeSignature
-        fieldTypes += q"""$name -> typeOf[$tpe]"""
+        fieldTypes += q"""$name -> weakTypeOf[$tpe]"""
         getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](byteBuffer)"""
         i += 1
       }
 
-      val out = c.Expr[My[TYPE]](q"""
+      c.Expr[My[TYPE]](q"""
         import java.nio.ByteBuffer
 
-        import scala.reflect.runtime.universe.typeOf
+        import scala.reflect.runtime.universe.weakTypeOf
 
         import org.dianahep.scaroot.reader._
         import org.dianahep.scaroot.reader.schema._
@@ -103,8 +103,6 @@ package reader {
             }
         }
       """)
-      println(out)
-      out
     }
   }
 

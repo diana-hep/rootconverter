@@ -173,14 +173,14 @@ package factory {
     override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryIterable(${factory.toString(indent, memo)})"""
   }
 
-  abstract class FactoryClass[TYPE : ClassTag](val name: String, val factories: List[(String, Factory[_])]) extends Factory[TYPE] {
+  abstract class FactoryClass[TYPE](val name: String, val factories: List[(String, Factory[_])]) extends Factory[TYPE] {
     override def toString() = toString(0, mutable.Set[String]())
     override def toString(indent: Int, memo: mutable.Set[String]): String =
       if (memo contains name)
-        s"""FactoryClass[${classTag[TYPE]}](name = ${Literal(Constant(name)).toString}, factories = <see above>)"""
+        s"""FactoryClass(name = ${Literal(Constant(name)).toString}, factories = <see above>)"""
       else {
         memo += name
-        s"""FactoryClass[${classTag[TYPE]}](name = ${Literal(Constant(name)).toString}, factories = List(${factories map {case (n, f) => "\n" + " " * indent + "  \"" + n + "\" -> " + f.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
+        s"""FactoryClass(name = ${Literal(Constant(name)).toString}, factories = List(${factories map {case (n, f) => "\n" + " " * indent + "  \"" + n + "\" -> " + f.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
       }
   }
   object FactoryClass {
