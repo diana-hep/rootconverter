@@ -108,19 +108,81 @@ package reader {
 
   /////////////////////////////////////////////////// entry point for iterating over ROOT files
 
-  class RootTreeIterator[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, myclasses: Map[String, My[_]] = Map[String, My[_]]()) extends Iterator[TYPE] {
+  class RootTreeIterator[TYPE](fileLocations: Seq[String],
+                               treeLocation: String,
+                               libs: Seq[String] = Nil,
+                               myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                               start: Long = 0L,
+                               end: Long = -1L,
+                               run: Long = 1L,
+                               skip: Long = 0L) extends Iterator[TYPE] {
+
     // FIXME: if TYPE is not Generic, add 'treeLocation -> My[TYPE]' to myclasses (note: that macro would have to be materialized implicitly; also, it's safe because this class already has a non-trivial constructor).
 
     private var libscpp = Pointer.NULL
     libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
 
+    // Pack of state variables that all have to be kept in sync!
+    // Limit user access to setIndex, reset(), and incrementIndex(), which should preserve interrelationships.
     private var done = true
     private var treeWalker = Pointer.NULL
+    private var entryIndex = 0L
     private var fileIndex = 0
+    private var entryInFileIndex = 0L
+
+    private var entriesInFileArray = Array.fill[Long](fileLocations.size)(-1L)   // opening files is expensive
+    private def entriesInFile(i: Int) = {
+      if (entriesInFileArray(i) < 0) {
+        RootReaderCPPLibrary.reset(treeWalker, fileLocations(i))
+        entriesInFileArray(i) = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
+      }
+      entriesInFileArray(i)
+    }
+
+    def index = entryIndex
+
+    // Go to a random position (not a common feature for an Iterator to have, but useful, particularly for implementing "start").
+    def setIndex(index: Long) {
+      entryIndex = 0L
+      fileIndex = 0
+      entryInFileIndex = 0L
+      while (entryIndex < index) {
+        if (fileIndex >= entriesInFileArray.size) {
+          done = true
+          entryIndex = -1L
+          throw new IllegalArgumentException(s"Total number of entries is ${entriesInFileArray.sum}, so $index would be beyond the last.")
+        }
+        if (entryIndex + entriesInFile(fileIndex) <= index) {
+          fileIndex += 1
+          entryIndex += entriesInFile(fileIndex)
+        }
+        else {
+          entryInFileIndex = index - entryIndex
+          entryIndex = index
+        }
+      }
+      RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+    }
+
+    def reset() { setIndex(0L) }  // synonym
+
+    // Go forward by one (the usual case).
+    def incrementIndex() {
+      entryIndex += 1L
+      entryInFileIndex += 1L
+      if (entryInFileIndex >= entriesInFile(fileIndex)) {
+        fileIndex += 1
+        entryInFileIndex = 0L
+        if (fileIndex >= entriesInFileArray.size)
+          done = true
+        else
+          RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+      }
+    }
 
     val schema: SchemaClass =
       if (!fileLocations.isEmpty) {
-        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(fileIndex), treeLocation, "", libscpp)
+        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(0), treeLocation, "", libscpp)
 
         if (RootReaderCPPLibrary.valid(treeWalker) == 0)
           throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
@@ -138,54 +200,58 @@ package reader {
 
     val factory = FactoryClass[TYPE](schema, myclasses)
 
-    private var entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
-    private var entryInFileIndex = 0L
-    RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, entryInFileIndex)
+    setIndex(start)
 
-    private var bufferSize = new NativeLong(128*1024)   // FIXME: update this when you encounter errors
+    private var bufferSize = new NativeLong(64*1024)
     private var buffer = new Memory(bufferSize.longValue)
     private var byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
+    private var statusByte = 1.toByte
 
     def hasNext = !done
     def next() = {
       if (done)
         throw new RuntimeException("next() called on empty RootTreeIterator (create a new one to run over the data again)")
 
-      buffer.setByte(0, 1)
-
+      // Set the status byte to 1 (writing) and let C++ write to the buffer.
+      statusByte = 1
+      buffer.setByte(0, statusByte)
       RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, buffer, bufferSize)
       byteBuffer.rewind()
-      val statusByte = byteBuffer.get
-      // println(s"statusByte $statusByte")
 
-      // FIXME: this is where you'd check the status byte to see if the buffer size needs to be increased or wait for the lock to be released in multithreaded mode
+      // Check the status byte to find out if copying failed due to a buffer that's too small (the only error we handle).
+      statusByte = byteBuffer.get
+      while (statusByte == 2) {
+        // Get a new, bigger buffer (and let the old one be garbage collected).
+        bufferSize = new NativeLong(bufferSize.longValue * 2L)
+        buffer = new Memory(bufferSize.longValue)
+        byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
 
+        // Try, try again.
+        statusByte = 1
+        buffer.setByte(0, statusByte)
+        RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, buffer, bufferSize)
+        byteBuffer.rewind()
+        statusByte = byteBuffer.get
+      }
+
+      // Interpret the data in the buffer, creating Scala objects.
       val out = factory(byteBuffer)
 
-      entryInFileIndex += 1L
-      if (entryInFileIndex >= entriesInFile) {
-        fileIndex += 1
-        if (fileIndex < fileLocations.size) {
-          RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
-          entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
-          entryInFileIndex = 0L
-        }
-        else
-          done = true
-      }
+      // Increment the counter and see if it's time to step to the next file.
+      incrementIndex()
 
       out
     }
-
-    def reset() {
-      done = false
-      fileIndex = 0
-      RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
-      entriesInFile = RootReaderCPPLibrary.numEntriesInCurrentTree(treeWalker)
-      entryInFileIndex = 0L
-    }
   }
   object RootTreeIterator {
-    def apply[TYPE](fileLocations: Seq[String], treeLocation: String, libs: Seq[String] = Nil, myclasses: Map[String, My[_]] = Map[String, My[_]]()) = new RootTreeIterator[TYPE](fileLocations, treeLocation, libs, myclasses)
+    def apply[TYPE](fileLocations: Seq[String],
+                    treeLocation: String,
+                    libs: Seq[String] = Nil,
+                    myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                    start: Long = 0L,
+                    end: Long = -1L,
+                    run: Long = 1L,
+                    skip: Long = 0L) =
+      new RootTreeIterator[TYPE](fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
   }
 }
