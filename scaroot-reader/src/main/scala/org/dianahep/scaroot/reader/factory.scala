@@ -1,7 +1,5 @@
 package org.dianahep.scaroot.reader
 
-import java.nio.ByteBuffer
-
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 import scala.collection.mutable.Builder
@@ -15,10 +13,66 @@ import scala.reflect.runtime.universe.Type
 import scala.reflect.runtime.universe.typeOf
 import scala.reflect.runtime.universe.TypeRefApi
 
+import com.sun.jna.Pointer
+
 import org.dianahep.scaroot.reader._
 import org.dianahep.scaroot.reader.schema._
 
 package factory {
+  // My own ByteBuffer that can be reused if the pointer doesn't move.
+  class ByteBuffer(buffer: Pointer, size: Long) {
+    private var offset = 0L
+
+    def rewind() {
+      offset = 0L
+    }
+
+    def get: Byte = {
+      val out = buffer.getByte(offset)
+      offset += 1L
+      out
+    }
+
+    def getShort: Short = {
+      val out = buffer.getShort(offset)
+      offset += 2L
+      out
+    }
+
+    def getInt: Int = {
+      val out = buffer.getInt(offset)
+      offset += 4L
+      out
+    }
+
+    def getLong: Long = {
+      val out = buffer.getLong(offset)
+      offset += 8L
+      out
+    }
+
+    def getFloat: Float = {
+      val out = buffer.getFloat(offset)
+      offset += 4L
+      out
+    }
+
+    def getDouble: Double = {
+      val out = buffer.getDouble(offset)
+      offset += 8L
+      out
+    }
+
+    def get(byteArray: Array[Byte]) {
+      var i = 0
+      while (i < byteArray.size) {
+        byteArray(i) = buffer.getByte(offset + i)
+        i += 1
+      }
+      offset += byteArray.size
+    }
+  }
+
   /////////////////////////////////////////////////// factories for building data at runtime
   // Note that type information is compiled in!
 
@@ -133,7 +187,11 @@ package factory {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val b = builder(size)
-      0 until size foreach {i => b(i) = factory(byteBuffer)}
+      var i = 0
+      while (i < size) {
+        b(i) = factory(byteBuffer)
+        i += 1
+      }
       b.toSeq
     }
     override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryWrappedArray(${factory.toString(indent, memo)})"""
@@ -143,7 +201,11 @@ package factory {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val b = builder(size)
-      0 until size foreach {i => b(i) = factory(byteBuffer)}
+      var i = 0
+      while (i < size) {
+        b(i) = factory(byteBuffer)
+        i += 1
+      }
       b
     }
     override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryArray(${factory.toString(indent, memo)})"""
@@ -153,7 +215,11 @@ package factory {
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val b = builder(size)
-      0 until size foreach {i => b += factory(byteBuffer)}
+      var i = 0
+      while (i < size) {
+        b += factory(byteBuffer)
+        i += 1
+      }
       b.result
     }
     override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryIterable(${factory.toString(indent, memo)})"""

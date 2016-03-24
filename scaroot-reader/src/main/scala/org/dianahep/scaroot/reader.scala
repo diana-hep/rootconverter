@@ -76,7 +76,6 @@ package reader {
       }
 
       val out = c.Expr[My[TYPE]](q"""
-        import java.nio.ByteBuffer
         import scala.reflect.runtime.universe.typeOf
         import org.dianahep.scaroot.reader._
         import org.dianahep.scaroot.reader.schema._
@@ -116,12 +115,11 @@ package reader {
 
     private var done = true
     private var treeWalker = Pointer.NULL
-    private var remainingFiles = fileLocations.toList
+    private var fileIndex = 0
 
     val schema: SchemaClass =
       if (!fileLocations.isEmpty) {
-        treeWalker = RootReaderCPPLibrary.newTreeWalker(remainingFiles.head, treeLocation, "", libscpp)
-        remainingFiles = remainingFiles.tail
+        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(fileIndex), treeLocation, "", libscpp)
 
         if (RootReaderCPPLibrary.valid(treeWalker) == 0)
           throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
@@ -140,8 +138,9 @@ package reader {
 
     val factory = FactoryClass[TYPE](schema, myclasses)
 
-    private var bufferSize = 64*1024   // FIXME: update this when you encounter errors
+    private var bufferSize = 128*1024   // FIXME: update this when you encounter errors
     private var buffer = new Memory(bufferSize)
+    private var byteBuffer = new ByteBuffer(buffer, bufferSize)
 
     def hasNext = !done
     def next() = {
@@ -152,20 +151,30 @@ package reader {
       buffer.setByte(0, 1)
 
       RootReaderCPPLibrary.copyToBuffer(treeWalker, 1, buffer, new NativeLong(bufferSize))
-      val byteBuffer = buffer.getByteBuffer(0, bufferSize)   // FIXME: does this unnecessarily create objects? Maybe I should make my own custom view of the Pointer, call it MyByteBuffer or something?
+      byteBuffer.rewind()
       val statusByte = byteBuffer.get
+      // println(s"statusByte $statusByte")
+
       // FIXME: this is where you'd check the status byte to see if the buffer size needs to be increased or wait for the lock to be released in multithreaded mode
 
       val out = factory(byteBuffer)
 
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-      if (done  &&  !remainingFiles.isEmpty) {
-        RootReaderCPPLibrary.reset(treeWalker, remainingFiles.head)
-        remainingFiles = remainingFiles.tail
-        done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      if (done) {
+        fileIndex += 1
+        if (fileIndex < fileLocations.size) {
+          RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+          done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+        }
       }
 
       out
+    }
+
+    def reset() {
+      fileIndex = 0
+      RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
     }
   }
   object RootTreeIterator {
