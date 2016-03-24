@@ -143,8 +143,6 @@ package reader {
     private var buffer = new Memory(bufferSize)
     private var byteBuffer = buffer.getByteBuffer(0, bufferSize)
 
-    private var tmpindex = 0L
-
     def hasNext = !done
     def next() = {
       if (done)
@@ -162,12 +160,7 @@ package reader {
 
       val out = factory(byteBuffer)
 
-      // done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-      tmpindex += 1
-      done = (tmpindex >= 1000)
-      if (!done)
-        RootReaderCPPLibrary.setEntryInCurrentTree(treeWalker, tmpindex)
-
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
       if (done) {
         fileIndex += 1
         if (fileIndex < fileLocations.size) {
@@ -180,8 +173,6 @@ package reader {
     }
 
     def reset() {
-      tmpindex = 0L
-
       fileIndex = 0
       RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
       done = (RootReaderCPPLibrary.next(treeWalker) == 0)
