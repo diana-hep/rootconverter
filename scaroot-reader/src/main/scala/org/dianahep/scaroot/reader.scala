@@ -126,18 +126,12 @@ package reader {
                                                   treeLocation: String,
                                                   libs: Seq[String] = Nil,
                                                   myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                                  start: Long = 0L,   // Fancy indexing was for an earlier attempt
-                                                  end: Long = -1L,    // at parallelization. No longer used, but
-                                                  run: Long = 1L,     // it has no performance penalty.
-                                                  skip: Long = 0L) extends Iterator[TYPE] {
+                                                  start: Long = 0L,
+                                                  end: Long = -1L) extends Iterator[TYPE] {
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
       throw new IllegalArgumentException(s"If an ending index is given (greater than or equal to zero), then start ($start) must be less than end ($end).")
-    if (run < 1)
-      throw new IllegalArgumentException(s"The run ($run) must be strictly greater than zero.")
-    if (skip < 0)
-      throw new IllegalArgumentException(s"The skip ($skip) must be greater than or equal to zero.")
 
     libs foreach {lib => LoadLibsOnce(lib)}
 
@@ -148,7 +142,6 @@ package reader {
     private var entryIndex = 0L
     private var fileIndex = 0
     private var entryInFileIndex = 0L
-    private var pattern = 0L
 
     private var entriesInFileArray = Array.fill[Long](fileLocations.size)(-1L)   // opening files is expensive
     private def entriesInFile(i: Int) = {
@@ -184,7 +177,6 @@ package reader {
         }
       }
       RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
-      pattern = (entryIndex - start) % (run + skip)
     }
 
     def reset() { setIndex(0L) }  // synonym
@@ -203,7 +195,6 @@ package reader {
       }
       if (end >= 0  &&  entryIndex >= end)
         done = true
-      pattern = (entryIndex - start) % (run + skip)
     }
 
     val schema: SchemaClass =
@@ -272,8 +263,6 @@ package reader {
 
       // Increment the counter and see if it's time to step to the next file.
       incrementIndex()
-      while (pattern >= run  &&  !done)
-        incrementIndex()      // inefficient if skip is large, but that's not our use-case
 
       out
     }
@@ -283,10 +272,8 @@ package reader {
                                        treeLocation: String,
                                        libs: Seq[String] = Nil,
                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                       start: Long = 0L,   // Fancy indexing was for an earlier attempt
-                                       end: Long = -1L,    // at parallelization. No longer used, but
-                                       run: Long = 1L,     // it has no performance penalty.
-                                       skip: Long = 0L) =
-      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
+                                       start: Long = 0L,
+                                       end: Long = -1L) =
+      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end)
   }
 }

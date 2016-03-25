@@ -8,56 +8,56 @@ import org.scalatest.Matchers
 
 import org.dianahep.scaroot.reader._
 
+case class Tree(event: Event)
+
+case class Event(
+  fType: String,
+  fEventName: Option[String],
+  fNtrack: Int,
+  fNseg: Int,
+  fNvertex: Int,
+  fFlag: Long,
+  fTemperature: Double,
+  fMeasures: Seq[Int],
+  fMatrix: Seq[Seq[Double]],
+  fClosestDistance: Option[Double],
+  fEvtHdr: EventHeader,
+  fTracks: Option[Seq[Track]],
+  fTriggerBits: TBits,
+  fIsValid: Boolean)
+
+case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
+
+case class Track(
+  fPx: Float,
+  fPy: Float,
+  fPz: Float,
+  fRandom: Float,
+  fMass2: Float,
+  fBx: Float,
+  fBy: Float,
+  fMeanCharge: Float,
+  fXfirst: Float,
+  fXlast: Float,
+  fYfirst: Float,
+  fYlast: Float,
+  fZfirst: Float,
+  fZlast: Float,
+  fCharge: Double,
+  fVertex: Seq[Double],
+  fNpoint: Int,
+  fValid: Short,
+  fNsp: Int,
+  fPointValue: Option[Double],
+  fTriggerBits: TBits)
+
+case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
+
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
-    case class Tree(event: Event)
+    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
 
-    case class Event(
-      fType: String,
-      fEventName: Option[String],
-      fNtrack: Int,
-      fNseg: Int,
-      fNvertex: Int,
-      fFlag: Long,
-      fTemperature: Double,
-      fMeasures: Seq[Int],
-      fMatrix: Seq[Seq[Double]],
-      fClosestDistance: Option[Double],
-      fEvtHdr: EventHeader,
-      fTracks: Option[Seq[Track]],
-      fTriggerBits: TBits,
-      fIsValid: Boolean)
-
-    case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
-
-    case class Track(
-      fPx: Float,
-      fPy: Float,
-      fPz: Float,
-      fRandom: Float,
-      fMass2: Float,
-      fBx: Float,
-      fBy: Float,
-      fMeanCharge: Float,
-      fXfirst: Float,
-      fXlast: Float,
-      fYfirst: Float,
-      fYlast: Float,
-      fZfirst: Float,
-      fZlast: Float,
-      fCharge: Double,
-      fVertex: Seq[Double],
-      fNpoint: Int,
-      fValid: Short,
-      fNsp: Int,
-      fPointValue: Option[Double],
-      fTriggerBits: TBits)
-
-    case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
-
-    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits], "T" -> My[Tree])
-
-    val iterator = RootTreeIterator[Object](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
+    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
 
     // println(iterator.schema)
     // println(iterator.factory)
@@ -68,7 +68,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     //   var tmp: Tree = null
 
       while (iterator.hasNext) {
-        println(iterator.next().asInstanceOf[Tree].event.fEventName)
+        println(iterator.next().event.fEventName)
         i += 1
       }
 
@@ -77,7 +77,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     // }
 
     // case class Tree(x: Int, y: Double, z: String)
-    // val iterator = RootTreeIterator[Tree](List("../root2avro/build/multipleLeaves.root"), "t", numberOfThreads = 2)
+    // val iterator = RootTreeIterator[Tree](List("../root2avro/build/multipleLeaves.root"), "t")
     // while (iterator.hasNext)
     //   println(iterator.next())
 
