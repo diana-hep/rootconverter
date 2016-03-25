@@ -57,7 +57,7 @@ class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
     val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
 
-    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
+    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses, microBatchSize = 10)
 
     // println(iterator.schema)
     // println(iterator.factory)
@@ -69,6 +69,7 @@ class DefaultSuite extends FlatSpec with Matchers {
 
       while (iterator.hasNext) {
         println(iterator.next().event.fEventName)
+        // tmp = iterator.next()
         i += 1
       }
 
@@ -77,7 +78,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     // }
 
     // case class Tree(x: Int, y: Double, z: String)
-    // val iterator = RootTreeIterator[Tree](List("../root2avro/build/multipleLeaves.root"), "t")
+    // val iterator = RootTreeIterator[Tree](List("../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root", "../root2avro/build/multipleLeaves.root"), "t", microBatchSize = 3)
     // while (iterator.hasNext)
     //   println(iterator.next())
 

@@ -1,6 +1,7 @@
 package org.dianahep.scaroot.reader
 
 import java.nio.ByteBuffer
+import java.nio.charset.Charset
 
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
@@ -108,8 +109,8 @@ package factory {
     }
   }
 
-  case class FactoryString(charset: String) extends Factory[String] {
-    // FIXME: it might be more efficient to get a Charset object from that string, first.
+  case class FactoryString(charsetName: String) extends Factory[String] {
+    val charset = Charset.forName(charsetName)
     def apply(byteBuffer: ByteBuffer) = {
       val size = byteBuffer.getInt
       val out = Array.fill[Byte](size)(0)

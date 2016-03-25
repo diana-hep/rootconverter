@@ -2721,9 +2721,10 @@ const void *TreeWalker::getData(const void *address, int index) {
   return field->unpack(field->getAddress());
 }
 
-void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
+void TreeWalker::copyToBuffer(int64_t entry, int microBatchSize, void *buffer, size_t size) {
   // Sanity check lock between C++ and Java: the first byte denotes the
   // reading vs writing state of the buffer.
+  // Currently not used (C++ and Java code work in the same thread).
   while (*((char*)buffer) != StatusWriting) {
     timespec req, rem;
     req.tv_sec = 0;
@@ -2735,18 +2736,24 @@ void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
 
   void *ptr = buffer;
   void *limit = (void*)((size_t)buffer + size);
+ 
+  void *beginningOfRecord = ptr;
+  for (int i = 0;  i < microBatchSize;  i++) {
+    beginningOfRecord = ptr;
+    ptr = (void*)((size_t)ptr + sizeof(char));
 
-  ptr = (void*)((size_t)buffer + sizeof(char));
+    reader->SetEntry(entry + i);
 
-  reader->SetEntry(entry);
+    for (auto iter = fields.begin();  iter != fields.end();  ++iter)
+      ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
 
-  for (auto iter = fields.begin();  iter != fields.end();  ++iter)
-    ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
-
-  if (ptr == nullptr)
-    *((char*)buffer) = StatusTooSmall;
-  else
-    *((char*)buffer) = StatusReading;
+    if (ptr == nullptr) {
+      *((char*)beginningOfRecord) = StatusTooSmall;
+      return;
+    }
+    else
+      *((char*)beginningOfRecord) = StatusReading;
+  }
 }
 
 void resetSignals() {

@@ -76,7 +76,7 @@ const void *getData(const void *dataProvider, const void *address, int index) {
   return dp->getData(address, index);
 }
 
-void copyToBuffer(void *treeWalker, int64_t entry, void *buffer, long size) {
+void copyToBuffer(void *treeWalker, int64_t entry, int microBatchSize, void *buffer, long size) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
-  tw->copyToBuffer(entry, buffer, (size_t)size);
+  tw->copyToBuffer(entry, microBatchSize, buffer, (size_t)size);
 }

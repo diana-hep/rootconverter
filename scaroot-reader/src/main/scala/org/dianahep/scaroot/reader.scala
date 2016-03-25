@@ -127,7 +127,8 @@ package reader {
                                                   libs: Seq[String] = Nil,
                                                   myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                                   start: Long = 0L,
-                                                  end: Long = -1L) extends Iterator[TYPE] {
+                                                  end: Long = -1L,
+                                                  microBatchSize: Int = 10) extends Iterator[TYPE] {
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
@@ -142,6 +143,7 @@ package reader {
     private var entryIndex = 0L
     private var fileIndex = 0
     private var entryInFileIndex = 0L
+    private var microBatchIndex = 0
 
     private var entriesInFileArray = Array.fill[Long](fileLocations.size)(-1L)   // opening files is expensive
     private def entriesInFile(i: Int) = {
@@ -161,6 +163,7 @@ package reader {
       entryIndex = 0L
       fileIndex = 0
       entryInFileIndex = 0L
+      microBatchIndex = 0
       while (entryIndex < index) {
         if (fileIndex >= entriesInFileArray.size) {
           done = true
@@ -177,6 +180,7 @@ package reader {
         }
       }
       RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
+      done = false
     }
 
     def reset() { setIndex(0L) }  // synonym
@@ -185,14 +189,21 @@ package reader {
     def incrementIndex() {
       entryIndex += 1L
       entryInFileIndex += 1L
+      microBatchIndex += 1
+
+      if (microBatchIndex >= microBatchSize)
+        microBatchIndex = 0
+
       if (entryInFileIndex >= entriesInFile(fileIndex)) {
         fileIndex += 1
         entryInFileIndex = 0L
+        microBatchIndex = 0
         if (fileIndex >= entriesInFileArray.size)
           done = true
         else
           RootReaderCPPLibrary.reset(treeWalker, fileLocations(fileIndex))
       }
+
       if (end >= 0  &&  entryIndex >= end)
         done = true
     }
@@ -231,16 +242,24 @@ package reader {
     private var byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
     private var statusByte = 1.toByte
 
+    private def thisMicroBatchSize =
+      if (entriesInFile(fileIndex) - entryInFileIndex > microBatchSize)
+        microBatchSize
+      else
+        (entriesInFile(fileIndex) - entryInFileIndex).toInt
+
     def hasNext = !done
     def next() = {
       if (done)
         throw new RuntimeException("next() called on empty RootTreeIterator (create a new one to run over the data again)")
 
-      // Set the status byte to 1 (writing) and let C++ write to the buffer.
-      statusByte = 1
-      buffer.setByte(0, statusByte)
-      RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, buffer, bufferSize)
-      byteBuffer.rewind()
+      if (microBatchIndex == 0) {
+        // Set the status byte to 1 (writing) and let C++ write to the buffer.
+        statusByte = 1
+        buffer.setByte(0, statusByte)
+        RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, thisMicroBatchSize, buffer, bufferSize)
+        byteBuffer.rewind()
+      }
 
       // Check the status byte to find out if copying failed due to a buffer that's too small (the only error we handle).
       statusByte = byteBuffer.get
@@ -251,9 +270,10 @@ package reader {
         byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
 
         // Try, try again.
+        microBatchIndex = 0
         statusByte = 1
         buffer.setByte(0, statusByte)
-        RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, buffer, bufferSize)
+        RootReaderCPPLibrary.copyToBuffer(treeWalker, entryInFileIndex, thisMicroBatchSize, buffer, bufferSize)
         byteBuffer.rewind()
         statusByte = byteBuffer.get
       }
@@ -273,7 +293,8 @@ package reader {
                                        libs: Seq[String] = Nil,
                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                        start: Long = 0L,
-                                       end: Long = -1L) =
-      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end)
+                                       end: Long = -1L,
+                                       microBatchSize: Int = 10) =
+      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end, microBatchSize)
   }
 }
