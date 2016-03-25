@@ -211,6 +211,17 @@ package factory {
       else if (tpe =:= typeOf[Double])  {size: Int => val out = List.newBuilder[Double];  out.sizeHint(size); out}
       else                              {size: Int => val out = List.newBuilder[AnyRef];  out.sizeHint(size); out}
 
+    private def mutableListBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = mutable.ListBuffer.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = mutable.ListBuffer.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = mutable.ListBuffer.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = mutable.ListBuffer.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = mutable.ListBuffer.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = mutable.ListBuffer.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = mutable.ListBuffer.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = mutable.ListBuffer.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = mutable.ListBuffer.newBuilder[AnyRef];  out.sizeHint(size); out}
+
     private def vectorBuilder(tpe: Type) =
       if      (tpe =:= typeOf[Boolean]) {size: Int => val out = Vector.newBuilder[Boolean]; out.sizeHint(size); out}
       else if (tpe =:= typeOf[Char])    {size: Int => val out = Vector.newBuilder[Char];    out.sizeHint(size); out}
@@ -233,6 +244,17 @@ package factory {
       else if (tpe =:= typeOf[Double])  {size: Int => val out = Set.newBuilder[Double];  out.sizeHint(size); out}
       else                              {size: Int => val out = Set.newBuilder[AnyRef];  out.sizeHint(size); out}
 
+    private def mutableSetBuilder(tpe: Type) =
+      if      (tpe =:= typeOf[Boolean]) {size: Int => val out = mutable.Set.newBuilder[Boolean]; out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Char])    {size: Int => val out = mutable.Set.newBuilder[Char];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Byte])    {size: Int => val out = mutable.Set.newBuilder[Byte];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Short])   {size: Int => val out = mutable.Set.newBuilder[Short];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Int])     {size: Int => val out = mutable.Set.newBuilder[Int];     out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Long])    {size: Int => val out = mutable.Set.newBuilder[Long];    out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Float])   {size: Int => val out = mutable.Set.newBuilder[Float];   out.sizeHint(size); out}
+      else if (tpe =:= typeOf[Double])  {size: Int => val out = mutable.Set.newBuilder[Double];  out.sizeHint(size); out}
+      else                              {size: Int => val out = mutable.Set.newBuilder[AnyRef];  out.sizeHint(size); out}
+
     private def sortedSetBuilder(tpe: Type) =
       if      (tpe =:= typeOf[Boolean])    {size: Int => val out = SortedSet.newBuilder[Boolean]; out.sizeHint(size); out}
       else if (tpe =:= typeOf[Char])       {size: Int => val out = SortedSet.newBuilder[Char];    out.sizeHint(size); out}
@@ -243,7 +265,6 @@ package factory {
       else if (tpe =:= typeOf[Float])      {size: Int => val out = SortedSet.newBuilder[Float];   out.sizeHint(size); out}
       else if (tpe =:= typeOf[Double])     {size: Int => val out = SortedSet.newBuilder[Double];  out.sizeHint(size); out}
       else
-        // FIXME: you should do this with a macro (materialize with "implicitly")
         throw new IllegalArgumentException(s"SortedSet is currently only supported for primitive types, not $tpe.")
 
     // Called for each field of a My[class]; choice of factory depends on fields of the class.
@@ -279,10 +300,14 @@ package factory {
           FactoryArray(applyField(content, typeArgs(tpe).head, myclasses), arrayBuilder(typeArgs(tpe).head).asInstanceOf[Int => Array[TYPE]]).asInstanceOf[Factory[TYPE]]
         else if (tpe <:< typeOf[List[_]])
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), listBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
+        else if (tpe <:< typeOf[mutable.ListBuffer[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), mutableListBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else if (tpe <:< typeOf[Vector[_]])
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), vectorBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else if (tpe <:< typeOf[Set[_]])
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), setBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
+        else if (tpe <:< typeOf[mutable.Set[_]])
+          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), mutableSetBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else if (tpe <:< typeOf[SortedSet[_]])
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), sortedSetBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else
