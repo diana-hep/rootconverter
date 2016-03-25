@@ -35,12 +35,13 @@ package schema {
     val SchemaClassName      = new SchemaInstruction(12, "SchemaClassName")
     val SchemaClassPointer   = new SchemaInstruction(13, "SchemaClassPointer")
     val SchemaClassFieldName = new SchemaInstruction(14, "SchemaClassFieldName")
-    val SchemaClassEnd       = new SchemaInstruction(15, "SchemaClassEnd")
-    val SchemaClassReference = new SchemaInstruction(16, "SchemaClassReference")
+    val SchemaClassFieldDoc  = new SchemaInstruction(15, "SchemaClassFieldDoc")
+    val SchemaClassEnd       = new SchemaInstruction(16, "SchemaClassEnd")
+    val SchemaClassReference = new SchemaInstruction(17, "SchemaClassReference")
 
-    val SchemaPointer = new SchemaInstruction(17, "SchemaPointer")
+    val SchemaPointer = new SchemaInstruction(18, "SchemaPointer")
 
-    val SchemaSequence = new SchemaInstruction(18, "SchemaSequence")
+    val SchemaSequence = new SchemaInstruction(19, "SchemaSequence")
   }
 
   /////////////////////////////////////////////////// schemas (type information from ROOT)
@@ -92,12 +93,12 @@ package schema {
 
               // Note: filling the stack reverses the order of the fields, and this operation reverses
               // them back (for the same reason: Lists are filled on the left).
-              var fields = List[(String, Schema)]()
+              var fields = List[SchemaField]()
               var done2 = false
               while (!done2) stack match {
-                case S(schema) :: I(SchemaInstruction.SchemaClassFieldName(), fieldNamePtr) :: rest2 =>
+                case S(schema) :: I(SchemaInstruction.SchemaClassFieldDoc(), commentPtr) :: I(SchemaInstruction.SchemaClassFieldName(), fieldNamePtr) :: rest2 =>
                   stack = rest2
-                  fields = (fieldNamePtr.getString(0), schema) :: fields
+                  fields = SchemaField(fieldNamePtr.getString(0), commentPtr.getString(0), schema) :: fields
                 case _ =>
                   done2 = true
               }
@@ -158,7 +159,13 @@ package schema {
   case object SchemaDouble extends Schema { val cpp = "double" }
   case object SchemaString extends Schema { val cpp = "STRING" }
 
-  case class SchemaClass(name: String, fields: List[(String, Schema)]) extends Schema {
+  case class SchemaField(name: String, comment: String, schema: Schema) {
+    override def toString() = toString(0, mutable.Set[String]())
+    def toString(indent: Int, memo: mutable.Set[String]) =
+      s"""SchemaField(${Literal(Constant(name))}, ${Literal(Constant(comment))}, ${schema.toString(indent, memo)})"""
+  }
+
+  case class SchemaClass(name: String, fields: List[SchemaField]) extends Schema {
     def cpp = name
     override def toString() = toString(0, mutable.Set[String]())
     override def toString(indent: Int, memo: mutable.Set[String]) =
@@ -166,7 +173,7 @@ package schema {
         s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = <see above>)"""
       else {
         memo += name
-        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields map {case (n, s) => "\n" + " " * indent + "  \"" + n + "\" -> " + s.toString(indent + 2, memo)} mkString(",")}${"\n" + " " * indent}))"""
+        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields.map("\n" + " " * indent + "  " + _.toString(indent + 2, memo)).mkString(",")}${"\n" + " " * indent}))"""
       }
   }
 

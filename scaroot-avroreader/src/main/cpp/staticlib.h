@@ -26,6 +26,7 @@ extern "C" {
   const char *repr(void *treeWalker);
   const char *avroSchema(void *treeWalker);
   void printJSON(void *treeWalker);
+  const char *stringJSON(void *treeWalker);
 
   void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder);
   int getDataSize(const void *fieldWalker, const void *address);

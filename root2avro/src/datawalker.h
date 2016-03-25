@@ -69,12 +69,13 @@ enum SchemaInstruction {
   SchemaClassName      = 12,
   SchemaClassPointer   = 13,
   SchemaClassFieldName = 14,
-  SchemaClassEnd       = 15,
-  SchemaClassReference = 16,
+  SchemaClassFieldDoc  = 15,
+  SchemaClassEnd       = 16,
+  SchemaClassReference = 17,
 
-  SchemaPointer        = 17,
+  SchemaPointer        = 18,
 
-  SchemaSequence       = 18,
+  SchemaSequence       = 19,
 };
 
 typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *data);
@@ -112,7 +113,7 @@ public:
   virtual std::string avroTypeName() = 0;
   virtual std::string avroSchema(int indent, std::set<std::string> &memo) = 0;
   virtual void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) = 0;
-  virtual void printJSON(void *address) = 0;
+  virtual void printJSON(void *address, std::ostream &stream) = 0;
 #ifdef AVRO
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
 #endif
@@ -131,8 +132,8 @@ public:
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroSchema(int indent, std::set<std::string> &memo);
   virtual void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) = 0;
-  virtual void printJSON(void *address) = 0;
-  virtual void printJSON(TTreeReaderArrayBase *readerArrayBase, int i) = 0;
+  virtual void printJSON(void *address, std::ostream &stream) = 0;
+  virtual void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) = 0;
 #ifdef AVRO
   virtual bool printAvro(void *address, avro_value_t *avrovalue) = 0;
   virtual bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue) = 0;
@@ -152,8 +153,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -173,8 +174,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -194,8 +195,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -215,8 +216,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -236,8 +237,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -257,8 +258,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -279,8 +280,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -300,8 +301,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -321,8 +322,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -342,8 +343,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -363,8 +364,8 @@ public:
   const std::type_info *typeId();
   std::string avroTypeName();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -397,8 +398,8 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -417,8 +418,8 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -437,8 +438,8 @@ public:
   size_t sizeOf();
   const std::type_info *typeId();
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
-  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i);
+  void printJSON(void *address, std::ostream &stream);
+  void printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
   bool printAvro(TTreeReaderArrayBase *readerArrayBase, int i, avro_value_t *avrovalue);
@@ -472,7 +473,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -518,7 +519,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -554,7 +555,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -578,7 +579,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -615,7 +616,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -653,7 +654,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -690,7 +691,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -729,7 +730,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -755,7 +756,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -793,7 +794,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -859,8 +860,8 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim);
-  void printJSON(void *address);
+  int printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim, std::ostream &stream);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   int printAvroDeep(int readerIndex, int readerSize, LeafDimension *dim, avro_value_t *avrovalue);
   bool printAvro(void *address, avro_value_t *avrovalue);
@@ -896,7 +897,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -922,7 +923,7 @@ public:
   std::string avroTypeName();
   std::string avroSchema(int indent, std::set<std::string> &memo);
   void buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo);
-  void printJSON(void *address);
+  void printJSON(void *address, std::ostream &stream);
 #ifdef AVRO
   bool printAvro(void *address, avro_value_t *avrovalue);
 #endif
@@ -961,6 +962,7 @@ public:
   std::string fileLocation;
   std::string treeLocation;
   std::string avroNamespace;
+  std::string stringHolder;
 
   bool valid = false;
   std::string errorMessage = "";
@@ -992,6 +994,7 @@ public:
   std::string avroSchema();
   void buildSchema(SchemaBuilder schemaBuilder);
   void printJSON();
+  std::string stringJSON();
 #ifdef AVRO
   bool printAvroHeaderOnce(std::string &codec, int blockSize);
   bool printAvro();

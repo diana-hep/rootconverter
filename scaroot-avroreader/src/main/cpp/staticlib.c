@@ -48,17 +48,25 @@ void resolve(void *treeWalker) {
 
 const char *repr(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
-  return tw->repr().c_str();
+  tw->stringHolder = tw->repr();
+  return tw->stringHolder.c_str();
 }
 
 const char *avroSchema(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
-  return tw->avroSchema().c_str();
+  tw->stringHolder = tw->avroSchema();
+  return tw->stringHolder.c_str();
 }
 
 void printJSON(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->printJSON();
+}
+
+const char *stringJSON(void *treeWalker) {
+  TreeWalker *tw = (TreeWalker*)treeWalker;
+  tw->stringHolder = tw->stringJSON();
+  return tw->stringHolder.c_str();
 }
 
 void buildSchema(void *treeWalker, SchemaBuilder schemaBuilder) {

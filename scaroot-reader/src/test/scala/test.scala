@@ -59,15 +59,17 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses, microBatchSize = 10)
 
-    // println(iterator.schema)
-    // println(iterator.factory)
+    println(iterator.schema)
+    println(iterator.factory)
+    println(iterator.avroSchema)
+    println(iterator.repr)
 
     var i = 0
     // while (true) {
     //   val beforeTime = System.nanoTime
     //   var tmp: Tree = null
 
-      while (iterator.hasNext) {
+      while (iterator.hasNext  &&  i < 10) {
         println(iterator.next().event.fEventName)
         // tmp = iterator.next()
         i += 1

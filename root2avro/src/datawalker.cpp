@@ -62,12 +62,12 @@ void BoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   schemaBuilder(SchemaBool, nullptr);
 }
 
-void BoolWalker::printJSON(void *address) {
-  if (*((bool*)address)) std::cout << "true"; else std::cout << "false";
+void BoolWalker::printJSON(void *address, std::ostream &stream) {
+  if (*((bool*)address)) stream << "true"; else stream << "false";
 }
 
-void BoolWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  if (((TTreeReaderArray<bool>*)readerArrayBase)->At(i)) std::cout << "true"; else std::cout << "false";
+void BoolWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  if (((TTreeReaderArray<bool>*)readerArrayBase)->At(i)) stream << "true"; else stream << "false";
 }
 
 #ifdef AVRO
@@ -138,12 +138,12 @@ void CharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   schemaBuilder(SchemaChar, nullptr);
 }
 
-void CharWalker::printJSON(void *address) {
-  std::cout << ((int)(*((char*)address)));
+void CharWalker::printJSON(void *address, std::ostream &stream) {
+  stream << ((int)(*((char*)address)));
 }
 
-void CharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((int)((TTreeReaderArray<char>*)readerArrayBase)->At(i));
+void CharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((int)((TTreeReaderArray<char>*)readerArrayBase)->At(i));
 }
 
 #ifdef AVRO
@@ -202,12 +202,12 @@ void UCharWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   schemaBuilder(SchemaUChar, nullptr);
 }
 
-void UCharWalker::printJSON(void *address) {
-  std::cout << ((int)(*((unsigned char*)address)));
+void UCharWalker::printJSON(void *address, std::ostream &stream) {
+  stream << ((int)(*((unsigned char*)address)));
 }
 
-void UCharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((int)((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
+void UCharWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((int)((TTreeReaderArray<unsigned char>*)readerArrayBase)->At(i));
 }
 
 #ifdef AVRO
@@ -266,12 +266,12 @@ void ShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   schemaBuilder(SchemaShort, nullptr);
 }
 
-void ShortWalker::printJSON(void *address) {
-  std::cout << *((short*)address);
+void ShortWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((short*)address);
 }
 
-void ShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<short>*)readerArrayBase)->At(i);
+void ShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<short>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -330,12 +330,12 @@ void UShortWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string
   schemaBuilder(SchemaUShort, nullptr);
 }
 
-void UShortWalker::printJSON(void *address) {
-  std::cout << *((unsigned short*)address);
+void UShortWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((unsigned short*)address);
 }
 
-void UShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i);
+void UShortWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<unsigned short>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -394,12 +394,12 @@ void IntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &
   schemaBuilder(SchemaInt, nullptr);
 }
 
-void IntWalker::printJSON(void *address) {
-  std::cout << *((int*)address);
+void IntWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((int*)address);
 }
 
-void IntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<int>*)readerArrayBase)->At(i);
+void IntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<int>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -462,12 +462,12 @@ void UIntWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   schemaBuilder(SchemaUInt, nullptr);
 }
 
-void UIntWalker::printJSON(void *address) {
-  std::cout << *((unsigned int*)address);
+void UIntWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((unsigned int*)address);
 }
 
-void UIntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i);
+void UIntWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<unsigned int>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -525,12 +525,12 @@ void LongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   schemaBuilder(SchemaLong, nullptr);
 }
 
-void LongWalker::printJSON(void *address) {
-  std::cout << *((Long64_t*)address);
+void LongWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((Long64_t*)address);
 }
 
-void LongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i);
+void LongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<Long64_t>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -589,12 +589,12 @@ void ULongWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   schemaBuilder(SchemaULong, nullptr);
 }
 
-void ULongWalker::printJSON(void *address) {
-  std::cout << *((ULong64_t*)address);
+void ULongWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((ULong64_t*)address);
 }
 
-void ULongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<unsigned long>*)readerArrayBase)->At(i);
+void ULongWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<unsigned long>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -653,12 +653,12 @@ void FloatWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   schemaBuilder(SchemaFloat, nullptr);
 }
 
-void FloatWalker::printJSON(void *address) {
-  std::cout << *((float*)address);
+void FloatWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((float*)address);
 }
 
-void FloatWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<float>*)readerArrayBase)->At(i);
+void FloatWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<float>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -717,12 +717,12 @@ void DoubleWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string
   schemaBuilder(SchemaDouble, nullptr);
 }
 
-void DoubleWalker::printJSON(void *address) {
-  std::cout << *((double*)address);
+void DoubleWalker::printJSON(void *address, std::ostream &stream) {
+  stream << *((double*)address);
 } 
 
-void DoubleWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << ((TTreeReaderArray<double>*)readerArrayBase)->At(i);
+void DoubleWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << ((TTreeReaderArray<double>*)readerArrayBase)->At(i);
 }
 
 #ifdef AVRO
@@ -797,16 +797,16 @@ void CStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::strin
   schemaBuilder(SchemaString, nullptr);
 }
 
-void CStringWalker::printJSON(void *address) {
-  std::cout << "\"";
-  printEscapedString((char*)address, std::cout);
-  std::cout << "\"";
+void CStringWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString((char*)address, stream);
+  stream << "\"";
 }
 
-void CStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << "\"";
-  printEscapedString(((TTreeReaderArray<char*>*)readerArrayBase)->At(i), std::cout);
-  std::cout << "\"";
+void CStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString(((TTreeReaderArray<char*>*)readerArrayBase)->At(i), stream);
+  stream << "\"";
 }
 
 #ifdef AVRO
@@ -871,16 +871,16 @@ void StdStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::str
   schemaBuilder(SchemaString, nullptr);
 }
 
-void StdStringWalker::printJSON(void *address) {
-  std::cout << "\"";
-  printEscapedString(((std::string*)address)->c_str(), std::cout);
-  std::cout << "\"";
+void StdStringWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString(((std::string*)address)->c_str(), stream);
+  stream << "\"";
 }
 
-void StdStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << "\"";
-  printEscapedString(((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str(), std::cout);
-  std::cout << "\"";
+void StdStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString(((TTreeReaderArray<std::string>*)readerArrayBase)->At(i).c_str(), stream);
+  stream << "\"";
 }
 
 #ifdef AVRO
@@ -946,16 +946,16 @@ void TStringWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::strin
   schemaBuilder(SchemaString, nullptr);
 }
 
-void TStringWalker::printJSON(void *address) {
-  std::cout << "\"";
-  printEscapedString(((TString*)address)->Data(), std::cout);
-  std::cout << "\"";
+void TStringWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString(((TString*)address)->Data(), stream);
+  stream << "\"";
 }
 
-void TStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i) {
-  std::cout << "\"";
-  printEscapedString(((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data(), std::cout);
-  std::cout << "\"";
+void TStringWalker::printJSON(TTreeReaderArrayBase *readerArrayBase, int i, std::ostream &stream) {
+  stream << "\"";
+  printEscapedString(((TTreeReaderArray<TString>*)readerArrayBase)->At(i).Data(), stream);
+  stream << "\"";
 }
 
 #ifdef AVRO
@@ -1136,12 +1136,13 @@ std::string MemberWalker::avroSchema(int indent, std::set<std::string> &memo) {
 
 void MemberWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> &memo) {
   schemaBuilder(SchemaClassFieldName, fieldName.c_str());
+  schemaBuilder(SchemaClassFieldDoc, comment.c_str());
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void MemberWalker::printJSON(void *address) {
-  std::cout << "\"" << fieldName << "\": ";
-  walker->printJSON((void*)((size_t)address + offset));
+void MemberWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"" << fieldName << "\": ";
+  walker->printJSON((void*)((size_t)address + offset), stream);
 }
 
 #ifdef AVRO
@@ -1298,14 +1299,14 @@ void ClassWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   }
 }
 
-void ClassWalker::printJSON(void *address) {
-  std::cout << "{";
+void ClassWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "{";
   bool first = true;
   for (auto iter = members.begin();  iter != members.end();  ++iter) {
-    if (first) first = false; else std::cout << ", ";    
-    (*iter)->printJSON(address);
+    if (first) first = false; else stream << ", ";    
+    (*iter)->printJSON(address, stream);
   }
-  std::cout << "}";
+  stream << "}";
 }
 
 #ifdef AVRO
@@ -1384,14 +1385,14 @@ void PointerWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::strin
   subWalker->buildSchema(schemaBuilder, memo);
 }
 
-void PointerWalker::printJSON(void *address) {
+void PointerWalker::printJSON(void *address, std::ostream &stream) {
   void *dereferenced = *((void**)address);
   if (dereferenced == nullptr)
-    std::cout << "null";
+    stream << "null";
   else {
-    std::cout << "{\"" << walker->avroTypeName() << "\": ";
-    walker->printJSON(dereferenced);
-    std::cout << "\"}";
+    stream << "{\"" << walker->avroTypeName() << "\": ";
+    walker->printJSON(dereferenced, stream);
+    stream << "\"}";
   }
 }
 
@@ -1471,7 +1472,7 @@ void TRefWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   std::cerr << std::endl << "TREF" << std::endl;
 }
 
-void TRefWalker::printJSON(void *address) {
+void TRefWalker::printJSON(void *address, std::ostream &stream) {
   std::cerr << std::endl << "TREF" << std::endl;
 }
 
@@ -1545,18 +1546,18 @@ void StdVectorWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::str
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void StdVectorWalker::printJSON(void *address) {
-  std::cout << "[";
+void StdVectorWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "[";
   std::vector<char> *generic = (std::vector<char>*)address;
   int numItems = generic->size() / walker->sizeOf();
   void *ptr = generic->data();
   bool first = true;
   for (int i = 0;  i < numItems;  i++) {                     // std::vector<T> are guaranteed to be
-    if (first) first = false; else std::cout << ", ";        // contiguous for all T except bool
-    walker->printJSON(ptr);
+    if (first) first = false; else stream << ", ";        // contiguous for all T except bool
+    walker->printJSON(ptr, stream);
     ptr = (void*)((size_t)ptr + walker->sizeOf());
   }
-  std::cout << "]";
+  stream << "]";
 }
 
 #ifdef AVRO
@@ -1642,18 +1643,18 @@ void StdVectorBoolWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std:
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void StdVectorBoolWalker::printJSON(void *address) {
-  std::cout << "[";
+void StdVectorBoolWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "[";
   std::vector<bool> *vectorBool = (std::vector<bool>*)address;
 
   int numItems = vectorBool->size();
   bool first = true;
   for (int i = 0;  i < numItems;  i++) {
-    if (first) first = false; else std::cout << ", ";
+    if (first) first = false; else stream << ", ";
     bool val = vectorBool->at(i);
-    walker->printJSON((void*)&val);
+    walker->printJSON((void*)&val, stream);
   }
-  std::cout << "]";
+  stream << "]";
 }
 
 #ifdef AVRO
@@ -1733,16 +1734,16 @@ void ArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string>
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void ArrayWalker::printJSON(void *address) {
-  std::cout << "[";
+void ArrayWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "[";
   void *ptr = address;
   bool first = true;
   for (int i = 0;  i < numItems;  i++) {
-    if (first) first = false; else std::cout << ", ";
-    walker->printJSON(ptr);
+    if (first) first = false; else stream << ", ";
+    walker->printJSON(ptr, stream);
     ptr = (void*)((size_t)ptr + walker->sizeOf());
   }
-  std::cout << "]";
+  stream << "]";
 }
 
 #ifdef AVRO
@@ -1837,21 +1838,21 @@ void TObjArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::str
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void TObjArrayWalker::printJSON(void *address) {
+void TObjArrayWalker::printJSON(void *address, std::ostream &stream) {
   if (!resolved()) resolve(address);
   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TObjArray (is the first one empty?)"));
   TObjArray *array = (TObjArray*)address;
   if (!array->AssertClass(classToAssert))
     throw std::invalid_argument(std::string("TObjArray elements must all have the same class for Avro conversion"));
 
-  std::cout << "[";
+  stream << "[";
   TIter nextItem = array;
   bool first = true;
   for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
-    if (first) first = false; else std::cout << ", ";
-    walker->printJSON(item);
+    if (first) first = false; else stream << ", ";
+    walker->printJSON(item, stream);
   }
-  std::cout << "]";
+  stream << "]";
 }
 
 #ifdef AVRO
@@ -1930,7 +1931,7 @@ void TRefArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::str
   std::cerr << std::endl << "TREFARRAY" << std::endl;
 }
 
-void TRefArrayWalker::printJSON(void *address) {
+void TRefArrayWalker::printJSON(void *address, std::ostream &stream) {
   std::cerr << std::endl << "TREFARRAY" << std::endl;
 }
 
@@ -2004,17 +2005,17 @@ void TClonesArrayWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void TClonesArrayWalker::printJSON(void *address) {
+void TClonesArrayWalker::printJSON(void *address, std::ostream &stream) {
   if (!resolved()) resolve(address);
   if (!resolved()) throw std::invalid_argument(std::string("could not resolve TClonesArray"));
-  std::cout << "[";
+  stream << "[";
   TIter nextItem = (TClonesArray*)address;
   bool first = true;
   for (void *item = (void*)nextItem();  item != nullptr;  item = (void*)nextItem()) {
-    if (first) first = false; else std::cout << ", ";
-    walker->printJSON(item);
+    if (first) first = false; else stream << ", ";
+    walker->printJSON(item, stream);
   }
-  std::cout << "]";
+  stream << "]";
 }
 
 #ifdef AVRO
@@ -2238,31 +2239,31 @@ void LeafWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::string> 
   walker->buildSchema(schemaBuilder, memo);
 }
 
-int LeafWalker::printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim) {
+int LeafWalker::printJSONDeep(int readerIndex, int readerSize, LeafDimension *dim, std::ostream &stream) {
   int dimSize = dim->size();
 
-  std::cout << "[";
+  stream << "[";
   bool first = true;
   for (int dimIndex = 0;  dimIndex < dimSize  &&  readerIndex < readerSize;  dimIndex++) {
-    if (first) first = false; else std::cout << ", ";
+    if (first) first = false; else stream << ", ";
     if (dim->next() == nullptr) {
-      walker->printJSON(readerArray, readerIndex);
+      walker->printJSON(readerArray, readerIndex, stream);
       readerIndex += 1;
     }
     else
-      readerIndex = printJSONDeep(readerIndex, readerSize, dim->next());
+      readerIndex = printJSONDeep(readerIndex, readerSize, dim->next(), stream);
   }
-  std::cout << "]";
+  stream << "]";
 
   return readerIndex;
 }
 
-void LeafWalker::printJSON(void *address) {
-  std::cout << "\"" << fieldName << "\": ";
+void LeafWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"" << fieldName << "\": ";
   if (address != nullptr)
-    walker->printJSON(address);
+    walker->printJSON(address, stream);
   else
-    printJSONDeep(0, dims->flatSize(), dims);
+    printJSONDeep(0, dims->flatSize(), dims, stream);
 }
 
 #ifdef AVRO
@@ -2389,9 +2390,9 @@ void ReaderValueWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::s
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void ReaderValueWalker::printJSON(void *address) {
-  std::cout << "\"" << fieldName << "\": ";
-  walker->printJSON(address);
+void ReaderValueWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"" << fieldName << "\": ";
+  walker->printJSON(address, stream);
 }
 
 #ifdef AVRO
@@ -2446,9 +2447,9 @@ void RawTBranchWalker::buildSchema(SchemaBuilder schemaBuilder, std::set<std::st
   walker->buildSchema(schemaBuilder, memo);
 }
 
-void RawTBranchWalker::printJSON(void *address) {
-  std::cout << "\"" << fieldName << "\": ";
-  walker->printJSON(address);
+void RawTBranchWalker::printJSON(void *address, std::ostream &stream) {
+  stream << "\"" << fieldName << "\": ";
+  walker->printJSON(address, stream);
 }
 
 #ifdef AVRO
@@ -2641,6 +2642,7 @@ void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
 
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
     schemaBuilder(SchemaClassFieldName, (*iter)->fieldName.c_str());
+    schemaBuilder(SchemaClassFieldDoc, "");
     (*iter)->buildSchema(schemaBuilder, memo);
   }
 
@@ -2652,9 +2654,21 @@ void TreeWalker::printJSON() {
   bool first = true;
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
     if (first) first = false; else std::cout << ", ";
-    (*iter)->printJSON((*iter)->getAddress());
+    (*iter)->printJSON((*iter)->getAddress(), std::cout);
   }
   std::cout << "}" << std::endl;
+}
+
+std::string TreeWalker::stringJSON() {
+  std::ostringstream stream;
+  stream << "{";
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else stream << ", ";
+    (*iter)->printJSON((*iter)->getAddress(), stream);
+  }
+  stream << "}" << std::endl;
+  return stream.str();
 }
 
 #ifdef AVRO

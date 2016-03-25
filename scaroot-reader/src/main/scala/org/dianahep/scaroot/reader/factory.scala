@@ -255,17 +255,18 @@ package factory {
       else if (tpe =:= typeOf[Double])  {size: Int => val out = mutable.Set.newBuilder[Double];  out.sizeHint(size); out}
       else                              {size: Int => val out = mutable.Set.newBuilder[AnyRef];  out.sizeHint(size); out}
 
-    private def sortedSetBuilder(tpe: Type) =
-      if      (tpe =:= typeOf[Boolean])    {size: Int => val out = SortedSet.newBuilder[Boolean]; out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Char])       {size: Int => val out = SortedSet.newBuilder[Char];    out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Byte])       {size: Int => val out = SortedSet.newBuilder[Byte];    out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Short])      {size: Int => val out = SortedSet.newBuilder[Short];   out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Int])        {size: Int => val out = SortedSet.newBuilder[Int];     out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Long])       {size: Int => val out = SortedSet.newBuilder[Long];    out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Float])      {size: Int => val out = SortedSet.newBuilder[Float];   out.sizeHint(size); out}
-      else if (tpe =:= typeOf[Double])     {size: Int => val out = SortedSet.newBuilder[Double];  out.sizeHint(size); out}
-      else
-        throw new IllegalArgumentException(s"SortedSet is currently only supported for primitive types, not $tpe.")
+    //// Not ready. Also, what about a mutable version? You'll probably have to wrap the overly implicited Scala version with one that only knows about Ordered[T].
+    // private def sortedSetBuilder(tpe: Type) =
+    //   if      (tpe =:= typeOf[Boolean])    {size: Int => val out = SortedSet.newBuilder[Boolean]; out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Char])       {size: Int => val out = SortedSet.newBuilder[Char];    out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Byte])       {size: Int => val out = SortedSet.newBuilder[Byte];    out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Short])      {size: Int => val out = SortedSet.newBuilder[Short];   out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Int])        {size: Int => val out = SortedSet.newBuilder[Int];     out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Long])       {size: Int => val out = SortedSet.newBuilder[Long];    out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Float])      {size: Int => val out = SortedSet.newBuilder[Float];   out.sizeHint(size); out}
+    //   else if (tpe =:= typeOf[Double])     {size: Int => val out = SortedSet.newBuilder[Double];  out.sizeHint(size); out}
+    //   else
+    //     throw new IllegalArgumentException(s"SortedSet is currently only supported for primitive types, not $tpe.")
 
     // Called for each field of a My[class]; choice of factory depends on fields of the class.
     // All of the ".asInstanceOf[Factory[TYPE]]" are to assure the compiler of the type-checks
@@ -308,8 +309,8 @@ package factory {
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), setBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else if (tpe <:< typeOf[mutable.Set[_]])
           FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), mutableSetBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
-        else if (tpe <:< typeOf[SortedSet[_]])
-          FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), sortedSetBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
+        // else if (tpe <:< typeOf[SortedSet[_]])
+        //   FactoryIterable(applyField(content, typeArgs(tpe).head, myclasses), sortedSetBuilder(typeArgs(tpe).head).asInstanceOf[Int => Builder[TYPE, Iterable[TYPE]]]).asInstanceOf[Factory[TYPE]]
         else
           throw new IllegalArgumentException(s"Currently, only Array[T], List[T], Vector[T], Set[T], and SortedSet[T] can be used as containers, not $tpe.")
     }
@@ -361,7 +362,7 @@ package factory {
         if (schema.fields.size != my.fieldTypes.size)
           throw new IllegalArgumentException(s"ROOT class or TTree ${schema.name} has ${schema.fields.size} fields but My[${my.name}] has ${my.fieldTypes.size} fields.")
 
-        val factories = schema.fields zip my.fieldTypes map {case ((n1, s), (n2, tpe)) =>
+        val factories = schema.fields zip my.fieldTypes map {case (SchemaField(n1, c, s), (n2, tpe)) =>
           if (n1 != n2)
             throw new IllegalArgumentException(s"ROOT class or TTree ${schema.name} has a field named $n1 but the corresponding field in My[${my.name}] is named $n2.")
 
@@ -379,7 +380,7 @@ package factory {
       }
       // Generic class because the name is not in the myclasses lookup table.
       else {
-        val factories = schema.fields map {case (n, s) => (n, applyGenericField(s, myclasses))}
+        val factories = schema.fields map {case SchemaField(n, c, s) => (n, applyGenericField(s, myclasses))}
         FactoryGeneric(schema.name, factories).asInstanceOf[FactoryClass[TYPE]]
       }
   }
