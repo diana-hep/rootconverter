@@ -106,81 +106,14 @@ package reader {
   }
 
   /////////////////////////////////////////////////// entry point for iterating over ROOT files
-  
-  trait RootTreeIterator[TYPE] extends Iterator[TYPE] {
-    def fileLocations: Seq[String]
-    def treeLocation: String
-    def libs: Seq[String]
-    def myclasses: Map[String, My[_]]
-  }
-
-  case class RootTreeRoundRobinIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
-                                                                 treeLocation: String,
-                                                                 libs: Seq[String] = Nil,
-                                                                 myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                                                 numberOfThreads: Int = 10) extends RootTreeIterator[TYPE] {
-    if (numberOfThreads < 1)
-      throw new IllegalArgumentException(s"Number of threads must be at least one, not $numberOfThreads.")
-
-    private var pointer = 0
-    private val pipeline =
-      0 until numberOfThreads map {i =>
-        RootTreeSingleIteratorThread(RootTreeSingleIterator(fileLocations, treeLocation, libs, myclasses,
-          start = i, run = 1, skip = numberOfThreads - 1))
-      }
-
-    pipeline.foreach(_.start())
-
-    def hasNext = pipeline(pointer).hasNext
-
-    def next() = {
-      val out = pipeline(pointer).next()
-      pointer = (pointer + 1) % numberOfThreads
-      out
-    }
-  }
-
-  case class RootTreeSingleIteratorThread[TYPE : WeakTypeTag : My](rootTreeSingleIterator: RootTreeSingleIterator[TYPE]) extends Thread with Iterator[TYPE] {
-    setDaemon(true)
-
-    private var endOfInput = false
-    private val mvar = new RootTreeSingleIteratorThread.MVar[TYPE]
-
-    // Executed by the consumer thread (RootTreeRoundRobinIterator).
-    def hasNext = !(endOfInput  &&  mvar.isEmpty)
-    def next() = mvar.take()
-
-    // Executed by this thread, the producer thread.
-    override def run() {
-      while (rootTreeSingleIterator.hasNext) {
-        mvar.put(rootTreeSingleIterator.next())
-      }
-      endOfInput = true
-    }
-  }
-  object RootTreeSingleIteratorThread {
-    // Concurrency atom from Haskell.
-    class MVar[TYPE] {
-      private var message: Option[TYPE] = None
-      def isEmpty = message.isEmpty
-      def take(): TYPE = synchronized {
-        while (message.isEmpty) wait()
-        val out = message.get
-        message = None
-        notify()
-        out
-      }
-      def put(x: TYPE): Unit = synchronized {
-        while (!message.isEmpty) wait()
-        message = Some(x)
-        notify()
-      }
-    }
-  }
 
   object LoadLibsOnce {
+    // Avoid conflict between Java's signal handlers and ROOT's (which causes rare segmentation faults).
     RootReaderCPPLibrary.resetSignals()
+
+    // Keep track of which libraries have already been loaded to avoid loading them multiple times.
     val alreadyLoaded = mutable.Set[String]()
+
     def apply(lib: String) {
       if (!(alreadyLoaded contains lib)) {
         RootReaderCPPLibrary.loadLibrary(lib)
@@ -189,14 +122,14 @@ package reader {
     }
   }
 
-  case class RootTreeSingleIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
-                                                             treeLocation: String,
-                                                             libs: Seq[String] = Nil,
-                                                             myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                                             start: Long = 0L,
-                                                             end: Long = -1L,
-                                                             run: Long = 1L,
-                                                             skip: Long = 0L) extends RootTreeIterator[TYPE] {
+  class RootTreeIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                                  treeLocation: String,
+                                                  libs: Seq[String] = Nil,
+                                                  myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                                  start: Long = 0L,   // Fancy indexing was for an earlier attempt
+                                                  end: Long = -1L,    // at parallelization. No longer used, but
+                                                  run: Long = 1L,     // it has no performance penalty.
+                                                  skip: Long = 0L) extends Iterator[TYPE] {
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
@@ -344,5 +277,16 @@ package reader {
 
       out
     }
+  }
+  object RootTreeIterator {
+    def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                       treeLocation: String,
+                                       libs: Seq[String] = Nil,
+                                       myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                       start: Long = 0L,   // Fancy indexing was for an earlier attempt
+                                       end: Long = -1L,    // at parallelization. No longer used, but
+                                       run: Long = 1L,     // it has no performance penalty.
+                                       skip: Long = 0L) =
+      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
   }
 }

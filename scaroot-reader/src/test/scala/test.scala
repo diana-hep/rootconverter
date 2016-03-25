@@ -58,7 +58,7 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
 
-    val iterator = RootTreeRoundRobinIterator[Generic](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
+    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
 
     // println(iterator.schema)
     // println(iterator.factory)
@@ -69,7 +69,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     //   var tmp: Tree = null
 
       while (iterator.hasNext) {
-        println(iterator.next()("event").asInstanceOf[Event].fEventName)
+        println(iterator.next().event.fEventName)
         i += 1
       }
 
@@ -78,7 +78,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     // }
 
     // case class Tree(x: Int, y: Double, z: String)
-    // val iterator = RootTreeRoundRobinIterator[Tree](List("../root2avro/build/multipleLeaves.root"), "t", numberOfThreads = 2)
+    // val iterator = RootTreeIterator[Tree](List("../root2avro/build/multipleLeaves.root"), "t", numberOfThreads = 2)
     // while (iterator.hasNext)
     //   println(iterator.next())
 

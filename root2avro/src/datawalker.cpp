@@ -2724,8 +2724,6 @@ const void *TreeWalker::getData(const void *address, int index) {
 void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
   // Sanity check lock between C++ and Java: the first byte denotes the
   // reading vs writing state of the buffer.
-  // Don't rely on this: treat copyToBuffer as a blocking call and do all
-  // parallelization in Java (with wait() and notify()).
   while (*((char*)buffer) != StatusWriting) {
     timespec req, rem;
     req.tv_sec = 0;
