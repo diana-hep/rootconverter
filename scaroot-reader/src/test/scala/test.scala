@@ -10,7 +10,6 @@ import org.dianahep.scaroot.reader._
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
-
     case class Tree(event: Event)
 
     case class Event(
@@ -56,9 +55,9 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
 
-    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
+    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits], "T" -> My[Tree])
 
-    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
+    val iterator = RootTreeIterator[Object](List("../root2avro/test_Event/Event.root"), "T", List("../root2avro/test_Event/Event_cxx.so"), myclasses)
 
     // println(iterator.schema)
     // println(iterator.factory)
@@ -69,7 +68,7 @@ class DefaultSuite extends FlatSpec with Matchers {
     //   var tmp: Tree = null
 
       while (iterator.hasNext) {
-        println(iterator.next().event.fEventName)
+        println(iterator.next().asInstanceOf[Tree].event.fEventName)
         i += 1
       }
 

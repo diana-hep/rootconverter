@@ -226,7 +226,7 @@ package reader {
 
     import scala.reflect.runtime.universe.weakTypeOf
     val allmyclasses =
-      if (!(weakTypeOf[TYPE] =:= weakTypeOf[Generic]))
+      if (!(myclasses.keySet contains schema.name)  &&  !(weakTypeOf[TYPE] =:= weakTypeOf[Generic]  ||  weakTypeOf[TYPE] =:= weakTypeOf[AnyRef]))
         myclasses.updated(schema.name, implicitly[My[TYPE]])
       else
         myclasses
