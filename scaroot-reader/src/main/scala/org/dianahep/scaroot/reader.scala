@@ -52,7 +52,7 @@ package reader {
     def apply(factories: List[(String, Factory[_])]): FactoryClass[TYPE]
   }
   object My {
-    def apply[TYPE]: My[TYPE] = macro applyImpl[TYPE]
+    implicit def apply[TYPE]: My[TYPE] = macro applyImpl[TYPE]
 
     def applyImpl[TYPE : c.WeakTypeTag](c: Context): c.Expr[My[TYPE]] = {
       import c.universe._
@@ -108,15 +108,14 @@ package reader {
 
   /////////////////////////////////////////////////// entry point for iterating over ROOT files
 
-  class RootTreeIterator[TYPE](fileLocations: Seq[String],
-                               treeLocation: String,
-                               libs: Seq[String] = Nil,
-                               myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                               start: Long = 0L,
-                               end: Long = -1L,
-                               run: Long = 1L,
-                               skip: Long = 0L) extends Iterator[TYPE] {
-
+  class RootTreeSingleIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                                        treeLocation: String,
+                                                        libs: Seq[String] = Nil,
+                                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                                        start: Long = 0L,
+                                                        end: Long = -1L,
+                                                        run: Long = 1L,
+                                                        skip: Long = 0L) extends Iterator[TYPE] {
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
@@ -125,8 +124,6 @@ package reader {
       throw new IllegalArgumentException(s"The run ($run) must be strictly greater than zero.")
     if (skip < 0)
       throw new IllegalArgumentException(s"The skip ($skip) must be greater than or equal to zero.")
-
-    // FIXME: if TYPE is not Generic, add 'treeLocation -> My[TYPE]' to myclasses (note: that macro would have to be materialized implicitly; also, it's safe because this class already has a non-trivial constructor).
 
     private var libscpp = Pointer.NULL
     libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
@@ -214,7 +211,14 @@ package reader {
       else
         throw new RuntimeException("Cannot build RootTreeIterator over an empty set of files.")
 
-    val factory = FactoryClass[TYPE](schema, myclasses)
+    import scala.reflect.runtime.universe.weakTypeOf
+    val allmyclasses =
+      if (!(weakTypeOf[TYPE] =:= weakTypeOf[Generic]))
+        myclasses.updated(schema.name, implicitly[My[TYPE]])
+      else
+        myclasses
+
+    val factory = FactoryClass[TYPE](schema, allmyclasses)
 
     setIndex(start)
 
@@ -261,15 +265,15 @@ package reader {
       out
     }
   }
-  object RootTreeIterator {
-    def apply[TYPE](fileLocations: Seq[String],
-                    treeLocation: String,
-                    libs: Seq[String] = Nil,
-                    myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                    start: Long = 0L,
-                    end: Long = -1L,
-                    run: Long = 1L,
-                    skip: Long = 0L) =
-      new RootTreeIterator[TYPE](fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
+  object RootTreeSingleIterator {
+    def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                       treeLocation: String,
+                                       libs: Seq[String] = Nil,
+                                       myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                       start: Long = 0L,
+                                       end: Long = -1L,
+                                       run: Long = 1L,
+                                       skip: Long = 0L) =
+      new RootTreeSingleIterator[TYPE](fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
   }
 }
