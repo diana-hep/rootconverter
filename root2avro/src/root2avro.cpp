@@ -132,6 +132,11 @@ int main(int argc, char **argv) {
     return -1;
   }
 
+  // ROOT initialization
+  resetSignals();
+  for (auto lib = libs.begin();  lib != libs.end();  ++lib)
+    loadLibrary(lib->c_str());
+
   TreeWalker *treeWalker = nullptr;
 
   // main loop
@@ -147,7 +152,7 @@ int main(int argc, char **argv) {
       if (treeWalker->valid) treeWalker->next();
     }
     else {
-      treeWalker = new TreeWalker(url, treeLocation, ns, libs);
+      treeWalker = new TreeWalker(url, treeLocation, ns);
       while (treeWalker->valid  &&  !treeWalker->resolved()  &&  treeWalker->next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {

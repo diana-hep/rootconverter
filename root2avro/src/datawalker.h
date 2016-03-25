@@ -978,7 +978,7 @@ public:
   avro_value_t avroValue;
 #endif
 
-  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace, std::vector<std::string> libs);
+  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace);
   bool tryToOpenFile();
   void reset(std::string fileLocation);
 
@@ -1001,5 +1001,10 @@ public:
   const void *getData(const void *address, int index);
   void copyToBuffer(int64_t entry, void *buffer, size_t size);
 };
+
+extern "C" {
+  void resetSignals();
+  void loadLibrary(const char *lib);
+}
 
 #endif // DATAWALKER_H

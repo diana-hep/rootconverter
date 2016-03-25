@@ -1,8 +1,7 @@
 package org.dianahep.scaroot
 
-// import scala.language.existentials
+import scala.collection.mutable
 import scala.language.experimental.macros
-// import scala.language.higherKinds
 import scala.reflect.macros.Context
 import scala.reflect.runtime.universe.Type
 import scala.reflect.runtime.universe.WeakTypeTag
@@ -107,15 +106,97 @@ package reader {
   }
 
   /////////////////////////////////////////////////// entry point for iterating over ROOT files
+  
+  trait RootTreeIterator[TYPE] extends Iterator[TYPE] {
+    def fileLocations: Seq[String]
+    def treeLocation: String
+    def libs: Seq[String]
+    def myclasses: Map[String, My[_]]
+  }
 
-  class RootTreeSingleIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
-                                                        treeLocation: String,
-                                                        libs: Seq[String] = Nil,
-                                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                                        start: Long = 0L,
-                                                        end: Long = -1L,
-                                                        run: Long = 1L,
-                                                        skip: Long = 0L) extends Iterator[TYPE] {
+  case class RootTreeRoundRobinIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                                                 treeLocation: String,
+                                                                 libs: Seq[String] = Nil,
+                                                                 myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                                                 numberOfThreads: Int = 10) extends RootTreeIterator[TYPE] {
+    if (numberOfThreads < 1)
+      throw new IllegalArgumentException(s"Number of threads must be at least one, not $numberOfThreads.")
+
+    private var pointer = 0
+    private val pipeline =
+      0 until numberOfThreads map {i =>
+        RootTreeSingleIteratorThread(RootTreeSingleIterator(fileLocations, treeLocation, libs, myclasses,
+          start = i, run = 1, skip = numberOfThreads - 1))
+      }
+
+    pipeline.foreach(_.start())
+
+    def hasNext = pipeline(pointer).hasNext
+
+    def next() = {
+      val out = pipeline(pointer).next()
+      pointer = (pointer + 1) % numberOfThreads
+      out
+    }
+  }
+
+  case class RootTreeSingleIteratorThread[TYPE : WeakTypeTag : My](rootTreeSingleIterator: RootTreeSingleIterator[TYPE]) extends Thread with Iterator[TYPE] {
+    setDaemon(true)
+
+    private var endOfInput = false
+    private val mvar = new RootTreeSingleIteratorThread.MVar[TYPE]
+
+    // Executed by the consumer thread (RootTreeRoundRobinIterator).
+    def hasNext = !(endOfInput  &&  mvar.isEmpty)
+    def next() = mvar.take()
+
+    // Executed by this thread, the producer thread.
+    override def run() {
+      while (rootTreeSingleIterator.hasNext) {
+        mvar.put(rootTreeSingleIterator.next())
+      }
+      endOfInput = true
+    }
+  }
+  object RootTreeSingleIteratorThread {
+    // Concurrency atom from Haskell.
+    class MVar[TYPE] {
+      private var message: Option[TYPE] = None
+      def isEmpty = message.isEmpty
+      def take(): TYPE = synchronized {
+        while (message.isEmpty) wait()
+        val out = message.get
+        message = None
+        notify()
+        out
+      }
+      def put(x: TYPE): Unit = synchronized {
+        while (!message.isEmpty) wait()
+        message = Some(x)
+        notify()
+      }
+    }
+  }
+
+  object LoadLibsOnce {
+    RootReaderCPPLibrary.resetSignals()
+    val alreadyLoaded = mutable.Set[String]()
+    def apply(lib: String) {
+      if (!(alreadyLoaded contains lib)) {
+        RootReaderCPPLibrary.loadLibrary(lib)
+        alreadyLoaded += lib
+      }
+    }
+  }
+
+  case class RootTreeSingleIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                                             treeLocation: String,
+                                                             libs: Seq[String] = Nil,
+                                                             myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                                             start: Long = 0L,
+                                                             end: Long = -1L,
+                                                             run: Long = 1L,
+                                                             skip: Long = 0L) extends RootTreeIterator[TYPE] {
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
@@ -125,8 +206,7 @@ package reader {
     if (skip < 0)
       throw new IllegalArgumentException(s"The skip ($skip) must be greater than or equal to zero.")
 
-    private var libscpp = Pointer.NULL
-    libs foreach {lib => libscpp = RootReaderCPPLibrary.addVectorString(libscpp, lib)}
+    libs foreach {lib => LoadLibsOnce(lib)}
 
     // Pack of state variables that all have to be kept in sync!
     // Limit user access to setIndex, reset(), and incrementIndex(), which should preserve interrelationships.
@@ -195,7 +275,7 @@ package reader {
 
     val schema: SchemaClass =
       if (!fileLocations.isEmpty) {
-        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(0), treeLocation, "", libscpp)
+        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(0), treeLocation, "")
 
         if (RootReaderCPPLibrary.valid(treeWalker) == 0)
           throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
@@ -264,16 +344,5 @@ package reader {
 
       out
     }
-  }
-  object RootTreeSingleIterator {
-    def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
-                                       treeLocation: String,
-                                       libs: Seq[String] = Nil,
-                                       myclasses: Map[String, My[_]] = Map[String, My[_]](),
-                                       start: Long = 0L,
-                                       end: Long = -1L,
-                                       run: Long = 1L,
-                                       skip: Long = 0L) =
-      new RootTreeSingleIterator[TYPE](fileLocations, treeLocation, libs, myclasses, start, end, run, skip)
   }
 }

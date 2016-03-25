@@ -2515,16 +2515,9 @@ void *RawTBranchTStringWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace, std::vector<std::string> libs) :
+TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace) :
   fileLocation(fileLocation), treeLocation(treeLocation), avroNamespace(avroNamespace)
 {
-  // avoid segmentation faults due to conflicting signals in ROOT and the JVM
-  gSystem->ResetSignals();
-
-  // load the libraries needed to interpret the data
-  for (int i = 0;  i < libs.size();  i++)
-    gInterpreter->ProcessLine((std::string(".L ") + libs[i]).c_str());
-
   valid = tryToOpenFile();
   if (!valid) return;
 
@@ -2738,7 +2731,7 @@ void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
     req.tv_sec = 0;
     req.tv_nsec = 0;
     rem.tv_sec = 0;
-    rem.tv_nsec = 1;
+    rem.tv_nsec = 1;  // safer
     nanosleep(&req, &rem);  // nanosleep (even with 0 ns) keeps the poll from taking 100% CPU
   }
 
@@ -2756,4 +2749,14 @@ void TreeWalker::copyToBuffer(int64_t entry, void *buffer, size_t size) {
     *((char*)buffer) = StatusTooSmall;
   else
     *((char*)buffer) = StatusReading;
+}
+
+void resetSignals() {
+  // avoid segmentation faults due to conflicting signals in ROOT and the JVM
+  gSystem->ResetSignals();
+}
+
+void loadLibrary(const char *lib) {
+  // load the libraries needed to interpret the data
+  gInterpreter->ProcessLine((std::string(".L ") + lib).c_str());
 }

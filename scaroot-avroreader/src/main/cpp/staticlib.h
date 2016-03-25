@@ -9,9 +9,10 @@ typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *d
 #endif // DATAWALKER_H
 
 extern "C" {
-  void *addVectorString(void *vectorString, const char *str);
+  void resetSignals();
+  void loadLibrary(const char *lib);
 
-  void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, void *libs);
+  void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace);
   void reset(void *treeWalker, const char *fileLocation);
   bool valid(void *treeWalker);
   const char *errorMessage(void *treeWalker);

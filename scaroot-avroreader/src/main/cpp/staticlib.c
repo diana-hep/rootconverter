@@ -1,28 +1,8 @@
 #include "datawalker.h"
 #include "staticlib.h"
 
-void *addVectorString(void *vectorString, const char *str) {
-  std::vector<std::string> *l;  
-
-  if (vectorString == nullptr)
-    l = new std::vector<std::string>;
-  else
-    l = (std::vector<std::string>*)vectorString;
-
-  l->push_back(std::string(str));
-
-  return l;
-}
-
-void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace, void *libs) {
-  std::vector<std::string> *l;
-  if (libs == nullptr)
-    l = new std::vector<std::string>;
-  else
-    l = (std::vector<std::string>*)libs;
-
-  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace), *l);
-  delete l;
+void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace) {
+  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace));
   return out;
 }
 

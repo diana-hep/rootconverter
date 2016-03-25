@@ -5,8 +5,6 @@ import java.nio.ByteBuffer
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 import scala.collection.mutable.Builder
-// import scala.language.existentials
-// import scala.language.higherKinds
 import scala.reflect.classTag
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.Constant

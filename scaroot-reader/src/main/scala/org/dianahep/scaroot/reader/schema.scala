@@ -1,8 +1,6 @@
 package org.dianahep.scaroot.reader
 
 import scala.collection.mutable
-// import scala.language.existentials
-// import scala.language.higherKinds
 import scala.reflect.runtime.universe.Constant
 import scala.reflect.runtime.universe.Literal
 
