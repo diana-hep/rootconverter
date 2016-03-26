@@ -61,15 +61,12 @@ Options:
       }
 
       // Get a schema.
-      val schema: SchemaClass = Schema(treeWalker)
-      if (name == null) name = schema.name
+      val schemaClass: SchemaClass = Schema(treeWalker)
 
-      println(generateScala(name, ns, schema))
+      println(generateScala(ns, schemaClass.copy(name = if (name != null) name else schemaClass.name)))
     }
 
-    def generateScala(name: String, ns: String, schema: Schema) = s"""package $ns;
-
-// These classes represent your data. ScaROOT-Reader will convert ROOT
+    def generateScala(ns: String, schema: Schema) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT
 // TTree data into instances of these classes for you to perform your
 // analysis.
 //
@@ -129,9 +126,62 @@ Options:
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
-${generateScalaClass(name, schema)}
-"""
+package $ns {
+${generateScalaClasses(ns, schema)}
+}"""
 
-    def generateScalaClass(name: String, schema: Schema) = s"""// HERE"""
+    def generateScalaClasses(ns: String, schema: Schema) = {
+      def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
+        case SchemaClass(name, _) if (memo contains name) => Nil
+        case schemaClass @ SchemaClass(name, fields) => {
+          memo += name
+          schemaClass :: fields.flatMap(f => collectClasses(f.schema, memo))
+        }
+        case _ => Nil
+      }
+      val schemaClasses = collectClasses(schema, mutable.Set[String]())
+
+      def generateComment(comment: String) =
+        if (comment.isEmpty)
+          ""
+        else
+          "   // " + comment
+
+      def generateScalaType(s: Schema): String = s match {
+        case SchemaBool   => "Boolean"
+        case SchemaChar   => "Byte"
+        case SchemaUChar  => "Short"
+        case SchemaShort  => "Short"
+        case SchemaUShort => "Int"
+        case SchemaInt    => "Int"
+        case SchemaUInt   => "Long"
+        case SchemaLong   => "Long"
+        case SchemaULong  => "Double"
+        case SchemaFloat  => "Float"
+        case SchemaDouble => "Double"
+        case SchemaString => "String"
+        case SchemaClass(name, _) => name
+        case SchemaPointer(referent) => s"Option[${generateScalaType(referent)}]"
+        case SchemaSequence(content) => s"Seq[${generateScalaType(content)}]"
+      }
+
+      def generateScalaClass(schemaClass: SchemaClass) = {
+        val header = "  case class " + schemaClass.name + "("
+        val delimiter = "\n" + " " * header.size
+        val fields = schemaClass.fields.zipWithIndex collect {
+          case (SchemaField(name, comment, t), i) =>
+            val closer = if (i == schemaClass.fields.size - 1) ")" else ","
+            name + ": " + generateScalaType(t) + closer + generateComment(comment)
+        }
+        header + fields.mkString(delimiter)
+      }
+
+      val myclasses =
+        if (schemaClasses.size == 1) ""
+        else
+          "\n}\n\npackage object " + ns + " {\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
+
+      schemaClasses.map(generateScalaClass).mkString("\n\n") + myclasses
+    }
   }
 }
