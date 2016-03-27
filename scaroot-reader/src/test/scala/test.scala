@@ -1,4 +1,4 @@
-package test.scala.scaroot
+package test.scala.scaroot.reader
 
 import scala.collection.mutable
 
