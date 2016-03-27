@@ -84,28 +84,27 @@ package root {
                          fRun: Int,
                          fDate: Int)
 
-  case class Track(
-    fPx: Float,
-    fPy: Float,
-    fPz: Float,
-    fRandom: Float,
-    fMass2: Float,
-    fBx: Float,
-    fBy: Float,
-    fMeanCharge: Float,
-    fXfirst: Float,
-    fXlast: Float,
-    fYfirst: Float,
-    fYlast: Float,
-    fZfirst: Float,
-    fZlast: Float,
-    fCharge: Double,
-    fVertex: Seq[Double],
-    fNpoint: Int,
-    fValid: Short,
-    fNsp: Int,
-    fPointValue: Option[Double],
-    fTriggerBits: TBits)
+  case class Track(fPx: Float,   // X component of the momentum
+                   fPy: Float,   // Y component of the momentum
+                   fPz: Float,   // Z component of the momentum
+                   fRandom: Float,   // A random track quantity
+                   fMass2: Float,   // [0,0,8] The mass square of this particle
+                   fBx: Float,   // [0,0,10] X intercept at the vertex
+                   fBy: Float,   // [0,0,10] Y intercept at the vertex
+                   fMeanCharge: Float,   // Mean charge deposition of all hits of this track
+                   fXfirst: Float,   // X coordinate of the first point
+                   fXlast: Float,   // X coordinate of the last point
+                   fYfirst: Float,   // Y coordinate of the first point
+                   fYlast: Float,   // Y coordinate of the last point
+                   fZfirst: Float,   // Z coordinate of the first point
+                   fZlast: Float,   // Z coordinate of the last point
+                   fCharge: Double,   // [-1,1,2] Charge of this track
+                   fVertex: Seq[Double],   // [-30,30,16] Track vertex position
+                   fNpoint: Int,   // Number of points for this track
+                   fValid: Short,   // Validity criterion
+                   fNsp: Int,   // Number of points for this track with a special value
+                   fPointValue: Option[Double],   // [fNsp][0,3] a special quantity for some point.
+                   fTriggerBits: TBits)   // Bits triggered by this track.
 
   case class TBits(fNbits: Long,   // Highest bit set + 1
                    fNbytes: Long,   // Number of UChars in fAllBits

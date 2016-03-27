@@ -77,10 +77,12 @@ Options:
       // Get a schema.
       val schemaClass: SchemaClass = Schema(treeWalker)
 
-      println(generateScala(ns, schemaClass.copy(name = if (name != null) name else schemaClass.name)))
+      val (ns1, ns2) = {val out = ns.split('.'); (out.init.mkString("."), out.last)}
+
+      println(generateScala(ns1, ns2, schemaClass.copy(name = if (name != null) name else schemaClass.name)))
     }
 
-    def generateScala(ns: String, schema: Schema) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT
+    def generateScala(ns1: String, ns2: String, schema: Schema) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT
 // TTree data into instances of these classes for you to perform your
 // analysis.
 //
@@ -137,20 +139,24 @@ Options:
 //   // runtime and fill them with "Some(genParticle)"
 // }
 
-import scala.collection.mutable
+${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}import scala.collection.mutable
 import scala.collection.JavaConversions._
 
-package $ns {
-${generateScalaClasses(ns, schema)}
+import org.dianahep.scaroot.reader._
+
+package $ns2 {
+${generateScalaClasses(ns2, schema)}
 }"""
 
-    def generateScalaClasses(ns: String, schema: Schema) = {
+    def generateScalaClasses(ns2: String, schema: Schema) = {
       def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
         case SchemaClass(name, _) if (memo contains name) => Nil
         case schemaClass @ SchemaClass(name, fields) => {
           memo += name
           schemaClass :: fields.flatMap(f => collectClasses(f.schema, memo))
         }
+        case SchemaPointer(referent) => collectClasses(referent, memo)
+        case SchemaSequence(content) => collectClasses(content, memo)
         case _ => Nil
       }
       val schemaClasses = collectClasses(schema, mutable.Set[String]())
@@ -193,7 +199,7 @@ ${generateScalaClasses(ns, schema)}
       val myclasses =
         if (schemaClasses.size == 1) ""
         else
-          "\n}\n\npackage object " + ns + " {\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
+          "\n}\n\npackage object " + ns2 + " {\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
 
       schemaClasses.map(generateScalaClass).mkString("\n\n") + myclasses
     }
