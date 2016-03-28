@@ -43,9 +43,16 @@
     </dependency>
 
     <dependency>
+      <groupId>org.diana-hep</groupId>
+      <artifactId>scaroot-reader</artifactId>
+      <version>0.1</version>
+      <classifier>scala_2.10-root_6.06</classifier>
+    </dependency>
+
+    <dependency>
       <groupId>org.dcache</groupId>
       <artifactId>xrootd4j</artifactId>
-      <version>2.0.0</version>
+      <version>3.0.5</version>
     </dependency>
 
     <!-- Works with Hadoop 2.7.1-amzn-0 on Amazon Linux AMI release 2015.09 and Spark 1.6.0 -->
