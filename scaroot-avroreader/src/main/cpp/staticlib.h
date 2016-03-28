@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include <TNetXNGSystem.h>
+
 #ifndef DATAWALKER_H
 enum SchemaInstruction { dummy = 0 };
 typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *data);
@@ -49,8 +51,28 @@ extern "C" {
 
   void *xrootdFileSystem(const char *url);
   long xrootdFileSize(void *fs, const char *path);
-  void *xrootdDirectoryIter(void *fs, const char *path);
-  const char *xrootdDirectoryEntry(void *fs, void *dir);
+  void xrootdDirectoryBegin(void *fs, const char *path);
+  const char *xrootdDirectoryEntry(void *fs);
+  void xrootdDirectoryEnd(void *fs);
+  const char *xrootdLocate(void *fs, const char *path);
 }
+
+class XRootD {
+private:
+  TNetXNGSystem *fs;
+  FileStat_t buf;
+  void *dir;
+  std::string url;
+  std::string path;
+  TString endurl;
+  std::string empty;
+public:
+  XRootD(const char *urlstr);
+  long fileSize(const char *pathstr);
+  int dirBegin(const char *pathstr);
+  const char *dirEntry();
+  void dirEnd();
+  const char *locate(const char *path);
+};
 
 #endif // STATICLIB_H

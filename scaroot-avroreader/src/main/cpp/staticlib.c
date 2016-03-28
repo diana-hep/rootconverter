@@ -15,8 +15,6 @@
 #include "datawalker.h"
 #include "staticlib.h"
 
-#include "TNetXNGSystem.h"
-
 void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace) {
   TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace));
   return out;
@@ -105,24 +103,65 @@ void copyToBuffer(void *treeWalker, int64_t entry, int microBatchSize, void *buf
   tw->copyToBuffer(entry, microBatchSize, buffer, (size_t)size);
 }
 
+XRootD::XRootD(const char *urlstr) : url(urlstr) {
+  fs = new TNetXNGSystem(url.c_str());
+}
+
+long XRootD::fileSize(const char *pathstr) {
+  path = std::string(pathstr);
+  if (fs->GetPathInfo(path.c_str(), buf) == 0)
+    return buf.fSize;
+  else
+    return -1;
+}
+
+int XRootD::dirBegin(const char *pathstr) {
+  path = std::string(pathstr);
+  dir = fs->OpenDirectory(path.c_str());
+}
+
+const char *XRootD::dirEntry() {
+  return fs->GetDirEntry(dir);
+}
+
+void XRootD::dirEnd() {
+  fs->FreeDirectory(dir);
+}
+
+const char *XRootD::locate(const char *pathstr) {
+  path = std::string(pathstr);
+  if (fs->Locate(path.c_str(), endurl) == 0)
+    return endurl.Data();
+  else
+    return empty.c_str();
+}
+
 void *xrootdFileSystem(const char *url) {
-  return (void*)(new TNetXNGSystem(url));
+  XRootD *fs = new XRootD(url);
+  return (void*)fs;
 }
 
 long xrootdFileSize(void *fs, const char *path) {
-  FileStat_t buf;
-  ((TNetXNGSystem*)fs)->GetPathInfo(path, buf);
-  return buf.fSize;
+  XRootD *myfs = (XRootD*)fs;
+  return myfs->fileSize(path);
 }
 
-void *xrootdDirectoryIter(void *fs, const char *path) {
-  return ((TNetXNGSystem*)fs)->OpenDirectory(path);
+void xrootdDirectoryBegin(void *fs, const char *path) {
+  XRootD *myfs = (XRootD*)fs;
+  myfs->dirBegin(path);
 }
 
-const char *xrootdDirectoryEntry(void *fs, void *dir) {
-  return ((TNetXNGSystem*)fs)->GetDirEntry(dir);
+const char *xrootdDirectoryEntry(void *fs) {
+  XRootD *myfs = (XRootD*)fs;
+  return myfs->dirEntry();
 }
 
-void xrootdDirectoryFree(void *fs, void *dir) {
-  return ((TNetXNGSystem*)fs)->FreeDirectory(dir);
+void xrootdDirectoryEnd(void *fs) {
+  XRootD *myfs = (XRootD*)fs;
+  myfs->dirEnd();
+}
+
+const char *xrootdLocate(void *fs, const char *path) {
+  XRootD *myfs = (XRootD*)fs;
+  return myfs->locate(path);
 }

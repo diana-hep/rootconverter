@@ -317,23 +317,129 @@ package reader {
 
   /////////////////////////////////////////////////// interface to XRootD for creating file sets and splits
 
-  class XRootD(url: String) {
-    private val fs = RootReaderCPPLibrary.xrootdFileSystem(url)
+  class XRootD(baseurl: String) {
+    private val ensureResetSignals = LoadLibsOnce
+    private val fs = RootReaderCPPLibrary.xrootdFileSystem(baseurl)
+
+    if (fileSize("/") < 0)
+      throw new IllegalArgumentException(s"""XRootD server cannot be found at "$baseurl".""")
 
     def fileSize(path: String): Long = RootReaderCPPLibrary.xrootdFileSize(fs, path).longValue
 
-    def listDirectory(path: String): Seq[String] = {
-      val dir = RootReaderCPPLibrary.xrootdDirectoryIter(fs, path)
+    def listDirectory(path: String): List[String] = {
+      RootReaderCPPLibrary.xrootdDirectoryBegin(fs, path)
+
       val builder = List.newBuilder[String]
       var done = false
       while (!done) {
-        val item = RootReaderCPPLibrary.xrootdDirectoryEntry(fs, dir)
+        val item = RootReaderCPPLibrary.xrootdDirectoryEntry(fs)
         if (item == null)
           done = true
         else
           builder += item
       }
+      RootReaderCPPLibrary.xrootdDirectoryEnd(fs)
       builder.result
+    }
+  }
+
+  object XRootD {
+    case class File(url: String, size: Long)
+
+    val URLPattern = """(root://[^\/]*)(.*)""".r
+
+    private def matches(xrootd: XRootD, established: String, path: List[String]): List[String] = path match {
+      case dir :: rest =>
+        val (regex, branches) = globToRegex(dir)
+        if (branches) {
+          val pattern = java.util.regex.Pattern.compile(regex)
+          val results = xrootd.listDirectory(established + "/")
+          results.map(established + "/" + _).filter(pattern.matcher(_).lookingAt).flatMap(matches(xrootd, _, rest))
+        }
+        else
+          matches(xrootd, established + "/" + dir, rest)
+
+      case Nil =>
+        List(established)
+    }
+
+    def apply(globurl: String): Seq[File] = globurl match {
+      case URLPattern(baseurl, pathurl) =>
+        val xrootd = new XRootD(baseurl)
+        matches(xrootd, "", pathurl.split('/').toList).map(baseurl + _).map(x => File(x, xrootd.fileSize(x)))
+      case _ =>
+        throw new IllegalArgumentException(s"""Not an XRootD URL: "$globurl"""")
+    }
+
+    // http://stackoverflow.com/a/17369948/1623645
+    private def globToRegex(pattern: String): (String, Boolean) = {
+      val sb = new java.lang.StringBuilder
+      var inGroup = 0
+      var inClass = 0
+      var firstIndexInClass = -1
+      val arr = pattern.toCharArray
+      var i = 0
+      var branches = false
+      while (i < arr.length) {
+        var ch = arr(i)
+        ch match {
+          case '\\' =>
+            i += 1
+            if (i >= arr.length)
+              sb.append('\\')
+            else {
+              var next = arr(i)
+              if (next == 'Q'  ||  next == 'E')
+                sb.append('\\')  // extra escape needed
+              if (next != ',')
+                sb.append('\\')  // only one escape needed
+              sb.append(next)
+            }
+          case '*' if (inClass == 0) =>
+            branches = true
+            sb.append(".*")
+          case '*' =>
+            sb.append("*")
+          case '?' if (inClass == 0) =>
+            branches = true
+            sb.append('.')
+          case '?' =>
+            sb.append('?')
+          case '[' =>
+            branches = true
+            inClass += 1
+            firstIndexInClass = i + 1
+            sb.append('[')
+          case ']' =>
+            inClass -= 1
+            sb.append(']')
+          case '.' | '(' | ')' | '+' | '|' | '^' | '$' | '@' | '%' =>
+            if (inClass == 0  ||  (firstIndexInClass == i  &&  ch == '^'))
+              sb.append('\\')
+            sb.append(ch)
+          case '!' =>
+            if (firstIndexInClass == i)
+              sb.append('^')
+            else
+              sb.append('!')
+          case '{' =>
+            branches = true
+            inGroup += 1
+            sb.append('(')
+          case '}' =>
+            inGroup -= 1
+            sb.append(')')
+          case ',' =>
+            if (inGroup > 0)
+              sb.append('|')
+            else
+              sb.append(',')
+          case _ =>
+            sb.append(ch)
+        }
+        i += 1
+      }
+      (sb.toString, branches)
     }
   }
 }
