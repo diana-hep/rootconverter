@@ -314,4 +314,26 @@ package reader {
                                        microBatchSize: Int = 10) =
       new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end, microBatchSize)
   }
+
+  /////////////////////////////////////////////////// interface to XRootD for creating file sets and splits
+
+  class XRootD(url: String) {
+    private val fs = RootReaderCPPLibrary.xrootdFileSystem(url)
+
+    def fileSize(path: String): Long = RootReaderCPPLibrary.xrootdFileSize(fs, path).longValue
+
+    def listDirectory(path: String): Seq[String] = {
+      val dir = RootReaderCPPLibrary.xrootdDirectoryIter(fs, path)
+      val builder = List.newBuilder[String]
+      var done = false
+      while (!done) {
+        val item = RootReaderCPPLibrary.xrootdDirectoryEntry(fs, dir)
+        if (item == null)
+          done = true
+        else
+          builder += item
+      }
+      builder.result
+    }
+  }
 }

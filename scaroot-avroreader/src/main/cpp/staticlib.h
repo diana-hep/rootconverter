@@ -46,6 +46,11 @@ extern "C" {
   int getDataSize(const void *fieldWalker, const void *address);
   const void *getData(const void *fieldWalker, const void *address, int index);
   void copyToBuffer(void *treeWalker, int64_t entry, int microBatchSize, void *buffer, long size);
+
+  void *xrootdFileSystem(const char *url);
+  long xrootdFileSize(void *fs, const char *path);
+  void *xrootdDirectoryIter(void *fs, const char *path);
+  const char *xrootdDirectoryEntry(void *fs, void *dir);
 }
 
 #endif // STATICLIB_H

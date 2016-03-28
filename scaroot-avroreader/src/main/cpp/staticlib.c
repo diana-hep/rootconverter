@@ -15,6 +15,8 @@
 #include "datawalker.h"
 #include "staticlib.h"
 
+#include "TNetXNGSystem.h"
+
 void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace) {
   TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace));
   return out;
@@ -101,4 +103,26 @@ const void *getData(const void *dataProvider, const void *address, int index) {
 void copyToBuffer(void *treeWalker, int64_t entry, int microBatchSize, void *buffer, long size) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->copyToBuffer(entry, microBatchSize, buffer, (size_t)size);
+}
+
+void *xrootdFileSystem(const char *url) {
+  return (void*)(new TNetXNGSystem(url));
+}
+
+long xrootdFileSize(void *fs, const char *path) {
+  FileStat_t buf;
+  ((TNetXNGSystem*)fs)->GetPathInfo(path, buf);
+  return buf.fSize;
+}
+
+void *xrootdDirectoryIter(void *fs, const char *path) {
+  return ((TNetXNGSystem*)fs)->OpenDirectory(path);
+}
+
+const char *xrootdDirectoryEntry(void *fs, void *dir) {
+  return ((TNetXNGSystem*)fs)->GetDirEntry(dir);
+}
+
+void xrootdDirectoryFree(void *fs, void *dir) {
+  return ((TNetXNGSystem*)fs)->FreeDirectory(dir);
 }
