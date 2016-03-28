@@ -29,11 +29,13 @@ Options:
   --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm).
   --name=NAME            Name for TTree class (taken from TTree name if not provided).
   --ns=NAMESPACE         Package namespace for class ("data.root" if not provided).
+  --hadoop               If supplied, make the objects Hadoop writables.
 """
 
     val libsPrefix = "--libs=(.*)".r
     val namePrefix = "--name=(.*)".r
     val nsPrefix = "--ns=(.*)".r
+    val hadoopPrefix = "--hadoop".r
 
     def main(args: Array[String]) {
       var fileLocation: String = null
@@ -41,12 +43,14 @@ Options:
       var libs: List[String] = Nil
       var name: String = null
       var ns: String = "data.root"
+      var hadoop: Boolean = false
 
       // Handle arguments in the same way as root2avro.
       args.foreach(_.trim match {
         case libsPrefix(x) => libs = x.split(',').toList
         case namePrefix(x) => name = x
         case nsPrefix(x) => ns = x
+        case hadoopPrefix() => hadoop = true
         case x if (fileLocation == null) => fileLocation = x
         case x if (treeLocation == null) => treeLocation = x
         case _ =>
@@ -79,76 +83,46 @@ Options:
 
       val (ns1, ns2) = {val out = ns.split('.'); (out.init.mkString("."), out.last)}
 
-      println(generateScala(ns1, ns2, schemaClass.copy(name = if (name != null) name else schemaClass.name)))
+      println(generateScala(ns1, ns2, schemaClass.copy(name = if (name != null) name else schemaClass.name), hadoop))
     }
 
-    def generateScala(ns1: String, ns2: String, schema: Schema) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT
-// TTree data into instances of these classes for you to perform your
-// analysis.
+    def generateScala(ns1: String, ns2: String, schema: Schema, hadoop: Boolean) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
+// you to perform your analysis.
 //
-// You can make modifications to thils file, with some constraints.
+// You can add member data or member functions to these classes (in curly brackets after the "extends Serializable").
+// However, you cannot change the constructor arguments (in parentheses after the class name).
 //
-//     * You can add member data or member functions to the classes by
-//       giving them a curly-bracket body and "val", "var", or "def"
-//       statements in Scala syntax (see example below).
+// Use the example below as a guide to adding functionality:
 //
-//     * You may not change the names, number, or order of constructor
-//       arguments. ScaROOT-Reader fills the classes through their
-//       constructors.
-//
-//     * You can, however, change some of the constructor types. In
-//       particular, sequences (marked with Seq) can be changed to
-//       any of the following: Array, List, mutable.ListBuffer,
-//       Vector, Set, or mutable.Set. See Scala documentation for the
-//       relative advantages of each.
-//
-//     * Any numeric type can be replaced with a wider type: e.g.
-//       Int can be replaced with Long or Double, but not the other
-//       way around.
-//
-// Note that the JVM (and therefore Scala) has no unsigned integer
-// types. Unsigned integers are mapped to the next larger numeric
-// type (e.g. "unsigned int" goes to Long and "unsigned long" goes
-// to Double).
-//
-// Example members added to a class (quick Scala primer). Only the
-// class name and original constructor arguments are automatically
-// generated.
-//
-// case class Muon(px: Double,
+// case class Muon(px: Double,                          // The constructor arguments are automatically generated.
 //                 py: Double,
-//                 pz: Double) {       // add the curly braces
+//                 pz: Double) extends Serializable {   // Add curly braces to define members for this class.
 //
-//   val mass = 0.105                  // "val" makes a constant
+//   val mass = 0.105                                   // "val" makes a constant (which may be from a formula).
 //
-//   var variable: Double = 0.0        // "var" makes a variable
-//                                     // (type annotations are
-//                                     // optional)
+//   var variable: Double = 0.0                         // "var" makes a variable (type annotations are optional).
 //
-//   def pt = Math.sqrt(px*px + py*py) // "def" without arguments
-//                                     // is evaluated when asked
+//   def pt = Math.sqrt(px*px + py*py)                  // "def" without arguments is evaluated when asked.
 //
-//   def deltaR(candidate: GenParticle): Double = {
-//     var tmpVariable = ...           // full function body has
-//     ...                             // arguments, return type
-//     result             // and last expression is return value
+//   def deltaR(candidate: GenParticle): Double = {     // Full function body has arguments and a return type.
+//     var tmpVariable = ...
+//     ...
+//     result                                           // The last expression is return value.
 //   }
 //
-//   var bestGenParticle: Option[GenParticle] = None
-//   // use "Option" to make variables that aren't known until
-//   // runtime and fill them with "Some(genParticle)"
-// }
+//   var bestGenParticle: Option[GenParticle] = None    // Use "Option" to make variables that aren't known until
+// }                                                    // runtime and fill them with "Some(genParticle)" or None.
+//
+// Note that the JVM (and therefore Scala) has no unsigned integer types. Unsigned integers are mapped to the next
+// larger numeric type (e.g. "unsigned int" goes to Long and "unsigned long" goes to Double).
 
-${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}import scala.collection.mutable
-import scala.collection.JavaConversions._
-
-import org.dianahep.scaroot.reader._
+${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}${if (hadoop) "import org.apache.hadoop.io.Writable\n\n" else ""}import org.dianahep.scaroot.reader._
 
 package $ns2 {
-${generateScalaClasses(ns2, schema)}
+${generateScalaClasses(ns2, schema, hadoop)}
 }"""
 
-    def generateScalaClasses(ns2: String, schema: Schema) = {
+    def generateScalaClasses(ns2: String, schema: Schema, hadoop: Boolean) = {
       def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
         case SchemaClass(name, _) if (memo contains name) => Nil
         case schemaClass @ SchemaClass(name, fields) => {
@@ -186,22 +160,109 @@ ${generateScalaClasses(ns2, schema)}
       }
 
       def generateScalaClass(schemaClass: SchemaClass) = {
-        val header = "  case class " + schemaClass.name + "("
+        val header = s"  case class ${schemaClass.name}("
         val delimiter = "\n" + " " * header.size
+        var lastHadComment = false
         val fields = schemaClass.fields.zipWithIndex collect {
           case (SchemaField(name, comment, t), i) =>
             val closer = if (i == schemaClass.fields.size - 1) ")" else ","
+            lastHadComment = !comment.isEmpty
             name + ": " + generateScalaType(t) + closer + generateComment(comment)
         }
-        header + fields.mkString(delimiter)
+
+        header + fields.mkString(delimiter) + (if (lastHadComment) "\n" + " " * header.size else " ") + "extends Serializable"
       }
 
       val myclasses =
         if (schemaClasses.size == 1) ""
         else
-          "\n}\n\npackage object " + ns2 + " {\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
+          "// Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
 
-      schemaClasses.map(generateScalaClass).mkString("\n\n") + myclasses
+      def generateReadExpression(s: Schema, dummy: Int): String = s match {
+        case SchemaBool   => "in.readBoolean()"
+        case SchemaChar   => "in.readByte()"
+        case SchemaUChar  => "in.readShort()"
+        case SchemaShort  => "in.readShort()"
+        case SchemaUShort => "in.readInt()"
+        case SchemaInt    => "in.readInt()"
+        case SchemaUInt   => "in.readLong()"
+        case SchemaLong   => "in.readLong()"
+        case SchemaULong  => "in.readDouble()"
+        case SchemaFloat  => "in.readFloat()"
+        case SchemaDouble => "in.readDouble()"
+        case SchemaString => "in.readUTF()"
+        case SchemaClass(name, _) => s"""{val x$dummy = new ${name}Writable(); x$dummy.readFields(in); x$dummy.datum}"""
+        case SchemaPointer(referent) => s"""if (in.readBoolean()) Some(${generateReadExpression(referent, dummy + 1)}) else None"""
+        case SchemaSequence(content) => s"""(for (x$dummy <- 0 until in.readInt()) yield {${generateReadExpression(content, dummy + 1)}}).toSeq"""
+      }
+
+      def generateWriteStatement(n: String, s: Schema, dummy: Int): String = {
+        val indent = "  " * dummy
+        s match {
+          case SchemaBool   => indent + s"out.writeBoolean($n)"
+          case SchemaChar   => indent + s"out.writeByte($n)"
+          case SchemaUChar  => indent + s"out.writeShort($n)"
+          case SchemaShort  => indent + s"out.writeShort($n)"
+          case SchemaUShort => indent + s"out.writeInt($n)"
+          case SchemaInt    => indent + s"out.writeInt($n)"
+          case SchemaUInt   => indent + s"out.writeLong($n)"
+          case SchemaLong   => indent + s"out.writeLong($n)"
+          case SchemaULong  => indent + s"out.writeDouble($n)"
+          case SchemaFloat  => indent + s"out.writeFloat($n)"
+          case SchemaDouble => indent + s"out.writeDouble($n)"
+          case SchemaString => indent + s"out.writeUTF($n)"
+          case SchemaClass(name, _) => indent + s"""$n.write(out)"""
+          case SchemaPointer(referent) => indent + s"""if ($n.isEmpty)
+$indent        out.writeBoolean(false)
+$indent      else {
+$indent        out.writeBoolean(true)
+$indent      ${generateWriteStatement(n + ".get", referent, dummy + 1)}
+$indent      }"""
+          case SchemaSequence(content) => indent + s"""out.writeInt($n.size)
+$indent      for (x$dummy <- $n) {
+$indent      ${generateWriteStatement("x" + dummy.toString, content, dummy + 1)}
+$indent      }"""
+        }
+      }
+
+      def generateHadoopConverter(schemaClass: SchemaClass) = {
+        val writable = s"${schemaClass.name}Writable"
+        val header = s"      datum = new ${schemaClass.name}("
+        val readExpressions = schemaClass.fields.zipWithIndex collect {
+          case (SchemaField(n, _, t), i) => generateReadExpression(t, 0) + (if (i == schemaClass.fields.size - 1) ")" else ",") + "    // " + n
+        }
+        val writeStatements = schemaClass.fields collect {
+          case SchemaField(n, _, t) => generateWriteStatement("datum." + n, t, 0)
+        }
+        s"""  implicit class $writable(var datum: ${schemaClass.name}) extends Writable {
+    def this() { this(null) }
+    def readFields(in: java.io.DataInput) {
+$header${readExpressions.mkString("\n" + " " * header.size)}
+    }
+    def write(out: java.io.DataOutput) {
+      ${writeStatements.mkString("\n      ")}
+    }
+  }
+  object $writable {
+    def read(in: java.io.DataInput) = {
+      val out = new $writable()
+      out.readFields(in)
+      out
+    }
+  }
+  implicit def to${schemaClass.name}(wrapper: $writable) = wrapper.datum"""
+      }
+
+      val hadoopConverters =
+        if (!hadoop) ""
+        else "  // Import these implicits into Hadoop to provide methods for Hadoop's custom serialization.\n" + schemaClasses.map(generateHadoopConverter).mkString("\n\n")
+
+      val packageObject =
+        if (myclasses.isEmpty  &&  hadoopConverters.isEmpty) ""
+        else
+          "\n}\n\npackage object " + ns2 + " {\n  " + myclasses + (if (!myclasses.isEmpty  &&  !hadoopConverters.isEmpty) "\n\n" else "") + hadoopConverters
+          
+      schemaClasses.map(generateScalaClass).mkString("\n\n") + packageObject
     }
   }
 }
