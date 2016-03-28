@@ -354,11 +354,10 @@ package reader {
         if (branches) {
           val pattern = java.util.regex.Pattern.compile(regex)
           val results = xrootd.listDirectory(established + "/")
-          results.map(established + "/" + _).filter(pattern.matcher(_).lookingAt).flatMap(matches(xrootd, _, rest))
+          results.filter(pattern.matcher(_).lookingAt).map(established + "/" + _).flatMap(matches(xrootd, _, rest))
         }
         else
           matches(xrootd, established + "/" + dir, rest)
-
       case Nil =>
         List(established)
     }
