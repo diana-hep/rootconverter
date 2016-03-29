@@ -83,10 +83,10 @@ Options:
 
       val (ns1, ns2) = {val out = ns.split('.'); (out.init.mkString("."), out.last)}
 
-      println(generateScala(ns1, ns2, schemaClass.copy(name = if (name != null) name else schemaClass.name), hadoop))
+      println(generateScala(ns1, ns2, schemaClass.copy(name = if (name != null) name else schemaClass.name), treeLocation, hadoop))
     }
 
-    def generateScala(ns1: String, ns2: String, schema: Schema, hadoop: Boolean) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
+    def generateScala(ns1: String, ns2: String, schema: Schema, treeLocation: String, hadoop: Boolean) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
 // you to perform your analysis.
 //
 // You can add member data or member functions to these classes (in curly brackets after the "extends Serializable").
@@ -119,10 +119,10 @@ Options:
 ${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}${if (hadoop) "import org.apache.hadoop.io.Writable\n\n" else ""}import org.dianahep.scaroot.reader._
 
 package $ns2 {
-${generateScalaClasses(ns2, schema, hadoop)}
+${generateScalaClasses(ns2, schema, treeLocation, hadoop)}
 }"""
 
-    def generateScalaClasses(ns2: String, schema: Schema, hadoop: Boolean) = {
+    def generateScalaClasses(ns2: String, schema: Schema, treeLocation: String, hadoop: Boolean) = {
       def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
         case SchemaClass(name, _) if (memo contains name) => Nil
         case schemaClass @ SchemaClass(name, fields) => {
@@ -174,9 +174,10 @@ ${generateScalaClasses(ns2, schema, hadoop)}
       }
 
       val myclasses =
-        if (schemaClasses.size == 1) ""
-        else
-          "// Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.\n  val myclasses = Map(" + schemaClasses.tail.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
+        "  // Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.\n  val myclasses = Map(" + schemaClasses.map(c => s"${Literal(Constant(c.name))} -> My[${c.name}]").mkString(", ") + ")"
+
+      val tl =
+        s"  // Unless you move it, this is the location of the tree, provided for convenience and reusable code.\n  val treeLocation = ${Literal(Constant(treeLocation))}"
 
       def generateReadExpression(s: Schema, dummy: Int): String = s match {
         case SchemaBool   => "in.readBoolean()"
@@ -258,9 +259,7 @@ $header${readExpressions.mkString("\n" + " " * header.size)}
         else "  // Import these implicits into Hadoop to provide methods for Hadoop's custom serialization.\n" + schemaClasses.map(generateHadoopConverter).mkString("\n\n")
 
       val packageObject =
-        if (myclasses.isEmpty  &&  hadoopConverters.isEmpty) ""
-        else
-          "\n}\n\npackage object " + ns2 + " {\n  " + myclasses + (if (!myclasses.isEmpty  &&  !hadoopConverters.isEmpty) "\n\n" else "") + hadoopConverters
+        "\n}\n\npackage object " + ns2 + " {\n" + myclasses + "\n\n" + tl + (if (!myclasses.isEmpty  &&  !hadoopConverters.isEmpty) "\n\n" else "") + hadoopConverters
           
       schemaClasses.map(generateScalaClass).mkString("\n\n") + packageObject
     }
