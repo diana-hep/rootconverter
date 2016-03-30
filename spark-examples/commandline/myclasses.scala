@@ -1,69 +1,40 @@
-// These classes represent your data. ScaROOT-Reader will convert ROOT
-// TTree data into instances of these classes for you to perform your
-// analysis.
+// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
+// you to perform your analysis.
 //
-// You can make modifications to thils file, with some constraints.
+// You can add member data or member functions to these classes (in curly brackets after the "extends Serializable").
+// However, you cannot change the constructor arguments (in parentheses after the class name).
 //
-//     * You can add member data or member functions to the classes by
-//       giving them a curly-bracket body and "val", "var", or "def"
-//       statements in Scala syntax (see example below).
+// Use the example below as a guide to adding functionality:
 //
-//     * You may not change the names, number, or order of constructor
-//       arguments. ScaROOT-Reader fills the classes through their
-//       constructors.
-//
-//     * You can, however, change some of the constructor types. In
-//       particular, sequences (marked with Seq) can be changed to
-//       any of the following: Array, List, mutable.ListBuffer,
-//       Vector, Set, or mutable.Set. See Scala documentation for the
-//       relative advantages of each.
-//
-//     * Any numeric type can be replaced with a wider type: e.g.
-//       Int can be replaced with Long or Double, but not the other
-//       way around.
-//
-// Note that the JVM (and therefore Scala) has no unsigned integer
-// types. Unsigned integers are mapped to the next larger numeric
-// type (e.g. "unsigned int" goes to Long and "unsigned long" goes
-// to Double).
-//
-// Example members added to a class (quick Scala primer). Only the
-// class name and original constructor arguments are automatically
-// generated.
-//
-// case class Muon(px: Double,
+// case class Muon(px: Double,                          // The constructor arguments are automatically generated.
 //                 py: Double,
-//                 pz: Double) {       // add the curly braces
+//                 pz: Double) extends Serializable {   // Add curly braces to define members for this class.
 //
-//   val mass = 0.105                  // "val" makes a constant
+//   val mass = 0.105                                   // "val" makes a constant (which may be from a formula).
 //
-//   var variable: Double = 0.0        // "var" makes a variable
-//                                     // (type annotations are
-//                                     // optional)
+//   var variable: Double = 0.0                         // "var" makes a variable (type annotations are optional).
 //
-//   def pt = Math.sqrt(px*px + py*py) // "def" without arguments
-//                                     // is evaluated when asked
+//   def pt = Math.sqrt(px*px + py*py)                  // "def" without arguments is evaluated when asked.
 //
-//   def deltaR(candidate: GenParticle): Double = {
-//     var tmpVariable = ...           // full function body has
-//     ...                             // arguments, return type
-//     result             // and last expression is return value
+//   def deltaR(candidate: GenParticle): Double = {     // Full function body has arguments and a return type.
+//     var tmpVariable = ...
+//     ...
+//     result                                           // The last expression is return value.
 //   }
 //
-//   var bestGenParticle: Option[GenParticle] = None
-//   // use "Option" to make variables that aren't known until
-//   // runtime and fill them with "Some(genParticle)"
-// }
+//   var bestGenParticle: Option[GenParticle] = None    // Use "Option" to make variables that aren't known until
+// }                                                    // runtime and fill them with "Some(genParticle)" or None.
+//
+// Note that the JVM (and therefore Scala) has no unsigned integer types. Unsigned integers are mapped to the next
+// larger numeric type (e.g. "unsigned int" goes to Long and "unsigned long" goes to Double).
 
 package data
-
-import scala.collection.mutable
-import scala.collection.JavaConversions._
 
 import org.dianahep.scaroot.reader._
 
 package root {
-  case class Tree(event: Event)
+  case class Tree(event_split: Event,
+                  event_not_split: Event) extends Serializable
 
   case class Event(fType: String,   // event type
                    fEventName: Option[String],   // run+event number in character format
@@ -78,11 +49,11 @@ package root {
                    fEvtHdr: EventHeader,
                    fTracks: Option[Seq[Track]],   // ->array with all tracks
                    fTriggerBits: TBits,   // Bits triggered by this event.
-                   fIsValid: Boolean)
+                   fIsValid: Boolean) extends Serializable
 
   case class EventHeader(fEvtNum: Int,
                          fRun: Int,
-                         fDate: Int)
+                         fDate: Int) extends Serializable
 
   case class Track(fPx: Float,   // X component of the momentum
                    fPy: Float,   // Y component of the momentum
@@ -105,12 +76,18 @@ package root {
                    fNsp: Int,   // Number of points for this track with a special value
                    fPointValue: Option[Double],   // [fNsp][0,3] a special quantity for some point.
                    fTriggerBits: TBits)   // Bits triggered by this track.
+                   extends Serializable
 
   case class TBits(fNbits: Long,   // Highest bit set + 1
                    fNbytes: Long,   // Number of UChars in fAllBits
                    fAllBits: Option[Short])   // [fNbytes] array of UChars
+                   extends Serializable
 }
 
 package object root {
-  val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
+  // Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.
+  val myclasses = Map("t4" -> My[Tree], "Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
+
+  // Unless you move it, this is the location of the tree, provided for convenience and reusable code.
+  val treeLocation = "t4"
 }

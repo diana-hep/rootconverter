@@ -10,6 +10,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 
+import data.root._
 import org.dianahep.scaroot.reader._
 
 val sc = new SparkContext("local", "shell")
