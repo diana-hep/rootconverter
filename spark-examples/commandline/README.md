@@ -1,6 +1,6 @@
 # Example use of ScaROOT-Reader in Spark
 
-Since ScaROOT-Reader exposes ROOT trees in Scala, they are immediately available in Spark, without (much) extra work. This example uses sbt to compile a project and provide an interactive prompt. Note that sbt downloads Spark-Standalone: you don't even need to have a copy of Spark!
+Since ScaROOT-Reader exposes ROOT trees in Scala, they are immediately available in Spark, without (much) extra work. This example uses sbt to compile a project and provide an interactive prompt. Note that sbt downloads Spark-Standalone: you don't even need to have a copy of Spark! You do, however, [need a copy of sbt](http://www.scala-sbt.org/download.html), and you have to have compiled the `scaroot-reader` project with Maven (`mvn install`).
 
 ## Step 1 (optional): make container classes
 
