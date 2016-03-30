@@ -5,54 +5,38 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.compress.CompressionCodecFactory
-import org.apache.hadoop.io.Text
 import org.apache.hadoop.io.Writable
+import org.apache.hadoop.io.WritableComparable
 import org.apache.hadoop.mapreduce.InputSplit
 import org.apache.hadoop.mapreduce.JobContext
-import org.apache.hadoop.mapreduce.JobStatus
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.input.FileSplit
-import org.apache.hadoop.mapreduce.Mapper
 import org.apache.hadoop.mapreduce.RecordReader
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 
 import org.dianahep.scaroot.reader._
 
 package hadoop {
-  trait KeyWritable extends Serializable with Writable {
-    def fileIndex: Int
-    def treeEntry: Long
-    def fileLocation(configuration: Configuration): String
-  }
-  object KeyWritable {
-    def apply(fileIndex: Int, treeEntry: Long) = new KeyWritableImpl(fileIndex, treeEntry)
-    def read(in: java.io.DataInput) = {
-      val out = new KeyWritableImpl()
-      out.readFields(in)
-      out
-    }
-  }
-
-  private[hadoop] class KeyWritableImpl(var fileIndex: Int, var treeEntry: Long) extends KeyWritable {
-    def fileLocation(configuration: Configuration) = configuration.getStrings("scaroot.reader.fileLocations")(fileIndex)
-
+  case class KeyWritable(var fileIndex: Int, var treeEntry: Long) extends Serializable with WritableComparable[KeyWritable] {
     def this() { this(-1, -1L) }
-
+    def fileLocation(configuration: Configuration) = configuration.getStrings("scaroot.reader.fileLocations")(fileIndex)
     def write(out: java.io.DataOutput) {
       out.writeInt(fileIndex)
       out.writeLong(treeEntry)
     }
-
     def readFields(in: java.io.DataInput) {
       fileIndex = in.readInt()
       treeEntry = in.readLong()
     }
-
-    override def toString() = s"KeyWritable($fileIndex, $treeEntry)"
+    def compareTo(that: KeyWritable) =
+      if (this.fileIndex < that.fileIndex)
+        -1
+      else if (this.fileIndex > that.fileIndex)
+        1
+      else
+        this.treeEntry compare that.treeEntry
   }
 
   case class XRootDFilePiece(url: String, fileIndex: Int, size: Long, num: Int, of: Int) {
@@ -66,13 +50,21 @@ package hadoop {
 
   // Tells Hadoop how to split up files.
   class RootTreeInputFormat[TYPE <: Writable] extends FileInputFormat[KeyWritable, TYPE] {
-    override def createRecordReader(split: InputSplit, context: TaskAttemptContext): RecordReader[KeyWritable, TYPE] =
+    System.err.println("RootTreeInputFormat constructor")
+
+    override def createRecordReader(split: InputSplit, context: TaskAttemptContext): RecordReader[KeyWritable, TYPE] = {
+      System.err.println("RootTreeInputFormat createRecordReader")
       new RootTreeRecordReader[TYPE]
+    }
 
     override def getSplits(jobContext: JobContext): java.util.List[InputSplit] = {
+      System.err.println("RootTreeInputFormat getSplits")
+
       val configuration = jobContext.getConfiguration
       val inputPath = configuration.get("mapreduce.input.fileinputformat.inputdir", configuration.get("mapred.input.dir", ""))
       val maxSize = configuration.getLong("mapreduce.input.fileinputformat.split.maxsize", java.lang.Long.MAX_VALUE)  // By default, only one split.
+
+      System.err.println(s"inputPath $inputPath maxSize $maxSize (${maxSize == java.lang.Long.MAX_VALUE})")
 
       // We handle the case of XRootD, which has no locality (all files are remote, just distribute work evenly).
       if (inputPath startsWith "root://") {
@@ -109,8 +101,12 @@ package hadoop {
       }
       // They handle all other cases: HDFS and local filesystem.
       else {
+        System.err.println("else clause 1")
         configuration.setStrings("scaroot.reader.fileLocations", listStatus(jobContext).map(_.getPath.toString): _*)
-        super.getSplits(jobContext)
+        System.err.println("else clause 2")
+        val out = super.getSplits(jobContext)
+        System.err.println("else clause 3")
+        out
       }
     }
 
@@ -120,6 +116,8 @@ package hadoop {
 
   // Tells Hadoop how to interpret files as records.
   class RootTreeRecordReader[TYPE <: Writable] extends RecordReader[KeyWritable, TYPE] {
+    System.err.println("RootTreeRecordReader constructor")
+
     private var fileToIndex: Map[String, Int] = null
     private var treeLocation: String = null
     private var libs: List[String] = Nil
@@ -136,13 +134,18 @@ package hadoop {
     private var value: TYPE = null.asInstanceOf[TYPE]
 
     override def initialize(split: InputSplit, context: TaskAttemptContext) = {
+      System.err.println("RootTreeRecordReader initialize")
+
       val configuration = context.getConfiguration
 
       treeLocation = configuration.get("scaroot.reader.treeLocation")
-      libs = configuration.getStrings("scaroot.reader.libs").toList
-      val classNames = configuration.getStrings("scaroot.reader.classNames").toList
-      myclasses = classNames.map(name => (name, configuration.getClass(name, null, classOf[My[_]]).getConstructor().newInstance())).toMap
+      libs = Option(configuration.getStrings("scaroot.reader.libs")).toList.flatten
+      val classNames = Option(configuration.getStrings("scaroot.reader.classNames")).toList.flatten
+      myclasses = classNames.map(name => (name, configuration.getClass("scaroot.reader.myclasses." + name, null, classOf[My[_]]).getConstructor().newInstance())).toMap
       microBatchSize = configuration.getInt("scaroot.reader.microBatchSize", 10)
+
+      System.err.println(s"treeLocation $treeLocation libs $libs myclasses $myclasses microBatchSize $microBatchSize")
+      System.err.println(s"""fileLocations ${configuration.getStrings("scaroot.reader.fileLocations")}""")
 
       split match {
         // HDFS and local filesystem cases.
@@ -152,19 +155,25 @@ package hadoop {
           val localFileSystem = FileSystem.getLocal(configuration)
 
           val localFile =
-            if (path.getFileSystem(configuration) == localFileSystem)
+            if (path.getFileSystem(configuration) == localFileSystem) {
+              System.err.println(s"on local filesystem $path")
               localFileSystem.pathToFile(path)
+            }
             else {
+              System.err.println(s"on HDFS $path")
               // When the ROOT file is in HDFS, there's no better way to run over it than to copy it locally first.
               // HTTP access (not enabled for all HDFS clusters) is not seekable, and the ROOT file format depends
               // heavily on seeking (it's more of an object database than a file format).
               val name = fileSplit.getPath.getName
               val cwd = localFileSystem.getWorkingDirectory
               fileSystem.copyToLocalFile(false, path, cwd)
+
+              System.err.println(s"copied: $name $cwd")
+
               localFileSystem.pathToFile(new Path(cwd, name))
             }
 
-          val fileIndex = configuration.getStrings("scaroot.reader.fileLocations").indexOf(path)
+          val fileIndex = Option(configuration.getStrings("scaroot.reader.fileLocations")).toSeq.flatten.indexOf(path)
 
           this.pieces = List(XRootDFilePiece("file://" + localFile.getAbsolutePath, fileIndex, fileSplit.getLength, 0, 1))
 
@@ -172,6 +181,9 @@ package hadoop {
           // XRootD is a remote file protocol that works well with ROOT, so we can let it do its thing.
           this.pieces = pieces
       }
+
+      System.err.println(s"""mapred.map.child.env ${configuration.get("mapred.map.child.env")}""")
+      System.err.println(s"""LD_LIBRARY_PATH ${System.getenv()("LD_LIBRARY_PATH")}""")
 
       progressDenom = this.pieces.map(_.fractionalSize).sum
 
@@ -193,7 +205,7 @@ package hadoop {
         progressCurrentSize = next.fractionalSize
 
         if (iterator.hasNext) {
-          key = new KeyWritableImpl(fileIndex, iterator.index)
+          key = KeyWritable(fileIndex, iterator.index)
           value = iterator.next()
           true
         }
@@ -201,7 +213,7 @@ package hadoop {
           false
 
       case (true, _) =>
-        key = new KeyWritableImpl(fileIndex, iterator.index)
+        key = KeyWritable(fileIndex, iterator.index)
         value = iterator.next()
         true
     }

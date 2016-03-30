@@ -21,7 +21,7 @@
 
   <groupId>org.diana-hep</groupId>
   <artifactId>scaroot-hadoop</artifactId>
-  <version>TRUNK</version>
+  <version>0.1</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -50,26 +50,26 @@
     </dependency>
 
     <!-- Works with Hadoop 2.7.1-amzn-0 on Amazon Linux AMI release 2015.09 and Spark 1.6.0 -->
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-core</artifactId>
-      <version>1.2.1</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- <dependency> -->
-    <!--   <groupId>org.apache.hadoop</groupId> -->
-    <!--   <artifactId>hadoop-common</artifactId> -->
-    <!--   <version>2.6.0-cdh5.5.1</version> -->
-    <!--   <scope>provided</scope> -->
-    <!-- </dependency> -->
-
     <!-- <dependency> -->
     <!--   <groupId>org.apache.hadoop</groupId> -->
     <!--   <artifactId>hadoop-core</artifactId> -->
-    <!--   <version>2.6.0-mr1-cdh5.5.1</version> -->
+    <!--   <version>1.2.1</version> -->
     <!--   <scope>provided</scope> -->
     <!-- </dependency> -->
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>2.6.0-cdh5.5.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>2.6.0-mr1-cdh5.5.1</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- <dependency> -->
     <!--   <groupId>org.apache.spark</groupId> -->
@@ -89,8 +89,8 @@
 
   <repositories>
     <repository>
-      <id>xrootd4j.repository</id>
-      <url>https://download.dcache.org/nexus/content/repositories/releases/</url>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
     </repository>
   </repositories>
 
