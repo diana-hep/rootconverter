@@ -22,11 +22,11 @@ SAMPLE_FILE=root://cmseos.fnal.gov/store/user/pivarski/tree4/Event-0.root
 java -jar $SCAROOT_READER $SAMPLE_FILE t4 --libs=$CXX_CLASSES --name=Tree > myclasses.scala
 ```
 
-Now you have a new `myclasses.scala` file with Scala versions of the C++ classes. You can add your own methods to these classes; see the comments for details. Since it's in this directory, sbt will compile it and load it into the interactive session.
+Now you have a new `myclasses.scala` file with Scala versions of the C++ classes. You can add your own methods to these classes; see the comments for details. Since it's in this directory, sbt will automatically compile it and load it into the interactive session.
 
 ## Step 2: configure sbt build file
 
-Look at `build.sbt`. It tells sbt to download Spark and to use your personal Maven repository to find ScaROOT-Reader. This assumes that you compiled it with `mvn install`.
+Look at [`build.sbt`](https://github.com/diana-hep/rootconverter/blob/master/spark-examples/commandline/build.sbt). It tells sbt to download Spark and to use your personal Maven repository to find ScaROOT-Reader. This assumes that you compiled it with `mvn install`.
 
 It also has a few startup commands in it, to load a Spark context and import your classes.
 
