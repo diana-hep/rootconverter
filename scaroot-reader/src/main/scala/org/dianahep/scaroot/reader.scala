@@ -366,15 +366,40 @@ package reader {
         List(established)
     }
 
-    def apply(globurl: String): SortedSet[File] = globurl match {
+    def apply(globurl: String): Seq[File] = globurl match {
       case URLPattern(baseurl, pathurl) =>
         val xrootd = new XRootD(baseurl)
         val results = matches(xrootd, "", pathurl.split('/').toList).map(baseurl + _).map(x => File(x, xrootd.fileSize(x)))
         // Drop duplicates and sort results with biggest first.
-        SortedSet[File](results: _*)(Ordering.by[File, Long](-_.size))
+        SortedSet[File](results: _*)(Ordering.by[File, Long](-_.size)).toSeq
 
       case _ =>
         throw new IllegalArgumentException(s"""Not an XRootD URL: "$globurl"""")
+    }
+
+    def balance(globurl: String, partitions: Int): Seq[Seq[File]] = {
+      val out = Array.fill(partitions)(mutable.ListBuffer[File]())
+
+      def size(files: Iterable[File]) = files.map(_.size).sum
+
+      def minimum = {
+        var best = -1L
+        var besti = 0
+        0 until partitions foreach {i =>
+          val s = size(out(i))
+          if (best < 0  ||  s < best) {
+            best = s
+            besti = i
+          }
+        }
+        besti
+      }
+
+      apply(globurl) foreach {file =>
+        out(minimum) += file
+      }
+
+      out.map(_.toList).toSeq
     }
 
     // http://stackoverflow.com/a/17369948/1623645
