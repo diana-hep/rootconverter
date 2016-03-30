@@ -4,7 +4,7 @@ Converts ROOT trees into different formats to make them accessible in Big Data a
 There are several projects here, three of which are complete. They all belong in the same git repository because they share code.
 
   * `root2avro` is a C++ program that converts ROOT TTree data into an equivalent Avro data (which may be saved to a file on disk or streamed into another application.
-  * `scaroot-reader` is a hybrid Scala/C++ (through JNA) library that streams ROOT TTree data directly into the JVM. Data representation is controlled with (possibly) user-supplied callbacks.
+  * [`scaroot-reader`](https://github.com/diana-hep/rootconverter/tree/master/scaroot-reader) is a hybrid Scala/C++ (through JNA) library that streams ROOT TTree data directly into the JVM. Data representation is controlled with (possibly) user-supplied callbacks.
   * [`Spark examples`](https://github.com/diana-hep/rootconverter/tree/master/spark-examples/commandline) shows how to use ScaROOT-Reader in Spark.
 
 Click on the links to go to specific documentation for each.

@@ -43,7 +43,8 @@ Instead, the user can supply classes for ScaROOT-Reader to fill:
 ```scala
 case class TwoMuon(mass_mumu: Float, px: Float, py: Float, pz: Float)
 
-val iterator = RootTreeIterator[TwoMuon](List("TrackResonanceNtuple.root"), "TrackResonanceNtuple/twoMuon")
+val iterator = RootTreeIterator[TwoMuon](List("TrackResonanceNtuple.root"),
+                                         "TrackResonanceNtuple/twoMuon")
 
 while (iterator.hasNext) {
   val datum = iterator.next()
@@ -85,7 +86,8 @@ case class EventHeader(...)
 case class Track(...)
 case class TBits(...)
 
-val myclasses = Map("T" -> My[Tree], "Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
+val myclasses = Map("T" -> My[Tree], "Event" -> My[Event], "EventHeader" -> My[EventHeader],
+                    "Track" -> My[Track], "TBits" -> My[TBits])
 ```
 
 To generate these classes automatically, use the ScaROOT-Reader JAR as a command:
