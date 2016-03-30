@@ -18,7 +18,7 @@ What about the others? They're either works in progress or abandoned, since this
 Rough performance statistics for 1000 `Event.root` entries on a single machine (my laptop). Take these numbers as _relative._
 
   * 1.8 sec: read TTree, discard data.
-  * 1.8 sec: read TTree, create Scala objects with ScaROOT-Reader (negligible difference). However, repeating this test eventually produced some 3 second spikes, presumably due to garbage collector pauses.
+  * 1.8 sec: read TTree, create Scala objects with ScaROOT-Reader (negligible difference from above). However, repeating this test eventually produced some 3 second spikes, presumably due to garbage collector pauses.
   * 5.7 sec: convert to uncompressed Avro file and save. Reading from Avro file in Java: about 1 sec. Avro file is 2.0 times as large as the original ROOT file.
   * 6.1 sec: convert to Snappy-compressed Avro file and save. Avro file is 1.4 times as large as the original ROOT file.
   * 29 sec: convert to Avro with any other compression method. Avro file is 1.0 times as large as the original ROOT file (suggesting that ROOT uses something like deflate).
