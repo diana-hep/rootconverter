@@ -15,7 +15,7 @@
   <!-- See the License for the specific language governing permissions and         -->
   <!-- limitations under the License.                                              -->
 
-  <name>reader</name>
+  <name>scaroot-reader</name>
   <description>Access ROOT TTree data in Scala by sharing a flattened buffer.</description>
   <inceptionYear>2016</inceptionYear>
 
