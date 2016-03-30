@@ -5,7 +5,7 @@ There are several projects here, three of which are complete. They all belong in
 
   * `root2avro` is a C++ program that converts ROOT TTree data into an equivalent Avro data (which may be saved to a file on disk or streamed into another application.
   * `scaroot-reader` is a hybrid Scala/C++ (through JNA) library that streams ROOT TTree data directly into the JVM. Data representation is controlled with (possibly) user-supplied callbacks.
-  * [`Spark example`](https://github.com/diana-hep/rootconverter/tree/master/spark-examples/commandline) shows how to use ScaROOT-Reader in Spark.
+  * [`Spark examples`](https://github.com/diana-hep/rootconverter/tree/master/spark-examples/commandline) shows how to use ScaROOT-Reader in Spark.
 
 Click on the links to go to specific documentation for each.
 
@@ -22,6 +22,7 @@ Rough performance statistics for 1000 `Event.root` entries on a single machine (
   * 5.7 sec: convert to uncompressed Avro file and save. Reading from Avro file in Java: about 1 sec. Avro file is 2.0 times as large as the original ROOT file.
   * 6.1 sec: convert to Snappy-compressed Avro file and save. Avro file is 1.4 times as large as the original ROOT file.
   * 29 sec: convert to Avro with any other compression method. Avro file is 1.0 times as large as the original ROOT file (suggesting that ROOT uses something like deflate).
+  * 18 sec: convert to JSON file and save. The JSON file is huge.
   * 29 sec: abandoned `scaroot-oldreader` version.
 
 Unfortunately, file-reading cannot be parallelized in the same process: you immediately get `libRIO` segmentation faults. Adding a "micro-batch" strategy of copying several entries from C++ to Scala at a time does nothing for performance.
