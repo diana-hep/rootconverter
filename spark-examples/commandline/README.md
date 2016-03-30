@@ -47,7 +47,7 @@ The number of partitions (here, 5) is the number of concurrent map tasks: it sho
 ```scala
 val numPartitions = 5
 
-val fileList: Seq[Seq[XRootD.File]] = XRootD.balance("root://cmseos.fnal.gov/store/user/pivarski/tree4/*.root", numPartitions)
+val fileList = XRootD.balance("root://cmseos.fnal.gov/store/user/pivarski/tree4/*.root", numPartitions)
 
 val fileListRDD = sc.parallelize(fileList, numPartitions)
 ```
