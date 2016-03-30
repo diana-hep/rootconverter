@@ -9,7 +9,7 @@ These are classes that ROOT data will be copied into. Without them, ScaROOT-Read
 For this, you'll need
 
    * a compiled `scaroot-reader.jar`
-   * a ROOT dictionary for your ROOT file's classes, if any (`Event_cxx.so` here)
+   * a ROOT dictionary for your ROOT file's classes, if any (here, `Event_cxx.so`)
    * a sample of the ROOT files you want to analyze. This example uses files on an XRootD server (note the `root://` prefix).
 
 ```
@@ -32,7 +32,7 @@ It also has a few startup commands in it, to load a Spark context and import you
 
 ## Step 3: start Spark
 
-Start the interactive session. It will take a while to download all the packages the first time only. This is actually an ordinary Scala prompt, since sbt is a Scala build tool, but the startup commands defines a local `SparkContext`, which is what makes a Spark prompt a Spark prompt.
+Start the interactive session. It will take a while to download all the packages the first time only. This is actually an ordinary Scala prompt, since sbt is a Scala build tool, but the startup commands define a local `SparkContext`, which is what makes a Spark prompt a Spark prompt.
 
 ```
 sbt console
@@ -42,7 +42,7 @@ sbt console
 
 Since the data are being pulled from a distinct server from the Spark cluster, we don't need to worry about data locality. (None of the data are local.) Therefore, we'll create a file list RDD and use that to populate a dataset.
 
-The number of partitions (5 here) is the number of concurrent map tasks: it should be the number of available processors on your Spark cluster. The `XRootD.balance` function comes from ScaROOT-Reader; it looks up files on XRootD and makes a set of file sets that are balanced by size. It accepts wildcards in the path.
+The number of partitions (here, 5) is the number of concurrent map tasks: it should be the number of available processors on your Spark cluster. The `XRootD.balance` function comes from ScaROOT-Reader; it looks up files on XRootD and makes a set of file sets that are balanced by size. It accepts wildcards in the path.
 
 ```scala
 val numPartitions = 5
@@ -50,7 +50,7 @@ val numPartitions = 5
 val fileList: Seq[Seq[XRootD.File]] = XRootD.balance("root://cmseos.fnal.gov/store/user/pivarski/tree4/*.root", numPartitions)
 
 val fileListRDD = sc.parallelize(fileList, numPartitions)
-``
+```
 
 Each element of the `fileListRDD` is a set of files to process. The `RootTreeIterator` turns a list of files into an iterator over their data. The only tricky part is to note that we want to do a `flatMap` over these iterators to get one continuous stream of data from all the files.
 
