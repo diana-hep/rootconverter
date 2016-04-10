@@ -120,6 +120,7 @@ public:
   std::string escapedString(const char *string);
   virtual size_t sizeOf() = 0;
   virtual const std::type_info *typeId() = 0;
+  virtual TDictionary *tdictionary();
   virtual bool empty() = 0;
   virtual bool resolved() = 0;
   virtual void resolve(const void *address) = 0;
@@ -526,6 +527,7 @@ public:
 
   size_t sizeOf();
   const std::type_info *typeId();
+  TDictionary *tdictionary();
   bool empty();
   bool resolved();
   void resolve(const void *address);

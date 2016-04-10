@@ -43,6 +43,10 @@ std::string FieldWalker::escapedString(const char *string) {
   return stream.str();
 }
 
+TDictionary *FieldWalker::tdictionary() {
+  return TDictionary::GetDictionary(*typeId());
+}
+
 ///////////////////////////////////////////////////////////////////// PrimitiveWalkers
 
 PrimitiveWalker::PrimitiveWalker(std::string fieldName, std::string typeName) :
@@ -1234,6 +1238,13 @@ size_t ClassWalker::sizeOf() { return sizeOf_; }
 
 const std::type_info *ClassWalker::typeId() { return typeId_; }
 
+TDictionary *ClassWalker::tdictionary() {
+  if (typeId() == nullptr)
+    return TDictionary::GetDictionary(tclass->GetName());
+  else
+    return TDictionary::GetDictionary(*typeId());
+}
+
 bool ClassWalker::empty() { return members.empty(); }
 
 bool ClassWalker::resolved() {
@@ -2372,7 +2383,7 @@ void *LeafWalker::getAddress() {
 GenericReaderValue::GenericReaderValue() {}
 
 GenericReaderValue::GenericReaderValue(std::string fieldName, std::string typeName, TTreeReader *reader, FieldWalker *walker) :
-  TTreeReaderValueBase(reader, fieldName.c_str(), TDictionary::GetDictionary(*walker->typeId())),
+  TTreeReaderValueBase(reader, fieldName.c_str(), walker->tdictionary()),
   typeName(typeName) { }
 
 const char *GenericReaderValue::GetDerivedTypeName() const { return typeName.c_str(); }
