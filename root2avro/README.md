@@ -23,7 +23,9 @@ Avro is streamed to standard output and can be redirected to a file.
 Options:
   --start=NUMBER         First entry number to convert.
   --end=NUMBER           Entry number after the last to convert.
-  --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm).
+    --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree
+                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or
+                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries).
   --mode=MODE            What to write to standard output: "avro" (Avro file, default), "json" (one JSON object per line), "schema" (Avro schema only), "repr" (ROOT representation only).
   --codec=CODEC          Codec for compressing the Avro output; may be "null" (uncompressed, default),
                          "deflate", "snappy", "lzma", depending on libraries installed on your system.
