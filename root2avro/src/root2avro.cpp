@@ -45,8 +45,11 @@ void help() {
             << "Options:" << std::endl
             << "  --start=NUMBER         First entry number to convert." << std::endl
             << "  --end=NUMBER           Entry number after the last to convert." << std::endl
-            << "  --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm)." << std::endl
-            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)." << std::endl
+            << "  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree" << std::endl
+            << "                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or" << std::endl
+            << "                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries)." << std::endl
+            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON" << std::endl
+            << "                         object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --block=SIZE           Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl

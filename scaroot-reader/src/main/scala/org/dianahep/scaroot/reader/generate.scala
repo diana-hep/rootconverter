@@ -26,7 +26,9 @@ package generate {
     val help = """Usage: java -jar scaroot-reader.jar fileLocation treeLocation
 Where fileLocation is either a file path or URL TFile::Open can handle and treeLocation is the path of the TTree.
 Options:
-  --libs=LIB1,LIB2,...   Comma-separated list of .so files defining objects in the TTree (i.e. X_cxx.so with associated X_cxx_ACLiC_dict_rdict.pcm).
+  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree
+                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or
+                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries).
   --name=NAME            Name for TTree class (taken from TTree name if not provided).
   --ns=NAMESPACE         Package namespace for class ("data.root" if not provided).
   --hadoop               If supplied, make the objects Hadoop writables.
