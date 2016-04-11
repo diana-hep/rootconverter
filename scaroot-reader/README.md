@@ -93,9 +93,9 @@ val myclasses = Map("T" -> My[Tree], "Event" -> My[Event], "EventHeader" -> My[E
 To generate these classes automatically, use the ScaROOT-Reader JAR as a command:
 
 ```
-java -jar scaroot-reader.jar Event.root T --libs=Event_cxx.so --name=Tree
+java -jar scaroot-reader.jar Event.root T --libs=Event.cxx --name=Tree
 ```
 
-where `scaroot-reader.jar` is the compiled ScaROOT-Reader JAR (probably named `scaroot-reader-0.1-scala_2.10-root_6.06.jar` in the `target` directory), `Event.root` is the name of the ROOT file, `T` is the name of the tree (with internal directories), `Event_cxx.so` is a (comma-separated) list of libraries, and `--name=Tree` overrides naming the tree class `T`.
+where `scaroot-reader.jar` is the compiled ScaROOT-Reader JAR (probably named `scaroot-reader-0.1-scala_2.10-root_6.06.jar` in the `target` directory), `Event.root` is the name of the ROOT file, `T` is the name of the tree (with internal directories), `Event.cxx` is a (comma-separated) list of source code or libraries defining the ROOT file content, and `--name=Tree` overrides naming the tree class `T`.
 
 The resulting code goes to standard output for inspection; pipe it to a file named `myclasses.scala` and put it in your project. (See [Spark example](https://github.com/diana-hep/rootconverter/tree/master/spark-examples/commandline) project.) By default, they go in a package named `data.root` (override with the `--ns` flag; see `--help` for all flags).
