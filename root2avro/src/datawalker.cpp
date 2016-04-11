@@ -1134,8 +1134,8 @@ bool MemberWalker::empty() { return walker->empty(); }
 bool MemberWalker::resolved() { return walker->resolved(); }
 
 void MemberWalker::resolve(const void *address) {
-    walker->resolve((const void*)((size_t)address + offset));
-  }
+  walker->resolve((const void*)((size_t)address + offset));
+}
 
 std::string MemberWalker::repr(int indent, std::set<std::string> &memo) {
   return std::string("\"") + fieldName + std::string("\": ") + walker->repr(indent, memo);
@@ -1199,12 +1199,13 @@ ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avro
 
 void ClassWalker::fill() {
   TIter nextMember = tclass->GetListOfDataMembers();
-  for (TDataMember *dataMember = (TDataMember*)nextMember();  dataMember != nullptr;  dataMember = (TDataMember*)nextMember())
-    if (dataMember->GetOffset() > 0) {
+  for (TDataMember *dataMember = (TDataMember*)nextMember();  dataMember != nullptr;  dataMember = (TDataMember*)nextMember()) {
+    if ((dataMember->Property() & kIsStatic) == 0) {
       MemberWalker *member = new MemberWalker(dataMember, avroNamespace, defs);
       if (!member->empty())
         members.push_back(member);
     }
+  }
   sizeOf_ = tclass->Size();
   typeId_ = tclass->GetTypeInfo();
 }
