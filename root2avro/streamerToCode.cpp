@@ -20,8 +20,7 @@ public:
     type(type), pointer(pointer), variable(variable), variableWithArray(variableWithArray), comment(comment) { }
 
   std::string cpp(int indent) {
-    std::string out;
-    for (int i = 0;  i < indent;  i++) out += " ";
+    std::string out = std::string(indent, ' ');
     out += type + " ";
     if (pointer)
       out += "*";
@@ -34,22 +33,34 @@ public:
 
 class ClassStructure {
 public:
-  std::string name;
+  std::string fullName;
+  std::vector<std::string> splitName;
   TClass *tclass;
   int version;
   std::vector<MemberStructure> bases;
   std::vector<MemberStructure> members;
-  ClassStructure(TClass *tclass, int version) : name(tclass->GetName()), tclass(tclass), version(version) { }
+  ClassStructure(TClass *tclass, int version) : fullName(tclass->GetName()), splitName(splitCppNamespace(tclass->GetName())), tclass(tclass), version(version) { }
+
+  std::vector<std::string> splitCppNamespace(std::string className) {
+    std::string delim("::");
+    std::vector<std::string> out;
+    std::size_t start = 0;
+    std::size_t end = 0;
+    while ((end = className.find(delim, start)) != std::string::npos) {
+      out.push_back(className.substr(start, end - start));
+      start = end + 2;
+    }
+    out.push_back(className.substr(start));
+    return out;
+  }
 
   std::string cpp(int indent) {
     std::string out;
-    std::string ind;
-    for (int i = 0;  i < indent;  i++)
-      ind += " ";
+    std::string ind = std::string(indent, ' ');
 
     if (!members.empty()) {
       out += ind + "class ";
-      out += name;
+      out += splitName.back();
       if (!bases.empty()) {
         out += " : public";
         for (int i = 0;  i < bases.size();  i++)
@@ -61,21 +72,21 @@ public:
       out += " {\n" + ind + "  public:\n";
 
       for (int i = 0;  i < members.size();  i++)
-        out += ind + members[i].cpp(indent + 4) + "\n";
+        out += ind + members[i].cpp(indent + 2) + "\n";
 
-      out += ind + "    " + name + "() {\n";
+      out += ind + "    " + splitName.back() + "() {\n";
       for (int i = 0;  i < members.size();  i++)
         if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
           out += ind + "      " + members[i].variable + " = nullptr;\n";
       out += ind + "    }\n";
 
-      out += ind + "    virtual ~" + name + "() {\n";
+      out += ind + "    virtual ~" + splitName.back() + "() {\n";
       for (int i = 0;  i < members.size();  i++)
         if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
           out += ind + "      " + members[i].variable + " = nullptr;\n";
       out += ind + "    }\n";
 
-      out += ind + "    ClassDef(" + name + "," + std::to_string(version) + ")\n" + ind + "};\n";
+      out += ind + "    ClassDef(" + splitName.back() + "," + std::to_string(version) + ")\n" + ind + "};\n";
     }
     return out;
   }
@@ -86,11 +97,14 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
 int main(int argc, char **argv) {
   TTree *ttree;
 
-  TFile *tfile = TFile::Open("test_Event/Event.root");
-  tfile->GetObject("T", ttree);
+  // TFile *tfile = TFile::Open("test_Event/Event.root");
+  // tfile->GetObject("T", ttree);
 
   // TFile *tfile = TFile::Open("Event-0.root");
   // tfile->GetObject("t4", ttree);
+
+  TFile *tfile = TFile::Open("test_Bacon/Output.root");
+  tfile->GetObject("Events", ttree);
 
   std::set<std::string> includes;
   std::vector<ClassStructure> classes;
@@ -106,17 +120,38 @@ int main(int argc, char **argv) {
     std::cout << *iter << std::endl;
 
   std::cout << std::endl;
-
-  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter)
-    std::cout << "class " << iter->name << ";" << std::endl;
+  
+  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
+    int i = 0;
+    for (;  i < iter->splitName.size() - 1;  i++)
+      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
+    std::cout << std::string(i * 2, ' ') << "class " << iter->splitName.back() << ";" << std::endl;
+    i--;
+    for (;  i >= 0;  i--)
+      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
+  }
 
   std::cout << std::endl;
 
-  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter)
-    std::cout << iter->cpp(0) << std::endl;
+  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
+    int i = 0;
+    for (;  i < iter->splitName.size() - 1;  i++)
+      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
+    std::cout << iter->cpp(i * 2) << std::endl;
+    i--;
+    for (;  i >= 0;  i--)
+      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
+  }
 
-  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter)
-    std::cout << "ClassImp(" << iter->name << ")" << std::endl;
+  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
+    int i = 0;
+    for (;  i < iter->splitName.size() - 1;  i++)
+      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
+    std::cout << std::string(i * 2, ' ') << "ClassImp(" << iter->splitName.back() << ")" << std::endl;
+    i--;
+    for (;  i >= 0;  i--)
+      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
+  }
 
   return 0;
 }
@@ -138,7 +173,7 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
   else {
     bool seen = false;
     for (int i = 0;  i < classes.size();  i++)
-      if (classes[i].name == className)
+      if (classes[i].fullName == className)
         seen = true;
 
     if (!seen) {
