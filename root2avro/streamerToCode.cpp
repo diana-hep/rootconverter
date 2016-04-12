@@ -116,42 +116,45 @@ int main(int argc, char **argv) {
       classesFromBranch(tbranch, tclass, classes, 0, includes);
   }
 
-  for (std::set<std::string>::iterator iter = includes.begin();  iter != includes.end();  ++iter)
-    std::cout << *iter << std::endl;
+  std::string out;
 
-  std::cout << std::endl;
+  for (std::set<std::string>::iterator iter = includes.begin();  iter != includes.end();  ++iter)
+    out += *iter + "\n";
+  out += "\n";
   
   for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
     int i = 0;
     for (;  i < iter->splitName.size() - 1;  i++)
-      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
-    std::cout << std::string(i * 2, ' ') << "class " << iter->splitName.back() << ";" << std::endl;
+      out += std::string(i * 2, ' ') + "namespace " + iter->splitName[i] + " {\n";
+
+    out += std::string(i * 2, ' ') + "class " + iter->splitName.back() + ";\n";
     i--;
     for (;  i >= 0;  i--)
-      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
+      out += std::string(i * 2, ' ') + "}\n";
   }
-
-  std::cout << std::endl;
-
-  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
-    int i = 0;
-    for (;  i < iter->splitName.size() - 1;  i++)
-      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
-    std::cout << iter->cpp(i * 2) << std::endl;
-    i--;
-    for (;  i >= 0;  i--)
-      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
-  }
+  out += "\n";
 
   for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
     int i = 0;
     for (;  i < iter->splitName.size() - 1;  i++)
-      std::cout << std::string(i * 2, ' ') << "namespace " << iter->splitName[i] << " {" << std::endl;
-    std::cout << std::string(i * 2, ' ') << "ClassImp(" << iter->splitName.back() << ")" << std::endl;
+      out += std::string(i * 2, ' ') + "namespace " + iter->splitName[i] + " {\n";
+    out += iter->cpp(i * 2) + "\n";
     i--;
     for (;  i >= 0;  i--)
-      std::cout << std::string(i * 2, ' ') << "}" << std::endl;
+      out += std::string(i * 2, ' ') + "}\n";
   }
+
+  for (std::vector<ClassStructure>::iterator iter = classes.begin();  iter != classes.end();  ++iter) {
+    int i = 0;
+    for (;  i < iter->splitName.size() - 1;  i++)
+      out += std::string(i * 2, ' ') + "namespace " + iter->splitName[i] + " {\n";
+    out += std::string(i * 2, ' ') + "ClassImp(" + iter->splitName.back() + ")\n";
+    i--;
+    for (;  i >= 0;  i--)
+      out += std::string(i * 2, ' ') + "}\n";
+  }
+
+  std::cout << out;
 
   return 0;
 }
@@ -380,8 +383,6 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
             TClass *elementClass = tStreamerElement->GetClassPointer();
             type = elementClass->GetName();
 
-            const std::string bitsetPrefix = "bitset<";
-
             if (elementClass == TClonesArray::Class()) {
               ROOT::Internal::TTreeGeneratorBase ttreeGenerator(tbranch->GetTree(), "");
               TString className = ttreeGenerator.GetContainedClassName((TBranchElement*)subbranch, tStreamerElement, pointer);
@@ -396,8 +397,6 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
               classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
               includes.insert(std::string("#include <") + type + std::string(">"));
             }
-            else if (type.substr(0, bitsetPrefix.size()) == bitsetPrefix)
-              includes.insert("#include <bitset>");
             else
               classesFromBranch(subbranch, elementClass, classes, variableWithArray.size() + 1, includes);
           }
