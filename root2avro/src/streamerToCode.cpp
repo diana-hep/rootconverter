@@ -87,10 +87,25 @@ void declareClasses(std::string code, std::vector<std::string> &classNames) {
   gInterpreter->Declare(code.c_str());
 }
 
-std::string generateCodeFromStreamers(std::string url, std::string treeLocation, std::vector<std::string> &classNames) {
-  TTree *ttree;
+std::string generateCodeFromStreamers(std::string url, std::string treeLocation, std::vector<std::string> &classNames, std::string &errorMessage) {
   TFile *tfile = TFile::Open(url.c_str());
-  tfile->GetObject(treeLocation.c_str(), ttree);
+  if (tfile == nullptr  ||  !tfile->IsOpen()) {
+    errorMessage = std::string("File not found: ") + url;
+    return std::string();
+  }
+
+  if (tfile->IsZombie()) {
+    errorMessage = std::string("Not a ROOT file: ") + url;
+    return std::string();
+  }
+
+  TTreeReader reader(treeLocation.c_str(), tfile);
+  if (reader.IsZombie()) {
+    errorMessage = std::string("Not a TTree: ") + treeLocation.c_str() + std::string(" in file: ") + url;
+    return std::string();
+  }
+
+  TTree *ttree = reader.GetTree();
 
   std::set<std::string> includes;
   std::vector<ClassStructure> classes;

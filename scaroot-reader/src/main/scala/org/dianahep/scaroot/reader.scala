@@ -142,10 +142,13 @@ package reader {
   class RootTreeIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
                                                   treeLocation: String,
                                                   libs: Seq[String] = Nil,
+                                                  inferTypes: Boolean = false,
                                                   myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                                   start: Long = 0L,
                                                   end: Long = -1L,
                                                   microBatchSize: Int = 10) extends Iterator[TYPE] {
+    if (fileLocations.isEmpty)
+      throw new RuntimeException("Cannot build RootTreeIterator over an empty set of files.")
     if (start < 0)
       throw new IllegalArgumentException(s"The start ($start) must be greater than or equal to zero.")
     if (end >= 0  &&  start >= end)
@@ -154,6 +157,12 @@ package reader {
       throw new IllegalArgumentException(s"The microBatchSize ($microBatchSize) must be greater than or equal to one.")
 
     libs foreach {lib => LoadLibsOnce(lib)}
+
+    if (inferTypes) {
+      val errorMessage: String = RootReaderCPPLibrary.inferTypes(fileLocations(0), treeLocation)
+      if (!errorMessage.isEmpty)
+        throw new RuntimeException(errorMessage)
+    }
 
     // Pack of state variables that all have to be kept in sync!
     // Limit user access to setIndex, reset, and incrementIndex, which should preserve interrelationships.
@@ -227,23 +236,20 @@ package reader {
         done = true
     }
 
-    val schema: SchemaClass =
-      if (!fileLocations.isEmpty) {
-        treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(0), treeLocation, "")
+    val schema: SchemaClass = {
+      treeWalker = RootReaderCPPLibrary.newTreeWalker(fileLocations(0), treeLocation, "")
 
-        if (RootReaderCPPLibrary.valid(treeWalker) == 0)
-          throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
+      if (RootReaderCPPLibrary.valid(treeWalker) == 0)
+        throw new RuntimeException(RootReaderCPPLibrary.errorMessage(treeWalker))
 
+      done = (RootReaderCPPLibrary.next(treeWalker) == 0)
+      while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
+        RootReaderCPPLibrary.resolve(treeWalker)
         done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-        while (!done  &&  RootReaderCPPLibrary.resolved(treeWalker) == 0) {
-          RootReaderCPPLibrary.resolve(treeWalker)
-          done = (RootReaderCPPLibrary.next(treeWalker) == 0)
-        }
-
-        Schema(treeWalker)
       }
-      else
-        throw new RuntimeException("Cannot build RootTreeIterator over an empty set of files.")
+
+      Schema(treeWalker)
+    }
 
     import scala.reflect.runtime.universe.weakTypeOf
     val allmyclasses =
@@ -313,11 +319,12 @@ package reader {
     def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
                                        treeLocation: String,
                                        libs: Seq[String] = Nil,
+                                       inferTypes: Boolean = false,
                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                        start: Long = 0L,
                                        end: Long = -1L,
                                        microBatchSize: Int = 10) =
-      new RootTreeIterator(fileLocations, treeLocation, libs, myclasses, start, end, microBatchSize)
+      new RootTreeIterator(fileLocations, treeLocation, libs, inferTypes, myclasses, start, end, microBatchSize)
   }
 
   /////////////////////////////////////////////////// interface to XRootD for creating file sets and splits

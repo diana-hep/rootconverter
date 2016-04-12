@@ -55,6 +55,8 @@ extern "C" {
   const char *xrootdDirectoryEntry(void *fs);
   void xrootdDirectoryEnd(void *fs);
   const char *xrootdLocate(void *fs, const char *path);
+
+  const char *inferTypes(const char *fileLocation, const char *treeLocation);
 }
 
 class XRootD {

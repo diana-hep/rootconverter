@@ -171,7 +171,13 @@ int main(int argc, char **argv) {
       url = std::string("file://") + url;
 
     std::vector<std::string> classNames;
-    std::string code = generateCodeFromStreamers(url, treeLocation, classNames);
+    std::string errorMessage;
+    std::string code = generateCodeFromStreamers(url, treeLocation, classNames, errorMessage);
+
+    if (code.empty()) {
+      std::cerr << errorMessage << std::endl;
+      return -1;
+    }
 
     if (mode == std::string("c++")) {
       std::cout << code << std::endl;

@@ -14,6 +14,7 @@
 
 #include "datawalker.h"
 #include "staticlib.h"
+#include "streamerToCode.h"
 
 void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace) {
   TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace));
@@ -164,4 +165,14 @@ void xrootdDirectoryEnd(void *fs) {
 const char *xrootdLocate(void *fs, const char *path) {
   XRootD *myfs = (XRootD*)fs;
   return myfs->locate(path);
+}
+
+const char *inferTypes(const char *fileLocation, const char *treeLocation) {
+  std::vector<std::string> classNames;
+  std::string errorMessage;
+  std::string code = generateCodeFromStreamers(std::string(fileLocation), std::string(treeLocation), classNames, errorMessage);
+  if (code.empty())
+    return errorMessage.c_str();
+  declareClasses(code, classNames);
+  return "";
 }
