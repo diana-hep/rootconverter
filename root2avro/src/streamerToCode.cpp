@@ -1,110 +1,93 @@
-#include <iostream>
+// Copyright 2016 Jim Pivarski
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TVirtualStreamerInfo.h"
-#include "TStreamerElement.h"
-#include "TClonesArray.h"
-#include "TTreeGeneratorBase.h"
-#include "TFormLeafInfo.h"
+#include "streamerToCode.h"
 
-class MemberStructure {
-public:
-  std::string type;
-  bool pointer;
-  std::string variable;
-  std::string variableWithArray;
-  std::string comment;
+MemberStructure::MemberStructure(std::string type, bool pointer, std::string variable, std::string variableWithArray, std::string comment) :
+  type(type), pointer(pointer), variable(variable), variableWithArray(variableWithArray), comment(comment) { }
 
-  MemberStructure(std::string type, bool pointer, std::string variable, std::string variableWithArray, std::string comment) :
-    type(type), pointer(pointer), variable(variable), variableWithArray(variableWithArray), comment(comment) { }
+std::string MemberStructure::cpp(int indent) {
+  std::string out = std::string(indent, ' ');
+  out += type + " ";
+  if (pointer)
+    out += "*";
+  out += variableWithArray + ";";
+  if (!comment.empty())
+    out += "    //" + comment;
+  return out;
+}
 
-  std::string cpp(int indent) {
-    std::string out = std::string(indent, ' ');
-    out += type + " ";
-    if (pointer)
-      out += "*";
-    out += variableWithArray + ";";
-    if (!comment.empty())
-      out += "    //" + comment;
-    return out;
+ClassStructure::ClassStructure(TClass *tclass, int version) : fullName(tclass->GetName()), splitName(splitCppNamespace(tclass->GetName())), tclass(tclass), version(version) { }
+
+std::vector<std::string> ClassStructure::splitCppNamespace(std::string className) {
+  std::string delim("::");
+  std::vector<std::string> out;
+  std::size_t start = 0;
+  std::size_t end = 0;
+  while ((end = className.find(delim, start)) != std::string::npos) {
+    out.push_back(className.substr(start, end - start));
+    start = end + 2;
   }
-};
+  out.push_back(className.substr(start));
+  return out;
+}
 
-class ClassStructure {
-public:
-  std::string fullName;
-  std::vector<std::string> splitName;
-  TClass *tclass;
-  int version;
-  std::vector<std::string> bases;
-  std::vector<MemberStructure> members;
-  ClassStructure(TClass *tclass, int version) : fullName(tclass->GetName()), splitName(splitCppNamespace(tclass->GetName())), tclass(tclass), version(version) { }
+std::string ClassStructure::cpp(int indent) {
+  std::string out;
+  std::string ind = std::string(indent, ' ');
 
-  std::vector<std::string> splitCppNamespace(std::string className) {
-    std::string delim("::");
-    std::vector<std::string> out;
-    std::size_t start = 0;
-    std::size_t end = 0;
-    while ((end = className.find(delim, start)) != std::string::npos) {
-      out.push_back(className.substr(start, end - start));
-      start = end + 2;
+  if (!members.empty()) {
+    out += ind + "class ";
+    out += splitName.back();
+    if (!bases.empty()) {
+      out += " : public";
+      for (int i = 0;  i < bases.size();  i++)
+        if (i == 0)
+          out += " " + bases[i];
+        else
+          out += ", " + bases[i];
     }
-    out.push_back(className.substr(start));
-    return out;
+    out += " {\n" + ind + "  public:\n";
+
+    for (int i = 0;  i < members.size();  i++)
+      out += ind + members[i].cpp(indent + 2) + "\n";
+
+    out += ind + "    " + splitName.back() + "() {\n";
+    for (int i = 0;  i < members.size();  i++)
+      if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
+        out += ind + "      " + members[i].variable + " = nullptr;\n";
+    out += ind + "    }\n";
+
+    out += ind + "    virtual ~" + splitName.back() + "() {\n";
+    for (int i = 0;  i < members.size();  i++)
+      if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
+        out += ind + "      " + members[i].variable + " = nullptr;\n";
+    out += ind + "    }\n";
+
+    out += ind + "    ClassDef(" + splitName.back() + "," + std::to_string(version) + ")\n" + ind + "};";
   }
+  return out;
+}
 
-  std::string cpp(int indent) {
-    std::string out;
-    std::string ind = std::string(indent, ' ');
+void declareClasses(std::string code) {
+  gInterpreter->Declare(code.c_str());
+}
 
-    if (!members.empty()) {
-      out += ind + "class ";
-      out += splitName.back();
-      if (!bases.empty()) {
-        out += " : public";
-        for (int i = 0;  i < bases.size();  i++)
-          if (i == 0)
-            out += " " + bases[i];
-          else
-            out += ", " + bases[i];
-      }
-      out += " {\n" + ind + "  public:\n";
-
-      for (int i = 0;  i < members.size();  i++)
-        out += ind + members[i].cpp(indent + 2) + "\n";
-
-      out += ind + "    " + splitName.back() + "() {\n";
-      for (int i = 0;  i < members.size();  i++)
-        if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
-          out += ind + "      " + members[i].variable + " = nullptr;\n";
-      out += ind + "    }\n";
-
-      out += ind + "    virtual ~" + splitName.back() + "() {\n";
-      for (int i = 0;  i < members.size();  i++)
-        if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
-          out += ind + "      " + members[i].variable + " = nullptr;\n";
-      out += ind + "    }\n";
-
-      out += ind + "    ClassDef(" + splitName.back() + "," + std::to_string(version) + ")\n" + ind + "};";
-    }
-    return out;
-  }
-};
-
-void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStructure> &classes, int prefix, std::set<std::string> &includes);
-
-int main(int argc, char **argv) {
-  TTree *ttree;
-
-  // TFile *tfile = TFile::Open("test_Event/Event.root");
-  // tfile->GetObject("T", ttree);
-
-  // TFile *tfile = TFile::Open("Event-0.root");
-  // tfile->GetObject("t4", ttree);
-
-  TFile *tfile = TFile::Open("test_Bacon/Output.root");
-  tfile->GetObject("Events", ttree);
+std::string generateCodeFromStreamers(std::string url, std::string treeLocation) {
+  TFile *tfile = TFile::Open(url.c_str());
+  TTreeReader reader(treeLocation.c_str(), tfile);
+  TTree *ttree = reader.GetTree();
 
   std::set<std::string> includes;
   std::vector<ClassStructure> classes;
@@ -154,9 +137,7 @@ int main(int argc, char **argv) {
       out += std::string(i * 2, ' ') + "}\n";
   }
 
-  std::cout << out;
-
-  return 0;
+  return out;
 }
 
 void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStructure> &classes, int prefix, std::set<std::string> &includes) {

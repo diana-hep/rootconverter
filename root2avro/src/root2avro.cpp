@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "datawalker.h"
+#include "streamerToCode.h"
 
 #define NA ((uint64_t)(-1))
 
@@ -30,6 +31,7 @@ std::string              treeLocation;
 uint64_t                 start = NA;
 uint64_t                 end = NA;
 std::vector<std::string> libs;
+bool                     inferTypes = false;
 std::string              mode = "avro";
 std::string              codec = "null";
 int                      blockKB = 64;
@@ -48,8 +50,11 @@ void help() {
             << "  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree" << std::endl
             << "                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or" << std::endl
             << "                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries)." << std::endl
+            << "  --inferTypes           As an alternative to providing --libs, attempt to infer the class structure from the" << std::endl
+            << "                         ROOT file itself by inspecting its embedded streamers." << std::endl
             << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON" << std::endl
-            << "                         object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)." << std::endl
+            << "                         object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)," << std::endl
+            << "                         or \"c++\" (show C++ code that would be generated from streamers with --inferTypes)." << std::endl
             << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --block=SIZE           Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl
@@ -81,6 +86,7 @@ int main(int argc, char **argv) {
   std::string startPrefix("--start=");
   std::string endPrefix("--end=");
   std::string libsPrefix("--libs=");
+  std::string inferTypesPrefix("--inferTypes");
   std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
   std::string blockPrefix("--block=");
@@ -103,6 +109,10 @@ int main(int argc, char **argv) {
 
     else if (arg.substr(0, libsPrefix.size()) == libsPrefix) {
       libs = splitByComma(arg.substr(libsPrefix.size(), arg.size()));
+    }
+
+    else if (arg.substr(0, inferTypesPrefix.size()) == inferTypesPrefix) {
+      inferTypes = true;
     }
 
     else if (arg.substr(0, modePrefix.size()) == modePrefix) {
@@ -153,6 +163,21 @@ int main(int argc, char **argv) {
   resetSignals();
   for (auto lib = libs.begin();  lib != libs.end();  ++lib)
     loadLibrary(lib->c_str());
+
+  // C++ code generation from inferTypes
+  if (inferTypes  ||  mode == std::string("c++")) {
+    std::string url = fileLocations[0];
+    if (url.find(std::string("://")) == std::string::npos)
+      url = std::string("file://") + url;
+    std::string code = generateCodeFromStreamers(url, treeLocation);
+
+    if (mode == std::string("c++")) {
+      std::cout << code << std::endl;
+      return 0;
+    }
+    else
+      declareClasses(code);
+  }
 
   TreeWalker *treeWalker = nullptr;
 
