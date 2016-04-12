@@ -65,13 +65,13 @@ public:
 
       out += ind + "    " + name + "() {\n";
       for (int i = 0;  i < members.size();  i++)
-        if (members[i].pointer)
+        if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
           out += ind + "      " + members[i].variable + " = nullptr;\n";
       out += ind + "    }\n";
 
       out += ind + "    virtual ~" + name + "() {\n";
       for (int i = 0;  i < members.size();  i++)
-        if (members[i].pointer)
+        if (members[i].pointer  ||  members[i].type == std::string("Char_t*"))
           out += ind + "      " + members[i].variable + " = nullptr;\n";
       out += ind + "    }\n";
 
@@ -287,7 +287,6 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
           break;
 
         case TVirtualStreamerInfo::kCharStar:
-          pointer = true;
           type = "Char_t*";
           break;
 
