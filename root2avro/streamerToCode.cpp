@@ -37,7 +37,7 @@ public:
   std::vector<std::string> splitName;
   TClass *tclass;
   int version;
-  std::vector<MemberStructure> bases;
+  std::vector<std::string> bases;
   std::vector<MemberStructure> members;
   ClassStructure(TClass *tclass, int version) : fullName(tclass->GetName()), splitName(splitCppNamespace(tclass->GetName())), tclass(tclass), version(version) { }
 
@@ -65,9 +65,9 @@ public:
         out += " : public";
         for (int i = 0;  i < bases.size();  i++)
           if (i == 0)
-            out += " " + bases[i].type;
+            out += " " + bases[i];
           else
-            out += ", " + bases[i].type;
+            out += ", " + bases[i];
       }
       out += " {\n" + ind + "  public:\n";
 
@@ -171,12 +171,12 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
     includes.insert("#include \"TBits.h\"");
   }
   else {
-    bool seen = false;
+    bool classSeen = false;
     for (int i = 0;  i < classes.size();  i++)
       if (classes[i].fullName == className)
-        seen = true;
+        classSeen = true;
 
-    if (!seen) {
+    if (!classSeen) {
       TVirtualStreamerInfo *tVirtualStreamerInfo = tclass->GetStreamerInfo();
       int version = tVirtualStreamerInfo->GetClassVersion();
 
@@ -191,7 +191,6 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
         if (std::string(substreamer->GetName()) == std::string("TClonesArray")) {
           ROOT::Internal::TTreeGeneratorBase ttreeGenerator(tbranch->GetTree(), "");
           TString className = ttreeGenerator.GetContainedClassName((TBranchElement*)tbranch, (TStreamerElement*)(substreamer->GetElements()->First()), true);
-
           classesFromBranch(tbranch, TClass::GetClass(className), classes, prefix + std::string(tbranch->GetName()).size() + 1, includes);
         }
       }
@@ -200,192 +199,210 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
       for (TStreamerElement *tStreamerElement = (TStreamerElement*)elements.Next();  tStreamerElement != nullptr;  tStreamerElement = (TStreamerElement*)elements.Next()) {
         std::string streamerName = tStreamerElement->GetName();
 
-        TIter listOfBranches = tbranch->GetListOfBranches();
-        TBranch *subbranch;
-        for (subbranch = (TBranch*)listOfBranches.Next();  subbranch != nullptr;  subbranch = (TBranch*)listOfBranches.Next())
-          if (std::string(subbranch->GetName()).find(streamerName) != std::string::npos)
-            break;
-        if (subbranch == nullptr)
-          continue;
-
-        std::string branchName = subbranch->GetName();
-
-        std::string variable = tStreamerElement->GetName();
-        std::string variableWithArray = subbranch->GetName();
-        variableWithArray = variableWithArray.substr(prefix, std::string::npos);
-        variableWithArray = variableWithArray.substr(0, variableWithArray.find('.'));
-
-        std::string comment = tStreamerElement->GetTitle();
-
-        std::string type;
-        Bool_t pointer = false;
-        switch (tStreamerElement->GetType()) {
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:
-        case TVirtualStreamerInfo::kBool:
-          type = "Bool_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:
-        case TVirtualStreamerInfo::kChar:
-          type = "Char_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:
-        case TVirtualStreamerInfo::kShort:
-          type = "Short_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:
-        case TVirtualStreamerInfo::kInt:
-          type = "Int_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:
-        case TVirtualStreamerInfo::kLong:
-          type = "Long_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:
-        case TVirtualStreamerInfo::kLong64:
-          type = "Long64_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:
-        case TVirtualStreamerInfo::kFloat:
-          type = "Float_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16:
-        case TVirtualStreamerInfo::kFloat16:
-          type = "Float16_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:
-        case TVirtualStreamerInfo::kDouble:
-          type = "Double_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:
-        case TVirtualStreamerInfo::kDouble32:
-          type = "Double32_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:
-        case TVirtualStreamerInfo::kUChar:
-          type = "UChar_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:
-        case TVirtualStreamerInfo::kUShort:
-          type = "UShort_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:
-        case TVirtualStreamerInfo::kUInt:
-          type = "UInt_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:
-        case TVirtualStreamerInfo::kULong:
-          type = "ULong_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64:
-        case TVirtualStreamerInfo::kULong64:
-          type = "ULong64_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:
-          pointer = true;
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:
-        case TVirtualStreamerInfo::kBits:
-          type = "UInt_t";
-          break;
-
-        case TVirtualStreamerInfo::kCharStar:
-          type = "Char_t*";
-          break;
-
-        case TVirtualStreamerInfo::kCounter:
-          type = "Int_t";
-          break;
-
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectp:
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectP:
-        case TVirtualStreamerInfo::kObjectp:
-        case TVirtualStreamerInfo::kObjectP:
-        case TVirtualStreamerInfo::kAnyp:
-        case TVirtualStreamerInfo::kAnyP:
-        case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectp:
-        case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectP:
-          pointer = true;
-
-        case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObject:
-        case TVirtualStreamerInfo::kObject:
-        case TVirtualStreamerInfo::kTString:
-        case TVirtualStreamerInfo::kTNamed:
-        case TVirtualStreamerInfo::kTObject:
-        case TVirtualStreamerInfo::kAny:
-        case TVirtualStreamerInfo::kBase:
-        case TVirtualStreamerInfo::kSTL:
+        if (tStreamerElement->IsBase()) {
           TClass *elementClass = tStreamerElement->GetClassPointer();
-          type = elementClass->GetName();
-
-          if (elementClass == TClonesArray::Class()) {
-            ROOT::Internal::TTreeGeneratorBase ttreeGenerator(tbranch->GetTree(), "");
-            TString className = ttreeGenerator.GetContainedClassName((TBranchElement*)subbranch, tStreamerElement, pointer);
-            if (className != nullptr) {
-              TClass *otherClass = TClass::GetClass(className);
-              classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
-              includes.insert("#include \"TClonesArray.h\"");
-            }
-          }
-          else if (elementClass->GetCollectionProxy() != nullptr  &&  elementClass->GetCollectionProxy()->GetValueClass() != nullptr) {
-            TClass *otherClass = elementClass->GetCollectionProxy()->GetValueClass();
-            classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
-            includes.insert(std::string("#include <") + type + std::string(">"));
-          }
-          else if (tStreamerElement->IsBase())
-            includes.insert(std::string("#include \"") + type + std::string(".h\""));
-          else
-            classesFromBranch(subbranch, elementClass, classes, variableWithArray.size() + 1, includes);
+          std::string type = elementClass->GetName();
+          includes.insert(std::string("#include \"") + type + std::string(".h\""));
+          classStructure.bases.push_back(type);
         }
 
-        if (tStreamerElement->IsBase())
-          classStructure.bases.push_back(MemberStructure(type, pointer, variable, variableWithArray, comment));
-        else
+        else {
+          TIter listOfBranches = tbranch->GetListOfBranches();
+          TBranch *subbranch;
+          for (subbranch = (TBranch*)listOfBranches.Next();  subbranch != nullptr;  subbranch = (TBranch*)listOfBranches.Next()) {
+            std::string branchName = subbranch->GetName();
+            branchName = branchName.substr(prefix, std::string::npos);
+            int firstDot = branchName.find('.');
+            int firstBracket = branchName.find('[');
+            if (firstDot != std::string::npos  &&  firstBracket != std::string::npos)
+              branchName = branchName.substr(0, firstDot < firstBracket ? firstDot : firstBracket);
+            else if (firstDot != std::string::npos)
+              branchName = branchName.substr(0, firstDot);
+            else if (firstBracket != std::string::npos)
+              branchName = branchName.substr(0, firstBracket);
+            if (branchName == streamerName)
+              break;
+          }
+          if (subbranch == nullptr)
+            continue;
+
+          std::string branchName = subbranch->GetName();
+
+          std::string variable = tStreamerElement->GetName();
+          std::string variableWithArray = subbranch->GetName();
+          variableWithArray = variableWithArray.substr(prefix, std::string::npos);
+          variableWithArray = variableWithArray.substr(0, variableWithArray.find('.'));
+
+          std::string comment = tStreamerElement->GetTitle();
+
+          std::string type;
+          Bool_t pointer = false;
+          switch (tStreamerElement->GetType()) {
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBool:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBool:
+          case TVirtualStreamerInfo::kBool:
+            type = "Bool_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kChar:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kChar:
+          case TVirtualStreamerInfo::kChar:
+            type = "Char_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kShort:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kShort:
+          case TVirtualStreamerInfo::kShort:
+            type = "Short_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kInt:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kInt:
+          case TVirtualStreamerInfo::kInt:
+            type = "Int_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong:
+          case TVirtualStreamerInfo::kLong:
+            type = "Long_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kLong64:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kLong64:
+          case TVirtualStreamerInfo::kLong64:
+            type = "Long64_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat:
+          case TVirtualStreamerInfo::kFloat:
+            type = "Float_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kFloat16:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kFloat16:
+          case TVirtualStreamerInfo::kFloat16:
+            type = "Float16_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble:
+          case TVirtualStreamerInfo::kDouble:
+            type = "Double_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kDouble32:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kDouble32:
+          case TVirtualStreamerInfo::kDouble32:
+            type = "Double32_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUChar:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUChar:
+          case TVirtualStreamerInfo::kUChar:
+            type = "UChar_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUShort:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUShort:
+          case TVirtualStreamerInfo::kUShort:
+            type = "UShort_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kUInt:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kUInt:
+          case TVirtualStreamerInfo::kUInt:
+            type = "UInt_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong:
+          case TVirtualStreamerInfo::kULong:
+            type = "ULong_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kULong64:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kULong64:
+          case TVirtualStreamerInfo::kULong64:
+            type = "ULong64_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetP + TVirtualStreamerInfo::kBits:
+            pointer = true;
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kBits:
+          case TVirtualStreamerInfo::kBits:
+            type = "UInt_t";
+            break;
+
+          case TVirtualStreamerInfo::kCharStar:
+            type = "Char_t*";
+            break;
+
+          case TVirtualStreamerInfo::kCounter:
+            type = "Int_t";
+            break;
+
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectp:
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObjectP:
+          case TVirtualStreamerInfo::kObjectp:
+          case TVirtualStreamerInfo::kObjectP:
+          case TVirtualStreamerInfo::kAnyp:
+          case TVirtualStreamerInfo::kAnyP:
+          case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectp:
+          case TVirtualStreamerInfo::kSTL + TVirtualStreamerInfo::kObjectP:
+            pointer = true;
+
+          case TVirtualStreamerInfo::kOffsetL + TVirtualStreamerInfo::kObject:
+          case TVirtualStreamerInfo::kObject:
+          case TVirtualStreamerInfo::kTString:
+          case TVirtualStreamerInfo::kTNamed:
+          case TVirtualStreamerInfo::kTObject:
+          case TVirtualStreamerInfo::kAny:
+          case TVirtualStreamerInfo::kBase:
+          case TVirtualStreamerInfo::kSTL:
+            TClass *elementClass = tStreamerElement->GetClassPointer();
+            type = elementClass->GetName();
+
+            const std::string bitsetPrefix = "bitset<";
+
+            if (elementClass == TClonesArray::Class()) {
+              ROOT::Internal::TTreeGeneratorBase ttreeGenerator(tbranch->GetTree(), "");
+              TString className = ttreeGenerator.GetContainedClassName((TBranchElement*)subbranch, tStreamerElement, pointer);
+              if (className != nullptr) {
+                TClass *otherClass = TClass::GetClass(className);
+                classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
+                includes.insert("#include \"TClonesArray.h\"");
+              }
+            }
+            else if (elementClass->GetCollectionProxy() != nullptr  &&  elementClass->GetCollectionProxy()->GetValueClass() != nullptr) {
+              TClass *otherClass = elementClass->GetCollectionProxy()->GetValueClass();
+              classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
+              includes.insert(std::string("#include <") + type + std::string(">"));
+            }
+            else if (type.substr(0, bitsetPrefix.size()) == bitsetPrefix)
+              includes.insert("#include <bitset>");
+            else
+              classesFromBranch(subbranch, elementClass, classes, variableWithArray.size() + 1, includes);
+          }
           classStructure.members.push_back(MemberStructure(type, pointer, variable, variableWithArray, comment));
+        }
       }
 
       if (!classStructure.members.empty())
