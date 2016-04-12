@@ -80,14 +80,17 @@ std::string ClassStructure::cpp(int indent) {
   return out;
 }
 
-void declareClasses(std::string code) {
+void declareClasses(std::string code, std::vector<std::string> &classNames) {
+  for (int i = 0;  i < classNames.size();  i++)
+    gROOT->RemoveClass(TClass::GetClass(classNames[i].c_str()));
+
   gInterpreter->Declare(code.c_str());
 }
 
-std::string generateCodeFromStreamers(std::string url, std::string treeLocation) {
+std::string generateCodeFromStreamers(std::string url, std::string treeLocation, std::vector<std::string> &classNames) {
+  TTree *ttree;
   TFile *tfile = TFile::Open(url.c_str());
-  TTreeReader reader(treeLocation.c_str(), tfile);
-  TTree *ttree = reader.GetTree();
+  tfile->GetObject(treeLocation.c_str(), ttree);
 
   std::set<std::string> includes;
   std::vector<ClassStructure> classes;
@@ -98,6 +101,11 @@ std::string generateCodeFromStreamers(std::string url, std::string treeLocation)
     if (tclass != nullptr  &&  tbranch->GetListOfBranches()->GetEntries() > 0)
       classesFromBranch(tbranch, tclass, classes, 0, includes);
   }
+
+  for (int i = 0;  i < classes.size();  i++)
+    classNames.push_back(classes[i].fullName);
+
+  tfile->Close();
 
   std::string out;
 
@@ -136,7 +144,7 @@ std::string generateCodeFromStreamers(std::string url, std::string treeLocation)
     for (;  i >= 0;  i--)
       out += std::string(i * 2, ' ') + "}\n";
   }
-
+  
   return out;
 }
 

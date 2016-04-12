@@ -169,14 +169,16 @@ int main(int argc, char **argv) {
     std::string url = fileLocations[0];
     if (url.find(std::string("://")) == std::string::npos)
       url = std::string("file://") + url;
-    std::string code = generateCodeFromStreamers(url, treeLocation);
+
+    std::vector<std::string> classNames;
+    std::string code = generateCodeFromStreamers(url, treeLocation, classNames);
 
     if (mode == std::string("c++")) {
       std::cout << code << std::endl;
       return 0;
     }
     else
-      declareClasses(code);
+      declareClasses(code, classNames);
   }
 
   TreeWalker *treeWalker = nullptr;

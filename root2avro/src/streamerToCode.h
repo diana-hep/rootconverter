@@ -21,6 +21,7 @@
 #include "TFile.h"
 #include "TFormLeafInfo.h"
 #include "TInterpreter.h"
+#include "TROOT.h"
 #include "TStreamerElement.h"
 #include "TTreeGeneratorBase.h"
 #include "TTree.h"
@@ -51,8 +52,8 @@ public:
   std::string cpp(int indent);
 };
 
-void declareClasses(std::string code);
-std::string generateCodeFromStreamers(std::string url, std::string treeLocation);
+void declareClasses(std::string code, std::vector<std::string> &classNames);
+std::string generateCodeFromStreamers(std::string url, std::string treeLocation, std::vector<std::string> &classNames);
 void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStructure> &classes, int prefix, std::set<std::string> &includes);
 
 #endif // STREAMER_TO_CODE_H
