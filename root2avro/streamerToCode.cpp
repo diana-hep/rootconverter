@@ -86,7 +86,7 @@ public:
           out += ind + "      " + members[i].variable + " = nullptr;\n";
       out += ind + "    }\n";
 
-      out += ind + "    ClassDef(" + splitName.back() + "," + std::to_string(version) + ")\n" + ind + "};\n";
+      out += ind + "    ClassDef(" + splitName.back() + "," + std::to_string(version) + ")\n" + ind + "};";
     }
     return out;
   }
@@ -182,21 +182,33 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
 
       ClassStructure classStructure(tclass, version);
 
-      TIter listOfBranches = tbranch->GetListOfBranches();
+      if (tVirtualStreamerInfo->GetElements()->GetEntries() == 1  &&
+          ((TStreamerElement*)(tVirtualStreamerInfo->GetElements()->First()))->IsBase()  &&
+          std::string(tVirtualStreamerInfo->GetElements()->First()->GetName()) == std::string("TObjArray")) {
+
+        TVirtualStreamerInfo *substreamer = ((TBranchElement*)tbranch)->GetInfo();
+
+        if (std::string(substreamer->GetName()) == std::string("TClonesArray")) {
+          ROOT::Internal::TTreeGeneratorBase ttreeGenerator(tbranch->GetTree(), "");
+          TString className = ttreeGenerator.GetContainedClassName((TBranchElement*)tbranch, (TStreamerElement*)(substreamer->GetElements()->First()), true);
+
+          classesFromBranch(tbranch, TClass::GetClass(className), classes, prefix + std::string(tbranch->GetName()).size() + 1, includes);
+        }
+      }
+
       TIter elements = tVirtualStreamerInfo->GetElements();
-
-      TStreamerElement *tStreamerElement;
-      TBranch *subbranch;
-      while (true) {
-        tStreamerElement = (TStreamerElement*)elements.Next();
-        subbranch = (TBranch*)listOfBranches.Next();
-        if (tStreamerElement == nullptr  ||  subbranch == nullptr) break;
-
+      for (TStreamerElement *tStreamerElement = (TStreamerElement*)elements.Next();  tStreamerElement != nullptr;  tStreamerElement = (TStreamerElement*)elements.Next()) {
         std::string streamerName = tStreamerElement->GetName();
+
+        TIter listOfBranches = tbranch->GetListOfBranches();
+        TBranch *subbranch;
+        for (subbranch = (TBranch*)listOfBranches.Next();  subbranch != nullptr;  subbranch = (TBranch*)listOfBranches.Next())
+          if (std::string(subbranch->GetName()).find(streamerName) != std::string::npos)
+            break;
+        if (subbranch == nullptr)
+          continue;
+
         std::string branchName = subbranch->GetName();
-        if (branchName.find(streamerName) == std::string::npos)
-          subbranch = (TBranch*)listOfBranches.Next();
-        if (subbranch == nullptr) break;
 
         std::string variable = tStreamerElement->GetName();
         std::string variableWithArray = subbranch->GetName();
