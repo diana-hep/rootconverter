@@ -23,10 +23,14 @@ Avro is streamed to standard output and can be redirected to a file.
 Options:
   --start=NUMBER         First entry number to convert.
   --end=NUMBER           Entry number after the last to convert.
-    --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree
+  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree
                          (i.e. SOMETHING.cxx to recompile the objects on the local architecture or
                          SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries).
-  --mode=MODE            What to write to standard output: "avro" (Avro file, default), "json" (one JSON object per line), "schema" (Avro schema only), "repr" (ROOT representation only).
+  --inferTypes           As an alternative to providing --libs, attempt to infer the class structure from the
+                         ROOT file itself by inspecting its embedded streamers.
+  --mode=MODE            What to write to standard output: "avro" (Avro file, default), "json" (one JSON
+                         object per line), "schema" (Avro schema only), "repr" (ROOT representation only),
+                         or "c++" (show C++ code that would be generated from streamers with --inferTypes).
   --codec=CODEC          Codec for compressing the Avro output; may be "null" (uncompressed, default),
                          "deflate", "snappy", "lzma", depending on libraries installed on your system.
   --block=SIZE           Avro block size in KB (default is 64); if too small, no output will be produced.
