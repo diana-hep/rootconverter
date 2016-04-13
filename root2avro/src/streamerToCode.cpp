@@ -209,8 +209,11 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
         if (tStreamerElement->IsBase()) {
           TClass *elementClass = tStreamerElement->GetClassPointer();
           std::string type = elementClass->GetName();
-          includes.insert(std::string("#include \"") + type + std::string(".h\""));
-          classStructure.bases.push_back(type);
+
+          if (type == std::string("TObject")) {
+            classStructure.bases.push_back(type);
+            includes.insert(std::string("#include \"") + type + std::string(".h\""));
+          }
         }
 
         else {
@@ -396,13 +399,16 @@ void classesFromBranch(TBranch *tbranch, TClass *tclass, std::vector<ClassStruct
                 includes.insert("#include \"TClonesArray.h\"");
               }
             }
+
             else if (elementClass->GetCollectionProxy() != nullptr  &&  elementClass->GetCollectionProxy()->GetValueClass() != nullptr) {
               TClass *otherClass = elementClass->GetCollectionProxy()->GetValueClass();
               classesFromBranch(subbranch, otherClass, classes, variableWithArray.size() + 1, includes);
-              includes.insert(std::string("#include <") + type + std::string(">"));
+              includes.insert(std::string("#include <") + type.substr(0, type.find('<')) + std::string(">"));
             }
+
             else
               classesFromBranch(subbranch, elementClass, classes, variableWithArray.size() + 1, includes);
+
           }
           classStructure.members.push_back(MemberStructure(type, pointer, variable, variableWithArray, comment));
         }
