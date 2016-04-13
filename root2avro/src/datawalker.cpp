@@ -2639,7 +2639,7 @@ std::string TreeWalker::repr() {
   out += std::string("}");
   return out;
 }
-
+#ifdef AVRO
 std::string TreeWalker::avroSchema() {
   std::set<std::string> memo;
   std::string out;
@@ -2697,7 +2697,7 @@ std::string TreeWalker::stringJSON() {
   return stream.str();
 }
 
-#ifdef AVRO
+
 bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
   if (!avroHeaderPrinted) {
     std::string schemastr = avroSchema();
