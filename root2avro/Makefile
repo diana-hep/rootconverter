@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+VERSION=0.1
+
 all:
 	mkdir -p build
-	g++ -O3 -DAVRO src/root2avro.cpp src/datawalker.cpp src/streamerToCode.cpp -o build/root2avro \
+	g++ -O3 -DAVRO -DVERSION=$(VERSION) src/root2avro.cpp src/datawalker.cpp src/streamerToCode.cpp -o build/root2avro \
 		-Wl,--no-as-needed $(shell root-config --cflags --ldflags --libs) -lTreePlayer \
 		$(shell pkg-config avro-c --cflags --libs) \
 		$(shell pkg-config jansson --cflags --libs)

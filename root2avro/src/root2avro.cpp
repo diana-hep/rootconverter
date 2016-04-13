@@ -40,7 +40,11 @@ std::string              schemaName = "";
 std::string              ns = "";
 bool                     debug = false;
 
-void help() {
+void help(bool banner) {
+  if (banner)
+    std::cerr << "*****************************************************************************************************************" << std::endl
+              << "* root2avro version " << VERSION << std::endl
+              << "*****************************************************************************************************************" << std::endl << std::endl;
   std::cerr << "Usage: root2avro fileLocation1, [fileLocation2, [...]], treeLocation" << std::endl << std::endl
             << "Where fileLocationN are either file paths or URLs TFile::Open can handle and treeLocation is the path of the" << std::endl
             << "TTree in all the files." << std::endl << std::endl
@@ -80,7 +84,7 @@ int main(int argc, char **argv) {
     if (std::string(argv[i]) == std::string("-h")  ||
         std::string(argv[i]) == std::string("-help")  ||
         std::string(argv[i]) == std::string("--help")) {
-      help();
+      help(true);
       return 0;
     }
   }
