@@ -71,7 +71,7 @@ class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
     val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
 
-    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List[String](), true, myclasses, microBatchSize = 10)
+    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", List[String](), List[String](), true, myclasses, microBatchSize = 10)
 
     println(iterator.schema)
     println(iterator.factory)

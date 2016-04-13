@@ -129,18 +129,27 @@ package reader {
     RootReaderCPPLibrary.resetSignals()
 
     // Keep track of which libraries have already been loaded to avoid loading them multiple times.
-    val alreadyLoaded = mutable.Set[String]()
+    val includeDirs = mutable.Set[String]()
+    val loadedLibraries = mutable.Set[String]()
+
+    def include(dir: String) {
+      if (!(includeDirs contains dir)) {
+        RootReaderCPPLibrary.addInclude(dir)
+        includeDirs += dir
+      }
+    }
 
     def apply(lib: String) {
-      if (!(alreadyLoaded contains lib)) {
+      if (!(loadedLibraries contains lib)) {
         RootReaderCPPLibrary.loadLibrary(lib)
-        alreadyLoaded += lib
+        loadedLibraries += lib
       }
     }
   }
 
   class RootTreeIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
                                                   treeLocation: String,
+                                                  includes: Seq[String] = Nil,
                                                   libs: Seq[String] = Nil,
                                                   inferTypes: Boolean = false,
                                                   myclasses: Map[String, My[_]] = Map[String, My[_]](),
@@ -156,6 +165,7 @@ package reader {
     if (microBatchSize < 1)
       throw new IllegalArgumentException(s"The microBatchSize ($microBatchSize) must be greater than or equal to one.")
 
+    includes foreach {dir => LoadLibsOnce.include(dir)}
     libs foreach {lib => LoadLibsOnce(lib)}
 
     if (inferTypes) {
@@ -318,13 +328,14 @@ package reader {
   object RootTreeIterator {
     def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
                                        treeLocation: String,
+                                       includes: Seq[String] = Nil,
                                        libs: Seq[String] = Nil,
                                        inferTypes: Boolean = false,
                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                        start: Long = 0L,
                                        end: Long = -1L,
                                        microBatchSize: Int = 10) =
-      new RootTreeIterator(fileLocations, treeLocation, libs, inferTypes, myclasses, start, end, microBatchSize)
+      new RootTreeIterator(fileLocations, treeLocation, includes, libs, inferTypes, myclasses, start, end, microBatchSize)
   }
 
   /////////////////////////////////////////////////// interface to XRootD for creating file sets and splits

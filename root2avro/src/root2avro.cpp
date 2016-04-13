@@ -31,6 +31,7 @@ std::string              treeLocation;
 uint64_t                 start = NA;
 uint64_t                 end = NA;
 std::vector<std::string> libs;
+std::vector<std::string> includes;
 bool                     inferTypes = false;
 std::string              mode = "avro";
 std::string              codec = "null";
@@ -45,23 +46,24 @@ void help() {
             << "TTree in all the files." << std::endl << std::endl
             << "Avro is streamed to standard output and can be redirected to a file." << std::endl << std::endl
             << "Options:" << std::endl
-            << "  --start=NUMBER         First entry number to convert." << std::endl
-            << "  --end=NUMBER           Entry number after the last to convert." << std::endl
-            << "  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree" << std::endl
-            << "                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or" << std::endl
-            << "                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries)." << std::endl
-            << "  --inferTypes           As an alternative to providing --libs, attempt to infer the class structure from the" << std::endl
-            << "                         ROOT file itself by inspecting its embedded streamers." << std::endl
-            << "  --mode=MODE            What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON" << std::endl
-            << "                         object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)," << std::endl
-            << "                         or \"c++\" (show C++ code that would be generated from streamers with --inferTypes)." << std::endl
-            << "  --codec=CODEC          Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
-            << "                         \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
-            << "  --block=SIZE           Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl
-            << "  --name=NAME            Name for schema (taken from TTree name if not provided)." << std::endl
-            << "  --ns=NAMESPACE         Namespace for schema (blank if not provided)." << std::endl
-            << "  -d, -debug, --debug    If supplied, only show the generated C++ code and exit; do not run it." << std::endl
-            << "  -h, -help, --help      Print this message and exit." << std::endl;
+            << "  --start=NUMBER            First entry number to convert." << std::endl
+            << "  --end=NUMBER              Entry number after the last to convert." << std::endl
+            << "  --libs=LIB1,LIB2,...      Comma-separated list of C++ source or .so files defining objects in the TTree" << std::endl
+            << "                            (i.e. SOMETHING.cxx to recompile the objects on the local architecture or" << std::endl
+            << "                            SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries)." << std::endl
+            << "  --includes=DIR1,DIR2...   Add include directories to the path for use in compiling C++ libs (above)." << std::endl
+            << "  --inferTypes              As an alternative to providing --libs, attempt to infer the class structure from the" << std::endl
+            << "                            ROOT file itself by inspecting its embedded streamers." << std::endl
+            << "  --mode=MODE               What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON" << std::endl
+            << "                            object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)," << std::endl
+            << "                            or \"c++\" (show C++ code that would be generated from streamers with --inferTypes)." << std::endl
+            << "  --codec=CODEC             Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
+            << "                            \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
+            << "  --block=SIZE              Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl
+            << "  --name=NAME               Name for schema (taken from TTree name if not provided)." << std::endl
+            << "  --ns=NAMESPACE            Namespace for schema (blank if not provided)." << std::endl
+            << "  -d, -debug, --debug       If supplied, only show the generated C++ code and exit; do not run it." << std::endl
+            << "  -h, -help, --help         Print this message and exit." << std::endl;
 }
 
 std::vector<std::string> splitByComma(std::string in) {
@@ -86,6 +88,7 @@ int main(int argc, char **argv) {
   std::string startPrefix("--start=");
   std::string endPrefix("--end=");
   std::string libsPrefix("--libs=");
+  std::string includesPrefix("--includes=");
   std::string inferTypesPrefix("--inferTypes");
   std::string modePrefix("--mode=");
   std::string codecPrefix("--codec=");
@@ -109,6 +112,10 @@ int main(int argc, char **argv) {
 
     else if (arg.substr(0, libsPrefix.size()) == libsPrefix) {
       libs = splitByComma(arg.substr(libsPrefix.size(), arg.size()));
+    }
+
+    else if (arg.substr(0, includesPrefix.size()) == includesPrefix) {
+      includes = splitByComma(arg.substr(includesPrefix.size(), arg.size()));
     }
 
     else if (arg.substr(0, inferTypesPrefix.size()) == inferTypesPrefix) {
@@ -161,6 +168,10 @@ int main(int argc, char **argv) {
 
   // ROOT initialization
   resetSignals();
+
+  for (auto include = includes.begin();  include != includes.end();  ++include)
+    addInclude(include->c_str());
+
   for (auto lib = libs.begin();  lib != libs.end();  ++lib)
     loadLibrary(lib->c_str());
 

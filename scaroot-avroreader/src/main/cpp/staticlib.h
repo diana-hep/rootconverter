@@ -26,6 +26,7 @@ typedef void (*SchemaBuilder)(SchemaInstruction schemaInstruction, const void *d
 
 extern "C" {
   void resetSignals();
+  void addInclude(const char *include);
   void loadLibrary(const char *lib);
 
   void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace);

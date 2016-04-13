@@ -2801,6 +2801,11 @@ void resetSignals() {
   gSystem->ResetSignals();
 }
 
+void addInclude(const char *include) {
+  // add include directories to the path to interpret C++ libraries.
+  gInterpreter->AddIncludePath(include);
+}
+
 void loadLibrary(const char *lib) {
   // load the libraries needed to interpret the data
   gInterpreter->ProcessLine((std::string(".L ") + lib).c_str());

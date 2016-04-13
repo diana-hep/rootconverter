@@ -26,17 +26,19 @@ package generate {
     val help = """Usage: java -jar scaroot-reader.jar fileLocation treeLocation
 Where fileLocation is either a file path or URL TFile::Open can handle and treeLocation is the path of the TTree.
 Options:
-  --libs=LIB1,LIB2,...   Comma-separated list of C++ source or .so files defining objects in the TTree
-                         (i.e. SOMETHING.cxx to recompile the objects on the local architecture or
-                         SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries).
-  --inferTypes           As an alternative to providing --libs, attempt to infer the class structure from the
-                         ROOT file itself by inspecting its embedded streamers.
-  --name=NAME            Name for TTree class (taken from TTree name if not provided).
-  --ns=NAMESPACE         Package namespace for class ("data.root" if not provided).
-  --hadoop               If supplied, make the objects Hadoop writables.
+  --libs=LIB1,LIB2,...      Comma-separated list of C++ source or .so files defining objects in the TTree
+                            (i.e. SOMETHING.cxx to recompile the objects on the local architecture or
+                            SOMETHING_cxx.so and SOMETHING_cxx_ACLiC_dict_rdict.pcm to use precompiled binaries).
+  --includes=DIR1,DIR2...   Add include directories to the path for use in compiling C++ libs (above).
+  --inferTypes              As an alternative to providing --libs, attempt to infer the class structure from the
+                            ROOT file itself by inspecting its embedded streamers.
+  --name=NAME               Name for TTree class (taken from TTree name if not provided).
+  --ns=NAMESPACE            Package namespace for class ("data.root" if not provided).
+  --hadoop                  If supplied, make the objects Hadoop writables.
 """
 
     val libsPrefix = "--libs=(.*)".r
+    val includesPrefix = "--includes=(.*)".r
     val inferTypesPrefix = "--inferTypes"
     val namePrefix = "--name=(.*)".r
     val nsPrefix = "--ns=(.*)".r
@@ -46,6 +48,7 @@ Options:
       var fileLocation: String = null
       var treeLocation: String = null
       var libs: List[String] = Nil
+      var includes: List[String] = Nil
       var inferTypes: Boolean = false
       var name: String = null
       var ns: String = "data.root"
@@ -54,6 +57,7 @@ Options:
       // Handle arguments in the same way as root2avro.
       args.foreach(_.trim match {
         case libsPrefix(x) => libs = x.split(',').toList
+        case includesPrefix(x) => includes = x.split(',').toList
         case `inferTypesPrefix` => inferTypes = true
         case namePrefix(x) => name = x
         case nsPrefix(x) => ns = x
@@ -71,6 +75,7 @@ Options:
       }
 
       // Load dynamic libraries, if necessary.
+      includes foreach {dir => LoadLibsOnce.include(dir)}
       libs foreach {lib => LoadLibsOnce(lib)}
 
       if (inferTypes) {

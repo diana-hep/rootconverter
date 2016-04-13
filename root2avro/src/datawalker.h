@@ -1023,6 +1023,7 @@ public:
 
 extern "C" {
   void resetSignals();
+  void addInclude(const char *include);
   void loadLibrary(const char *lib);
 }
 
