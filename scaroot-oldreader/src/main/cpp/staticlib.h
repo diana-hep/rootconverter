@@ -1,1 +1,0 @@
-../../../../scaroot-avroreader/src/main/cpp/staticlib.h
