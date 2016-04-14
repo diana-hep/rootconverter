@@ -152,7 +152,7 @@
                 <arg>${project.build.directory}/.scala_dependencies</arg>
               </args>
               <recompileMode>incremental</recompileMode>
-              <useZincServer>true</useZincServer>
+              <!-- <useZincServer>true</useZincServer> -->
 
               <!-- Required only for Scala 2.10 -->
               <compilerPlugins>
