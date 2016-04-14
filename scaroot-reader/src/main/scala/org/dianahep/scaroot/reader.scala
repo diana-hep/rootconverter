@@ -278,7 +278,6 @@ package reader {
     private var statusByte = 1.toByte
 
     def repr = RootReaderCPPLibrary.repr(treeWalker)
-    def avroSchema = RootReaderCPPLibrary.avroSchema(treeWalker)
 
     private def thisMicroBatchSize =
       if (entriesInFile(fileIndex) - entryInFileIndex > microBatchSize)

@@ -2639,6 +2639,44 @@ std::string TreeWalker::repr() {
   out += std::string("}");
   return out;
 }
+
+void TreeWalker::printJSON() {
+  std::cout << "{";
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else std::cout << ", ";
+    (*iter)->printJSON((*iter)->getAddress(), std::cout);
+  }
+  std::cout << "}" << std::endl;
+}
+
+void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
+  std::set<std::string> memo;
+
+  schemaBuilder(SchemaClassName, reader->GetTree()->GetName());
+  schemaBuilder(SchemaClassPointer, this);
+
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    schemaBuilder(SchemaClassFieldName, (*iter)->fieldName.c_str());
+    schemaBuilder(SchemaClassFieldDoc, "");
+    (*iter)->buildSchema(schemaBuilder, memo);
+  }
+
+  schemaBuilder(SchemaClassEnd, nullptr);
+}
+
+std::string TreeWalker::stringJSON() {
+  std::ostringstream stream;
+  stream << "{";
+  bool first = true;
+  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
+    if (first) first = false; else stream << ", ";
+    (*iter)->printJSON((*iter)->getAddress(), stream);
+  }
+  stream << "}" << std::endl;
+  return stream.str();
+}
+
 #ifdef AVRO
 std::string TreeWalker::avroSchema() {
   std::set<std::string> memo;
@@ -2659,44 +2697,6 @@ std::string TreeWalker::avroSchema() {
   out += std::string("\n ]\n}");
   return out;
 }
-
-void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
-  std::set<std::string> memo;
-
-  schemaBuilder(SchemaClassName, reader->GetTree()->GetName());
-  schemaBuilder(SchemaClassPointer, this);
-
-  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
-    schemaBuilder(SchemaClassFieldName, (*iter)->fieldName.c_str());
-    schemaBuilder(SchemaClassFieldDoc, "");
-    (*iter)->buildSchema(schemaBuilder, memo);
-  }
-
-  schemaBuilder(SchemaClassEnd, nullptr);
-}
-
-void TreeWalker::printJSON() {
-  std::cout << "{";
-  bool first = true;
-  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
-    if (first) first = false; else std::cout << ", ";
-    (*iter)->printJSON((*iter)->getAddress(), std::cout);
-  }
-  std::cout << "}" << std::endl;
-}
-
-std::string TreeWalker::stringJSON() {
-  std::ostringstream stream;
-  stream << "{";
-  bool first = true;
-  for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
-    if (first) first = false; else stream << ", ";
-    (*iter)->printJSON((*iter)->getAddress(), stream);
-  }
-  stream << "}" << std::endl;
-  return stream.str();
-}
-
 
 bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
   if (!avroHeaderPrinted) {

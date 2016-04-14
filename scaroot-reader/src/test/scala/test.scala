@@ -75,7 +75,6 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     println(iterator.schema)
     println(iterator.factory)
-    println(iterator.avroSchema)
     println(iterator.repr)
 
     var i = 0

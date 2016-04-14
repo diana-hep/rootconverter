@@ -41,7 +41,6 @@ extern "C" {
   bool resolved(void *treeWalker);
   void resolve(void *treeWalker);
   const char *repr(void *treeWalker);
-  const char *avroSchema(void *treeWalker);
   void printJSON(void *treeWalker);
   const char *stringJSON(void *treeWalker);
 

@@ -1007,11 +1007,11 @@ public:
   bool resolved();
   void resolve();
   std::string repr();
+  void printJSON();
+  void buildSchema(SchemaBuilder schemaBuilder);
+  std::string stringJSON();
 #ifdef AVRO
   std::string avroSchema();
-  void buildSchema(SchemaBuilder schemaBuilder);
-  void printJSON();
-  std::string stringJSON();
   bool printAvroHeaderOnce(std::string &codec, int blockSize);
   bool printAvro();
   void closeAvro();

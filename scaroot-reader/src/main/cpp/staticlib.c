@@ -67,12 +67,6 @@ const char *repr(void *treeWalker) {
   return tw->stringHolder.c_str();
 }
 
-const char *avroSchema(void *treeWalker) {
-  TreeWalker *tw = (TreeWalker*)treeWalker;
-  tw->stringHolder = tw->avroSchema();
-  return tw->stringHolder.c_str();
-}
-
 void printJSON(void *treeWalker) {
   TreeWalker *tw = (TreeWalker*)treeWalker;
   tw->printJSON();
