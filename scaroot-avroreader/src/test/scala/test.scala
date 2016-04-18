@@ -20,7 +20,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.Matchers
 
-// import org.dianahep.scaroot.avroreader._
+import org.dianahep.scaroot.avroreader._
 
 // case class Tree(event: Event)
 
@@ -67,63 +67,15 @@ import org.scalatest.Matchers
 
 // case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
 
-import scala.util.{Try, Success, Failure}
-
-import com.gensler.scalavro.types.AvroType
-import com.gensler.scalavro.io.AvroTypeIO
-
 case class TwoMuon(mass_mumu: Float, px: Float, py: Float, pz: Float)
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
 
-    val l = AvroType[Long]
-    println(l.schema)
+    val iterator = new RootTreeIterator[TwoMuon](List("/home/pivarski/DEMO/DATA/TrackResonanceNtuple.root"), "TrackResonanceNtuple/twoMuon", command = "../root2avro/build/root2avro", end = 10L)
 
-    val inputStream = new java.io.FileInputStream("testraw.avro")
-
-    val t = AvroType[TwoMuon]
-    println(t.schema)
-
-    val Success(l1) = l.io read inputStream
-    val Success(readResult1) = t.io read inputStream
-    println(l1, readResult1)
-
-    val Success(l2) = l.io read inputStream
-    val Success(readResult2) = t.io read inputStream
-    println(l2, readResult2)
-
-    val Success(l3) = l.io read inputStream
-    val Success(readResult3) = t.io read inputStream
-    println(l3, readResult3)
-
-    val Success(l4) = l.io read inputStream
-    val Success(readResult4) = t.io read inputStream
-    println(l4, readResult4)
-
-    val Success(l5) = l.io read inputStream
-    val Success(readResult5) = t.io read inputStream
-    println(l5, readResult5)
-
-    val Success(l6) = l.io read inputStream
-    val Success(readResult6) = t.io read inputStream
-    println(l6, readResult6)
-
-    val Success(l7) = l.io read inputStream
-    val Success(readResult7) = t.io read inputStream
-    println(l7, readResult7)
-
-    val Success(l8) = l.io read inputStream
-    val Success(readResult8) = t.io read inputStream
-    println(l8, readResult8)
-
-    val Success(l9) = l.io read inputStream
-    val Success(readResult9) = t.io read inputStream
-    println(l9, readResult9)
-
-    val Success(l10) = l.io read inputStream
-    val Success(readResult10) = t.io read inputStream
-    println(l10, readResult10)
+    while (iterator.hasNext)
+      println(iterator.next())
 
   }
 }
