@@ -22,57 +22,55 @@ import org.scalatest.Matchers
 
 import org.dianahep.scaroot.avroreader._
 
-// case class Tree(event: Event)
+case class Tree(event: Event)
 
-// case class Event(
-//   fType: String,
-//   fEventName: Option[String],
-//   fNtrack: Int,
-//   fNseg: Int,
-//   fNvertex: Int,
-//   fFlag: Long,
-//   fTemperature: Double,
-//   fMeasures: Seq[Int],
-//   fMatrix: Seq[Seq[Double]],
-//   fClosestDistance: Option[Double],
-//   fEvtHdr: EventHeader,
-//   fTracks: Option[Seq[Track]],
-//   fTriggerBits: TBits,
-//   fIsValid: Boolean)
+case class Event(
+  fType: String,
+  fEventName: Option[String],
+  fNtrack: Int,
+  fNseg: Int,
+  fNvertex: Int,
+  fFlag: Long,
+  fTemperature: Double,
+  fMeasures: Seq[Int],
+  fMatrix: Seq[Seq[Double]],
+  fClosestDistance: Option[Double],
+  fEvtHdr: EventHeader,
+  fTracks: Option[Seq[Track]],
+  fTriggerBits: TBits,
+  fIsValid: Boolean)
 
-// case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
+case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
 
-// case class Track(
-//   fPx: Float,
-//   fPy: Float,
-//   fPz: Float,
-//   fRandom: Float,
-//   fMass2: Float,
-//   fBx: Float,
-//   fBy: Float,
-//   fMeanCharge: Float,
-//   fXfirst: Float,
-//   fXlast: Float,
-//   fYfirst: Float,
-//   fYlast: Float,
-//   fZfirst: Float,
-//   fZlast: Float,
-//   fCharge: Double,
-//   fVertex: Seq[Double],
-//   fNpoint: Int,
-//   fValid: Short,
-//   fNsp: Int,
-//   fPointValue: Option[Double],
-//   fTriggerBits: TBits)
+case class Track(
+  fPx: Float,
+  fPy: Float,
+  fPz: Float,
+  fRandom: Float,
+  fMass2: Float,
+  fBx: Float,
+  fBy: Float,
+  fMeanCharge: Float,
+  fXfirst: Float,
+  fXlast: Float,
+  fYfirst: Float,
+  fYlast: Float,
+  fZfirst: Float,
+  fZlast: Float,
+  fCharge: Double,
+  fVertex: Seq[Double],
+  fNpoint: Int,
+  fValid: Short,
+  fNsp: Int,
+  fPointValue: Option[Double],
+  fTriggerBits: TBits)
 
-// case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
-
-case class TwoMuon(mass_mumu: Float, px: Float, py: Float, pz: Float)
+case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
 
-    val iterator = new RootTreeIterator[TwoMuon](List("/home/pivarski/DEMO/DATA/TrackResonanceNtuple.root"), "TrackResonanceNtuple/twoMuon", command = "../root2avro/build/root2avro", end = 10L)
+    val iterator = new RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, command = "../root2avro/build/root2avro", end = 2L)
 
     while (iterator.hasNext)
       println(iterator.next())

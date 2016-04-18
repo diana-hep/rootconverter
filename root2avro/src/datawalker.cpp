@@ -2542,8 +2542,8 @@ void *RawTBranchTStringWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace) :
-  fileLocation(fileLocation), treeLocation(treeLocation), avroNamespace(avroNamespace)
+TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace) :
+  fileLocation(fileLocation), treeLocation(treeLocation), schemaName(schemaName), avroNamespace(avroNamespace)
 {
   valid = tryToOpenFile();
   if (!valid) return;
@@ -2653,7 +2653,11 @@ void TreeWalker::printJSON() {
 void TreeWalker::buildSchema(SchemaBuilder schemaBuilder) {
   std::set<std::string> memo;
 
-  schemaBuilder(SchemaClassName, reader->GetTree()->GetName());
+  std::string name = schemaName;
+  if (name.empty())
+    name = reader->GetTree()->GetName();
+
+  schemaBuilder(SchemaClassName, name.c_str());
   schemaBuilder(SchemaClassPointer, this);
 
   for (auto iter = fields.begin();  iter != fields.end();  ++iter) {
@@ -2682,8 +2686,12 @@ std::string TreeWalker::avroSchema() {
   std::set<std::string> memo;
   std::string out;
 
+  std::string name = schemaName;
+  if (name.empty())
+    name = reader->GetTree()->GetName();
+
   out += std::string("{\"type\": \"record\",\n") +
-         std::string(" \"name\": \"") + reader->GetTree()->GetName() + std::string("\",\n");
+         std::string(" \"name\": \"") + name + std::string("\",\n");
   if (!avroNamespace.empty())
     out += std::string(" \"namespace\": \"") + avroNamespace + std::string("\",\n");
   out += std::string(" \"fields\": [\n");

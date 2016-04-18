@@ -71,8 +71,8 @@ package avroreader {
       parser.parse(process.getInputStream)
     }
 
-    if (readerSchema != writerSchema)
-      throw new RuntimeException(s"Reader's schema:\n    $readerSchema\ndoes not match writer's schema:\n    $writerSchema")
+    // if (readerSchema != writerSchema)
+    //   throw new RuntimeException(s"Reader's schema:\n    $readerSchema\ndoes not match writer's schema:\n    $writerSchema")
 
     private var entryIndex = -1L
     def index = entryIndex

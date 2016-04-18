@@ -977,6 +977,7 @@ class TreeWalker : public DataProvider {
 public:
   std::string fileLocation;
   std::string treeLocation;
+  std::string schemaName;
   std::string avroNamespace;
   std::string stringHolder;
 
@@ -999,7 +1000,7 @@ public:
   avro_value_t avroValue;
 #endif
 
-  TreeWalker(std::string fileLocation, std::string treeLocation, std::string avroNamespace);
+  TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace);
   bool tryToOpenFile();
   void reset(std::string fileLocation);
 

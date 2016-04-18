@@ -17,7 +17,7 @@
 #include "streamerToCode.h"
 
 void *newTreeWalker(const char *fileLocation, const char *treeLocation, const char *avroNamespace) {
-  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(avroNamespace));
+  TreeWalker *out = new TreeWalker(std::string(fileLocation), std::string(treeLocation), std::string(""), std::string(avroNamespace));
   return out;
 }
 

@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
       if (treeWalker->valid) treeWalker->next();
     }
     else {
-      treeWalker = new TreeWalker(url, treeLocation, ns);
+      treeWalker = new TreeWalker(url, treeLocation, schemaName, ns);
       while (treeWalker->valid  &&  !treeWalker->resolved()  &&  treeWalker->next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {
