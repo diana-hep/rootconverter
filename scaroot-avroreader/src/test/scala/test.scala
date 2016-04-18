@@ -71,61 +71,14 @@ import scala.util.{Try, Success, Failure}
 
 import com.gensler.scalavro.types.AvroType
 import com.gensler.scalavro.io.AvroTypeIO
-import com.gensler.scalavro.util.FixedData
 
 case class TwoMuon(mass_mumu: Float, px: Float, py: Float, pz: Float)
-
-@FixedData.Length(4)
-case class Magic(override val bytes: scala.collection.immutable.Seq[Byte]) extends FixedData(bytes)
-
-@FixedData.Length(16)
-case class Sync(override val bytes: scala.collection.immutable.Seq[Byte]) extends FixedData(bytes)
-
-case class Header(magic: Magic, meta: Map[String, Seq[Byte]], sync: Sync)
 
 class DefaultSuite extends FlatSpec with Matchers {
   "stuff" must "work" in {
 
-    // val inputStream = new java.io.FileInputStream("TrackResonanceNtuple-snappy.avro")
-    // // val dataFileStream = new org.apache.avro.file.DataFileStream(inputStream, new org.apache.avro.generic.GenericDatumReader[AnyRef])
-    // // val header = dataFileStream.getHeader()
-    // // println(dataFileStream.getSchema)
-
-    // // for (i <- 0 until 269) inputStream.read()
-
-    // val h = AvroType[Header]
-    // println(h.schema)
-
-    // val Success(header) = h.io read inputStream
-    // println(header)
-
-    // val out = new java.io.ByteArrayOutputStream
-    // h.io.write(header, out)
-    // println("size", out.toByteArray.size)
-
     val l = AvroType[Long]
     println(l.schema)
-
-    // val Success(l1) = l.io read inputStream
-    // println(l1)
-
-    // val Success(l2) = l.io read inputStream
-    // println(l2)
-
-    // val Success(l3) = l.io read inputStream
-    // println(l3)
-
-    // val Success(l4) = l.io read inputStream
-    // println(l4)
-
-    // val out2 = new java.io.ByteArrayOutputStream
-    // l.io.write(l1, out2)
-    // l.io.write(l2, out2)
-    // l.io.write(l3, out2)
-    // l.io.write(l4, out2)
-    // println("size", out2.toByteArray.size)
-
-    // // for (i <- 0 until 6) inputStream.read()
 
     val inputStream = new java.io.FileInputStream("testraw.avro")
 
