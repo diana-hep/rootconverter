@@ -990,9 +990,12 @@ public:
 
 #ifdef AVRO
   bool avroHeaderPrinted = false;
+  avro_schema_t entrySchema;
   avro_schema_t schema;
   avro_file_writer_t avroWriter;
+  avro_value_iface_t *avroEntryInterface;
   avro_value_iface_t *avroInterface;
+  avro_value_t avroEntryValue;
   avro_value_t avroValue;
 #endif
 
@@ -1012,8 +1015,8 @@ public:
   std::string stringJSON();
 #ifdef AVRO
   std::string avroSchema();
-  bool printAvroHeaderOnce(std::string &codec, int blockSize);
-  bool printAvro();
+  bool printAvroHeaderOnce(std::string &codec, int blockSize, bool stream);
+  bool printAvro(bool stream, uint64_t currentEntry);
   void closeAvro();
 #endif
   int getDataSize(const void *address);

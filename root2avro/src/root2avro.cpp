@@ -58,9 +58,13 @@ void help(bool banner) {
             << "  --includes=DIR1,DIR2...   Add include directories to the path for use in compiling C++ libs (above)." << std::endl
             << "  --inferTypes              As an alternative to providing --libs, attempt to infer the class structure from the" << std::endl
             << "                            ROOT file itself by inspecting its embedded streamers." << std::endl
-            << "  --mode=MODE               What to write to standard output: \"avro\" (Avro file, default), \"json\" (one JSON" << std::endl
-            << "                            object per line), \"schema\" (Avro schema only), \"repr\" (ROOT representation only)," << std::endl
-            << "                            or \"c++\" (show C++ code that would be generated from streamers with --inferTypes)." << std::endl
+            << "  --mode=MODE               What to write to standard output:" << std::endl
+            << "                                * \"avro\" (Avro file, default)" << std::endl
+            << "                                * \"avro-stream\" (schemaless Avro fragment)" << std::endl
+            << "                                * \"json\" (one JSON object per line, schemaless)" << std::endl
+            << "                                * \"schema\" (just the Avro schema as a JSON document)" << std::endl
+            << "                                * \"repr\" (custom JSON schema representing the ROOT source)" << std::endl
+            << "                                * \"c++\" (C++ code that would be generated from streamers with --inferTypes)" << std::endl
             << "  --codec=CODEC             Codec for compressing the Avro output; may be \"null\" (uncompressed, default)," << std::endl
             << "                            \"deflate\", \"snappy\", \"lzma\", depending on libraries installed on your system." << std::endl
             << "  --block=SIZE              Avro block size in KB (default is 64); if too small, no output will be produced." << std::endl
@@ -150,7 +154,7 @@ int main(int argc, char **argv) {
       debug = true;
 
     else if (arg.substr(0, badPrefix.size()) == badPrefix) {
-      std::cerr << "Recognized switches are: --start, --end, --mode, --codec, --name, --ns, --debug, --help." << std::endl;
+      std::cerr << "Recognized switches are: --start, --end, --mode, --codec, --libs, --includes, --inferTypes, --name, --ns, --debug, --help." << std::endl;
       return -1;
     }
 
@@ -245,14 +249,39 @@ int main(int argc, char **argv) {
       else
       treeWalker->setEntryInCurrentTree(0);
 
-      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024)) return -1;
+      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, false)) return -1;
       do {
         if (end != NA  &&  currentEntry >= end) {
           treeWalker->closeAvro();
           return 0;
         }
 
-        if (!treeWalker->printAvro()) {
+        if (!treeWalker->printAvro(false, currentEntry)) {
+          treeWalker->closeAvro();
+          return -1;
+        }
+
+        currentEntry += 1;
+      } while (treeWalker->next());
+    }
+
+    // print out Avro bytes (without the "Obj" header)
+    else if (mode == std::string("avro-stream")) {
+      if (start != NA  &&  start > currentEntry) {
+        treeWalker->setEntryInCurrentTree(start - currentEntry);
+        currentEntry = start;
+      }
+      else
+      treeWalker->setEntryInCurrentTree(0);
+
+      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, true)) return -1;
+      do {
+        if (end != NA  &&  currentEntry >= end) {
+          treeWalker->closeAvro();
+          return 0;
+        }
+
+        if (!treeWalker->printAvro(true, currentEntry)) {
           treeWalker->closeAvro();
           return -1;
         }

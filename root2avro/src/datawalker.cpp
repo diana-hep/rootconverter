@@ -2698,7 +2698,7 @@ std::string TreeWalker::avroSchema() {
   return out;
 }
 
-bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
+bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize, bool stream) {
   if (!avroHeaderPrinted) {
     std::string schemastr = avroSchema();
 
@@ -2724,11 +2724,33 @@ bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
         std::cerr << avro_strerror() << std::endl;
         return false;
       }
-    
-    std::string path;
-    if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), blockSize) != 0) {
-      std::cerr << avro_strerror() << std::endl;
-      return false;
+
+    if (stream) {
+      avro_schema_error_t schemaError;
+      if (avro_schema_from_json("{\"type\":\"long\"}", 15, &entrySchema, &schemaError) != 0) {
+        std::cerr << avro_strerror() << std::endl;
+        return false;
+      }
+
+      avroEntryInterface = avro_generic_class_from_schema(entrySchema);
+      if (avroEntryInterface == nullptr) {
+        std::cerr << avro_strerror() << std::endl;
+        return false;
+      }
+
+      if (avro_generic_value_new(avroEntryInterface, &avroEntryValue) != 0) {
+        std::cerr << avro_strerror() << std::endl;
+        return false;
+      }
+
+      avroWriter = nullptr;
+    }
+    else {
+      std::string path;
+      if (avro_file_writer_create_with_codec_fp(stdout, path.c_str(), true, schema, &avroWriter, codec.c_str(), blockSize) != 0) {
+        std::cerr << avro_strerror() << std::endl;
+        return false;
+      }
     }
 
     avroHeaderPrinted = true;
@@ -2736,18 +2758,24 @@ bool TreeWalker::printAvroHeaderOnce(std::string &codec, int blockSize) {
   return true;
 }
 
-bool TreeWalker::printAvro() {
+bool TreeWalker::printAvro(bool stream, uint64_t currentEntry) {
   for (auto iter = fields.begin();  iter != fields.end();  ++iter)
     if (!(*iter)->printAvro((*iter)->getAddress(), &(*iter)->avroValue)) {
       std::cerr << avro_strerror() << std::endl;
       return false;
     }
-  avro_file_writer_append_value(avroWriter, &avroValue);
+  if (stream) {
+    avro_value_set_long(&avroEntryValue, currentEntry);
+    avro_value_write(avro_writer_file(stdout), &avroEntryValue);
+    avro_value_write(avro_writer_file(stdout), &avroValue);
+  }
+  else
+    avro_file_writer_append_value(avroWriter, &avroValue);
   return true;
 }
 
 void TreeWalker::closeAvro() {
-  if (avroHeaderPrinted)
+  if (avroHeaderPrinted  &&  avroWriter != nullptr)
     avro_file_writer_close(avroWriter);
 }
 #endif // AVRO

@@ -49,33 +49,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-reflect</artifactId>
-      <version>${scala.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.scalamacros</groupId>
-      <artifactId>quasiquotes_${scala.tools.version}</artifactId>
-      <version>2.1.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-      <version>1.8.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-      <version>1.9.13</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.13</version>
+      <groupId>com.gensler</groupId>
+      <artifactId>scalavro_${scala.tools.version}</artifactId>
+      <version>0.6.2</version>
     </dependency>
 
     <dependency>
@@ -115,15 +91,6 @@
               </args>
               <recompileMode>incremental</recompileMode>
               <!-- <useZincServer>true</useZincServer> -->
-
-              <!-- Required only for Scala 2.10 -->
-              <compilerPlugins>
-                <compilerPlugin>
-                  <groupId>org.scalamacros</groupId>
-                  <artifactId>paradise_${scala.version}</artifactId>
-                  <version>2.1.0</version>
-                </compilerPlugin>
-              </compilerPlugins>
             </configuration>
           </execution>
         </executions>
@@ -137,7 +104,6 @@
           <classifier>scala_${scala.tools.version}</classifier>
           <archive>
             <manifest>
-              <mainClass>org.dianahep.scaroot.avroreader.generate.Main</mainClass>
               <addClasspath>true</addClasspath>
               <classpathPrefix>./lib</classpathPrefix>
             </manifest>
