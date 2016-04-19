@@ -96,12 +96,12 @@ package avroreader {
     }
     restartProcess(start)
 
-    private def getNext(trials: Int): Option[TYPE] =
+    private def getNext(trials: Int, exception: Option[Throwable]): Option[TYPE] =
       if (trials == 0) {
         process.foreach(_.destroy())
         process = None
         avroStream = None
-        None
+        throw new RuntimeException(s"""external process failed: ${arguments("avro-stream", start).mkString(" ")}""", exception.getOrElse(null))
       }
       else avroStream match {
         case Some(stream) =>
@@ -110,29 +110,80 @@ package avroreader {
               dataType.io read stream match {
                 case Success(datum) =>
                   entryIndex += 1
-                  Some(datum)                     // normal next
-                case _ =>
-                  restartProcess(entryIndex)      // couldn't parse Avro datum
-                  getNext(trials - 1)
+                  Some(datum)                        // normal next
+                case Failure(err) =>
+                  restartProcess(entryIndex)         // couldn't parse Avro datum
+                  getNext(trials - 1, Some(err))
               }
+            case Success(entry) =>
+              restartProcess(entryIndex)             // wrong entry number
+              getNext(trials - 1, Some(new RuntimeException(s"expected entry number $entryIndex but got $entry from root2avro")))
+
             case Failure(_: java.io.EOFException) =>
-              None                                // normal exit
-            case _ =>
-              restartProcess(entryIndex)          // wrong entry number
-              getNext(trials - 1)
+              None                                   // normal exit
+
+            case Failure(err) =>
+              restartProcess(entryIndex)             // other error
+              getNext(trials - 1, Some(err))
           }
-        case None =>                              // stream is not open
+        case None =>                                 // stream is not open
           restartProcess(entryIndex)
-          getNext(trials - 1)
+          getNext(trials - 1, Some(new RuntimeException("pipe is not open")))
       }
 
-    private var theNext = getNext(numberOfTrials)
+    private var theNext = getNext(numberOfTrials, None)
 
     def hasNext = !theNext.isEmpty
     def next() = {
       val out = theNext.get
-      theNext = getNext(numberOfTrials)
+      theNext = getNext(numberOfTrials, None)
       out
     }
   }
+
+case class Tree(event: Event)
+
+case class Event(
+  fType: String,
+  fEventName: Option[String],
+  fNtrack: Int,
+  fNseg: Int,
+  fNvertex: Int,
+  fFlag: Long,
+  fTemperature: Double,
+  fMeasures: Seq[Int],
+  fMatrix: Seq[Seq[Double]],
+  fClosestDistance: Option[Double],
+  fEvtHdr: EventHeader,
+  fTracks: Option[Seq[Track]],
+  fTriggerBits: TBits,
+  fIsValid: Boolean)
+
+case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
+
+case class Track(
+  fPx: Float,
+  fPy: Float,
+  fPz: Float,
+  fRandom: Float,
+  fMass2: Float,
+  fBx: Float,
+  fBy: Float,
+  fMeanCharge: Float,
+  fXfirst: Float,
+  fXlast: Float,
+  fYfirst: Float,
+  fYlast: Float,
+  fZfirst: Float,
+  fZlast: Float,
+  fCharge: Double,
+  fVertex: Seq[Double],
+  fNpoint: Int,
+  fValid: Short,
+  fNsp: Int,
+  fPointValue: Option[Double],
+  fTriggerBits: TBits)
+
+case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
+
 }
