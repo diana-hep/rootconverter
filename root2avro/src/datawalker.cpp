@@ -1231,7 +1231,10 @@ std::string ClassWalker::addCppNamespace(std::string className, std::string ns) 
   std::string out = ns;
   std::vector<std::string> cppns = splitCppNamespace(className);
   for (int i = 0;  i < cppns.size() - 1;  i++)
-    out += std::string(".") + cppns[i];
+    if (out.empty())
+      out += cppns[i];
+    else
+      out += std::string(".") + cppns[i];
   return out;
 }
 
@@ -1260,13 +1263,28 @@ void ClassWalker::resolve(const void *address) {
     (*iter)->resolve(address);
 }
 
+std::string ClassWalker::replaceSubstring(std::string subject, const std::string &search, const std::string &replace) {
+  size_t pos = 0;
+  while ((pos = subject.find(search, pos)) != std::string::npos) {
+    subject.replace(pos, search.length(), replace);
+    pos += replace.length();
+  }
+  return subject;
+}
+
 std::string ClassWalker::repr(int indent, std::set<std::string> &memo) {
-  if (memo.find(typeName) != memo.end())
-    return std::string("\"") + typeName + std::string("\"");
+  std::string tn = typeName;
+  std::string ns = avroNamespace;
+  if (!ns.empty())
+    tn = replaceSubstring(ns, ".", "::") + "::" + tn;
+
+  if (memo.find(tn) != memo.end())
+    return std::string("\"") + tn + std::string("\"");
   else {
-    memo.insert(typeName);
+    memo.insert(tn);
+
     std::string out;
-    out += std::string("{\"") + typeName + std::string("\": {\n") + std::string(indent + 2, ' ');
+    out += std::string("{\"") + tn + std::string("\": {\n") + std::string(indent + 2, ' ');
     bool first = true;
     for (auto iter = members.begin();  iter != members.end();  ++iter) {
       if (first) first = false; else out += std::string(",\n") + std::string(indent + 2, ' ');

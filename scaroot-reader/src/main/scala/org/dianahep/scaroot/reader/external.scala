@@ -86,7 +86,7 @@ package external {
       (if (!inferTypes) Nil else List("--inferTypes")) ++
       List("--start=" + index.toString) ++
       (if (end < 0L) Nil else List("--end=" + end.toString)) ++
-      List("--name=" + name, "--ns=" + ns)
+      List("--name=" + name)
 
     private var entryIndex = -1L
     def index = entryIndex

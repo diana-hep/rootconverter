@@ -531,6 +531,7 @@ public:
   bool empty();
   bool resolved();
   void resolve(const void *address);
+  std::string replaceSubstring(std::string subject, const std::string &search, const std::string &replace);
   std::string repr(int indent, std::set<std::string> &memo);
   std::string avroTypeName();
   std::string reference(std::set<std::string> &memo);
