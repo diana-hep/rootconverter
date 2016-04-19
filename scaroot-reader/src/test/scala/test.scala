@@ -547,17 +547,17 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits], "Tree" -> My[Tree])
 
-  //   val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, myclasses = myclasses)
+    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, myclasses = myclasses)
 
-  //   println(iterator.schema)
-  //   println(iterator.factory)
-  //   println(iterator.repr)
+    // println(iterator.schema)
+    // println(iterator.factory)
+    // println(iterator.repr)
 
-  //   var i = 0
-  //   while (iterator.hasNext  &&  i < 10) {
-  //     println(iterator.next().event.fEventName)
-  //     i += 1
-  //   }
+    var i = 0
+    while (iterator.hasNext  &&  i < 10) {
+      println(iterator.next().event.fEventName)
+      i += 1
+    }
   }
 
   "Bacon.root" must "work" in {
@@ -1409,36 +1409,46 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val myclasses = Map("Events" -> My[Tree2], "baconhep::TEventInfo" -> My[baconhep.TEventInfo], "baconhep::TGenEventInfo" -> My[baconhep.TGenEventInfo], "baconhep::TGenParticle" -> My[baconhep.TGenParticle], "baconhep::TLHEWeight" -> My[baconhep.TLHEWeight], "baconhep::TElectron" -> My[baconhep.TElectron], "baconhep::TMuon" -> My[baconhep.TMuon], "baconhep::TTau" -> My[baconhep.TTau], "baconhep::TPhoton" -> My[baconhep.TPhoton], "baconhep::TVertex" -> My[baconhep.TVertex], "baconhep::TJet" -> My[baconhep.TJet], "baconhep::TAddJet" -> My[baconhep.TAddJet])
 
-
-    // val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses)
+    val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses)
 
     // println(iterator.schema)
     // println(iterator.factory)
     // println(iterator.repr)
 
-    // var i = 0
-    // while (iterator.hasNext  &&  i < 10) {
-    //   val x = iterator.next()
-    //   println(x.PV)
-    //   println(x.Photon)
-    //   i += 1
+    var i = 0
+    while (iterator.hasNext  &&  i < 10) {
+      val x = iterator.next()
+      println(x.PV)
+      println(x.Photon)
+      i += 1
+    }
+
+
+    // val pb = new java.lang.ProcessBuilder("../root2avro/build/root2avro", "test_Event/Event.root", "T", "--inferTypes", "--mode=dump")
+    // val p = pb.start()
+
+    // val factory = FactoryClass[Tree](schema, myclasses)
+    // val inChannel = p.getInputStream.getChannel
+    // val buffer = inChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, inChannel.size)
+    // buffer.order(java.nio.ByteOrder.nativeOrder)
+
+    // var tmp: Tree = null.asInstanceOf[Tree]
+    // while (buffer.hasRemaining) {
+    //   println(buffer.getLong)
+    //   tmp = factory(buffer)
     // }
-
-
-
 
     // val factory = FactoryClass[Tree2](schema, myclasses)
     // val inChannel = new java.io.RandomAccessFile("bacon.raw", "r").getChannel
     // val buffer = inChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, inChannel.size)
     // buffer.order(java.nio.ByteOrder.nativeOrder)
 
-    // var tmp: Tree2 = null.asInstanceOf[Tree2]
-    // while (buffer.hasRemaining) {
-    //   println(buffer.getLong)
-    //   tmp = factory(buffer)
-    // }
-
-
+    // FileChannel inChannel = new FileInputStream(fileName).getChannel();
+    // ByteBuffer buffer = ByteBuffer.allocateDirect(CAPACITY);
+    // while(inChannel.read(buffer) > 0)
+    //     buffer.flip()
+    //     buffer.clear(); // do something with the data and clear/compact it.
+    // inChannel.close();
 
 
   }

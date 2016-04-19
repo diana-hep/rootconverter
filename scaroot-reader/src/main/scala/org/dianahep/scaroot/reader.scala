@@ -86,12 +86,12 @@ package reader {
         val name = param.asTerm.name.decodedName.toString
         val tpe = param.typeSignature
         fieldTypes += q"""$name -> weakTypeOf[$tpe]"""
-        getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](byteBuffer)"""
+        getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](dataBuffer)"""
         i += 1
       }
 
       c.Expr[My[TYPE]](q"""
-        import java.nio.ByteBuffer
+import java.nio.ByteBuffer
 
         import scala.reflect.runtime.universe.weakTypeOf
 
@@ -113,7 +113,7 @@ package reader {
               val factoryArray = factories.map(_._2).toArray
 
               // Fast runtime loop...
-              def apply(byteBuffer: ByteBuffer) = {
+              def apply(dataBuffer: ByteBuffer) = {
                 new $dataClass(..${getFields.result})
               }
             }
@@ -126,7 +126,10 @@ package reader {
 
   object LoadLibsOnce {
     // Avoid conflict between Java's signal handlers and ROOT's (which causes rare segmentation faults).
+    private var isready = false
     RootReaderCPPLibrary.resetSignals()
+    isready = true
+    def ready = isready
 
     // Keep track of which libraries have already been loaded to avoid loading them multiple times.
     val includeDirs = mutable.Set[String]()
@@ -165,8 +168,10 @@ package reader {
     if (microBatchSize < 1)
       throw new IllegalArgumentException(s"The microBatchSize ($microBatchSize) must be greater than or equal to one.")
 
-    includes foreach {dir => LoadLibsOnce.include(dir)}
-    libs foreach {lib => LoadLibsOnce(lib)}
+    val loadLibsOnce = LoadLibsOnce
+    while (!loadLibsOnce.ready) { Thread.sleep(1) }
+    includes foreach {dir => loadLibsOnce.include(dir)}
+    libs foreach {lib => loadLibsOnce(lib)}
 
     if (inferTypes) {
       val errorMessage: String = RootReaderCPPLibrary.inferTypes(fileLocations(0), treeLocation)
@@ -275,6 +280,7 @@ package reader {
     private var bufferSize = new NativeLong(64*1024)
     private var buffer = new Memory(bufferSize.longValue)
     private var byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
+    // private var dataByteBuffer = new DataByteBuffer(byteBuffer)
     private var statusByte = 1.toByte
 
     def repr = RootReaderCPPLibrary.repr(treeWalker)
@@ -305,6 +311,7 @@ package reader {
         bufferSize = new NativeLong(bufferSize.longValue * 2L)
         buffer = new Memory(bufferSize.longValue)
         byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
+        // dataByteBuffer = new DataByteBuffer(byteBuffer)
 
         // Try, try again.
         microBatchIndex = 0

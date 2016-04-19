@@ -2824,13 +2824,15 @@ size_t TreeWalker::copyToBuffer(int64_t entry, int microBatchSize, void *buffer,
     for (auto iter = fields.begin();  iter != fields.end();  ++iter)
       ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
 
-    if (ptr == nullptr)
+    if (ptr == nullptr) {
       *((char*)beginningOfRecord) = StatusTooSmall;
+      return 0;
+    }
     else
       *((char*)beginningOfRecord) = StatusReading;
-
-    return (size_t)ptr - (size_t)buffer - sizeof(char);
   }
+
+  return (size_t)ptr - (size_t)buffer - sizeof(char);
 }
 
 void TreeWalker::dumpRaw(int64_t entry) {
