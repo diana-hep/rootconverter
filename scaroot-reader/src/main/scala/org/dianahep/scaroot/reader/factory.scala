@@ -37,7 +37,7 @@ package factory {
   /////////////////////////////////////////////////// factories for building data at runtime
   // Note that type information is compiled in!
 
-  trait DataBuffer {
+  trait DataStream {
     def get: Byte
     def get(array: Array[Byte])
     def getShort: Short
@@ -47,7 +47,7 @@ package factory {
     def getDouble: Double
   }
 
-  class DataByteBuffer(byteBuffer: ByteBuffer) extends DataBuffer {
+  class ByteBufferDataStream(byteBuffer: ByteBuffer) extends DataStream {
     def get: Byte = byteBuffer.get
     def get(array: Array[Byte]) {byteBuffer.get(array)}
     def getShort: Short = byteBuffer.getShort
@@ -57,26 +57,54 @@ package factory {
     def getDouble: Double = byteBuffer.getDouble
   }
 
+  class BigEndianDataStream(in: java.io.DataInputStream) extends DataStream {
+    def get: Byte = in.readByte
+    def get(array: Array[Byte]) {
+      var totalRead = 0
+      while (totalRead < array.length)
+        totalRead += in.read(array, totalRead, array.length - totalRead)
+    }
+    def getShort: Short = in.readShort
+    def getInt: Int = in.readInt
+    def getLong: Long = in.readLong
+    def getFloat: Float = in.readFloat
+    def getDouble: Double = in.readDouble
+  }
+
+  class LittleEndianDataStream(in: java.io.DataInputStream) extends DataStream {
+    def get: Byte = in.readByte
+    def get(array: Array[Byte]) {
+      var totalRead = 0
+      while (totalRead < array.length)
+        totalRead += in.read(array, totalRead, array.length - totalRead)
+    }
+    def getShort: Short = java.lang.Short.reverseBytes(in.readShort)
+    def getInt: Int = java.lang.Integer.reverseBytes(in.readInt)
+    def getLong: Long = java.lang.Long.reverseBytes(in.readLong)
+    def getFloat: Float = java.lang.Float.intBitsToFloat(java.lang.Integer.reverseBytes(in.readInt))
+    def getDouble: Double = java.lang.Double.longBitsToDouble(java.lang.Long.reverseBytes(in.readLong))
+  }
+  
   trait Factory[+TYPE] {
-    def apply(dataBuffer: ByteBuffer): TYPE
+    def apply(dataStream: DataStream): TYPE
     def toString(indent: Int, memo: mutable.Set[String]): String = toString()
   }
 
   case object FactoryBool extends Factory[Boolean] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.get != 0
+    def apply(dataStream: DataStream) = dataStream.get != 0
   }
 
   case object FactoryChar extends Factory[Char] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.get.toChar
+    def apply(dataStream: DataStream) = dataStream.get.toChar
   }
 
   case object FactoryByte extends Factory[Byte] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.get
+    def apply(dataStream: DataStream) = dataStream.get
   }
 
   case object FactoryUByte extends Factory[Short] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val out = dataBuffer.get
+    def apply(dataStream: DataStream) = {
+      val out = dataStream.get
       if (out < 0)
         (2 * (java.lang.Byte.MAX_VALUE.toShort + 1) + out).toShort
       else
@@ -85,12 +113,12 @@ package factory {
   }
 
   case object FactoryShort extends Factory[Short] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.getShort
+    def apply(dataStream: DataStream) = dataStream.getShort
   }
 
   case object FactoryUShort extends Factory[Int] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val out = dataBuffer.getShort
+    def apply(dataStream: DataStream) = {
+      val out = dataStream.getShort
       if (out < 0)
         2 * (java.lang.Short.MAX_VALUE.toInt + 1) + out.toInt
       else
@@ -99,12 +127,12 @@ package factory {
   }
 
   case object FactoryInt extends Factory[Int] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.getInt
+    def apply(dataStream: DataStream) = dataStream.getInt
   }
 
   case object FactoryUInt extends Factory[Long] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val out = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val out = dataStream.getInt
       if (out < 0)
         2L * (java.lang.Integer.MAX_VALUE.toLong + 1L) + out.toLong
       else
@@ -113,12 +141,12 @@ package factory {
   }
 
   case object FactoryLong extends Factory[Long] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.getLong
+    def apply(dataStream: DataStream) = dataStream.getLong
   }
 
   case object FactoryULong extends Factory[Double] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val out = dataBuffer.getLong
+    def apply(dataStream: DataStream) = {
+      val out = dataStream.getLong
       if (out < 0)
         2.0 * (java.lang.Long.MAX_VALUE.toDouble + 1.0) + out.toDouble
       else
@@ -127,50 +155,50 @@ package factory {
   }
 
   case object FactoryFloat extends Factory[Float] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.getFloat
+    def apply(dataStream: DataStream) = dataStream.getFloat
   }
 
   case object FactoryDouble extends Factory[Double] {
-    def apply(dataBuffer: ByteBuffer) = dataBuffer.getDouble
+    def apply(dataStream: DataStream) = dataStream.getDouble
   }
 
   case object FactoryBytes extends Factory[Bytes] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val size = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val size = dataStream.getInt
       val out = Array.fill[Byte](size)(0)
-      dataBuffer.get(out)
+      dataStream.get(out)
       new Bytes(out)
     }
   }
 
   case class FactoryString(charsetName: String) extends Factory[String] {
     val charset = Charset.forName(charsetName)
-    def apply(dataBuffer: ByteBuffer) = {
-      val size = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val size = dataStream.getInt
       val out = Array.fill[Byte](size)(0)
-      dataBuffer.get(out)
+      dataStream.get(out)
       new String(out, charset)
     }
   }
 
   case class FactoryOption[TYPE](factory: Factory[TYPE]) extends Factory[Option[TYPE]] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val discriminant = dataBuffer.get
+    def apply(dataStream: DataStream) = {
+      val discriminant = dataStream.get
       if (discriminant == 0)
         None
       else
-        Some(factory(dataBuffer))
+        Some(factory(dataStream))
     }
     override def toString(indent: Int, memo: mutable.Set[String]): String = s"""FactoryOption(${factory.toString(indent, memo)})"""
   }
 
   case class FactoryWrappedArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Seq[TYPE]] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val size = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val size = dataStream.getInt
       val b = builder(size)
       var i = 0
       while (i < size) {
-        b(i) = factory(dataBuffer)
+        b(i) = factory(dataStream)
         i += 1
       }
       b.toSeq
@@ -179,12 +207,12 @@ package factory {
   }
 
   case class FactoryArray[TYPE](factory: Factory[TYPE], builder: Int => Array[TYPE]) extends Factory[Array[TYPE]] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val size = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val size = dataStream.getInt
       val b = builder(size)
       var i = 0
       while (i < size) {
-        b(i) = factory(dataBuffer)
+        b(i) = factory(dataStream)
         i += 1
       }
       b
@@ -193,12 +221,12 @@ package factory {
   }
 
   case class FactoryIterable[TYPE](factory: Factory[TYPE], builder: Int => Builder[TYPE, Iterable[TYPE]]) extends Factory[Iterable[TYPE]] {
-    def apply(dataBuffer: ByteBuffer) = {
-      val size = dataBuffer.getInt
+    def apply(dataStream: DataStream) = {
+      val size = dataStream.getInt
       val b = builder(size)
       var i = 0
       while (i < size) {
-        b += factory(dataBuffer)
+        b += factory(dataStream)
         i += 1
       }
       b.result
@@ -420,8 +448,8 @@ package factory {
   }
 
   case class FactoryGeneric(override val name: String, override val factories: List[(String, Factory[_])]) extends FactoryClass[Generic](name, factories) {
-    def apply(dataBuffer: ByteBuffer) =
-      new Generic(factories.map({case (n, f) => (n, f(dataBuffer))}).toMap)
+    def apply(dataStream: DataStream) =
+      new Generic(factories.map({case (n, f) => (n, f(dataStream))}).toMap)
     override def toString(indent: Int, memo: mutable.Set[String]): String =
       if (memo contains name)
         s"""FactoryGeneric(name = ${Literal(Constant(name)).toString}, factories = <see above>)"""

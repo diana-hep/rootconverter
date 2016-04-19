@@ -558,6 +558,12 @@ class DefaultSuite extends FlatSpec with Matchers {
       println(iterator.next().event.fEventName)
       i += 1
     }
+
+    val iterator2 = new external.RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, myclasses = myclasses, command = "../root2avro/build/root2avro", schema = schema, end = 10L)
+
+    while (iterator2.hasNext)
+      println(iterator2.next().event.fEventName)
+
   }
 
   "Bacon.root" must "work" in {
@@ -1415,41 +1421,13 @@ class DefaultSuite extends FlatSpec with Matchers {
     // println(iterator.factory)
     // println(iterator.repr)
 
-    var i = 0
-    while (iterator.hasNext  &&  i < 10) {
-      val x = iterator.next()
-      println(x.PV)
-      println(x.Photon)
-      i += 1
-    }
-
-
-    // val pb = new java.lang.ProcessBuilder("../root2avro/build/root2avro", "test_Event/Event.root", "T", "--inferTypes", "--mode=dump")
-    // val p = pb.start()
-
-    // val factory = FactoryClass[Tree](schema, myclasses)
-    // val inChannel = p.getInputStream.getChannel
-    // val buffer = inChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, inChannel.size)
-    // buffer.order(java.nio.ByteOrder.nativeOrder)
-
-    // var tmp: Tree = null.asInstanceOf[Tree]
-    // while (buffer.hasRemaining) {
-    //   println(buffer.getLong)
-    //   tmp = factory(buffer)
+    // var i = 0
+    // while (iterator.hasNext  &&  i < 10) {
+    //   val x = iterator.next()
+    //   println(x.PV)
+    //   println(x.Photon)
+    //   i += 1
     // }
-
-    // val factory = FactoryClass[Tree2](schema, myclasses)
-    // val inChannel = new java.io.RandomAccessFile("bacon.raw", "r").getChannel
-    // val buffer = inChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, inChannel.size)
-    // buffer.order(java.nio.ByteOrder.nativeOrder)
-
-    // FileChannel inChannel = new FileInputStream(fileName).getChannel();
-    // ByteBuffer buffer = ByteBuffer.allocateDirect(CAPACITY);
-    // while(inChannel.read(buffer) > 0)
-    //     buffer.flip()
-    //     buffer.clear(); // do something with the data and clear/compact it.
-    // inChannel.close();
-
 
   }
 

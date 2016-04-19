@@ -301,8 +301,11 @@ int main(int argc, char **argv) {
       treeWalker->setEntryInCurrentTree(0);
 
       do {
-        if (end != NA  &&  currentEntry >= end)
+        if (end != NA  &&  currentEntry >= end) {
+          int64_t endMarker = -1;
+          fwrite(&endMarker, sizeof(endMarker), 1, stdout);
           return 0;
+        }
 
         treeWalker->dumpRaw(currentEntry);
 
@@ -344,6 +347,11 @@ int main(int argc, char **argv) {
       std::cerr << "Unrecognized mode: " << mode << std::endl;
       return -1;
     }
+  }
+
+  if (mode == std::string("dump")) {
+    int64_t endMarker = -1;
+    fwrite(&endMarker, sizeof(endMarker), 1, stdout);
   }
 
   treeWalker->closeAvro();

@@ -86,13 +86,11 @@ package reader {
         val name = param.asTerm.name.decodedName.toString
         val tpe = param.typeSignature
         fieldTypes += q"""$name -> weakTypeOf[$tpe]"""
-        getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](dataBuffer)"""
+        getFields += q"""factoryArray($i).asInstanceOf[Factory[$tpe]](dataStream)"""
         i += 1
       }
 
       c.Expr[My[TYPE]](q"""
-import java.nio.ByteBuffer
-
         import scala.reflect.runtime.universe.weakTypeOf
 
         import org.dianahep.scaroot.reader._
@@ -113,7 +111,7 @@ import java.nio.ByteBuffer
               val factoryArray = factories.map(_._2).toArray
 
               // Fast runtime loop...
-              def apply(dataBuffer: ByteBuffer) = {
+              def apply(dataStream: DataStream) = {
                 new $dataClass(..${getFields.result})
               }
             }
@@ -280,7 +278,7 @@ import java.nio.ByteBuffer
     private var bufferSize = new NativeLong(64*1024)
     private var buffer = new Memory(bufferSize.longValue)
     private var byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
-    // private var dataByteBuffer = new DataByteBuffer(byteBuffer)
+    private var byteBufferDataStream = new ByteBufferDataStream(byteBuffer)
     private var statusByte = 1.toByte
 
     def repr = RootReaderCPPLibrary.repr(treeWalker)
@@ -311,7 +309,7 @@ import java.nio.ByteBuffer
         bufferSize = new NativeLong(bufferSize.longValue * 2L)
         buffer = new Memory(bufferSize.longValue)
         byteBuffer = buffer.getByteBuffer(0, bufferSize.longValue)
-        // dataByteBuffer = new DataByteBuffer(byteBuffer)
+        byteBufferDataStream = new ByteBufferDataStream(byteBuffer)
 
         // Try, try again.
         microBatchIndex = 0
@@ -323,7 +321,7 @@ import java.nio.ByteBuffer
       }
 
       // Interpret the data in the buffer, creating Scala objects.
-      val out = factory(byteBuffer)
+      val out = factory(byteBufferDataStream)
 
       // Increment the counter and see if it's time to step to the next file.
       incrementIndex()
