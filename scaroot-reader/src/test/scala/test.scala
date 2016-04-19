@@ -486,15 +486,7 @@ package baconhep {
                 val topchi2: Float) extends Serializable
   }
 
-
-package object root {
-  // Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.
-  val myclasses = Map("Events" -> My[Tree2], "baconhep::TEventInfo" -> My[baconhep.TEventInfo], "baconhep::TGenEventInfo" -> My[baconhep.TGenEventInfo], "baconhep::TGenParticle" -> My[baconhep.TGenParticle], "baconhep::TLHEWeight" -> My[baconhep.TLHEWeight], "baconhep::TElectron" -> My[baconhep.TElectron], "baconhep::TMuon" -> My[baconhep.TMuon], "baconhep::TTau" -> My[baconhep.TTau], "baconhep::TPhoton" -> My[baconhep.TPhoton], "baconhep::TVertex" -> My[baconhep.TVertex], "baconhep::TJet" -> My[baconhep.TJet], "baconhep::TAddJet" -> My[baconhep.TAddJet])
-
-  // Unless you move it, this is the location of the tree, provided for convenience and reusable code.
-  val treeLocation = "Events"
-}
-
+///////////////////////////////////////////////////////////////// actual tests
 
 class DefaultSuite extends FlatSpec with Matchers {
   "Event.root" must "work" in {

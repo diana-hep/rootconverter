@@ -141,49 +141,17 @@ package avroreader {
     }
   }
 
-case class Tree(event: Event)
-
-case class Event(
-  fType: String,
-  fEventName: Option[String],
-  fNtrack: Int,
-  fNseg: Int,
-  fNvertex: Int,
-  fFlag: Long,
-  fTemperature: Double,
-  fMeasures: Seq[Int],
-  fMatrix: Seq[Seq[Double]],
-  fClosestDistance: Option[Double],
-  fEvtHdr: EventHeader,
-  fTracks: Option[Seq[Track]],
-  fTriggerBits: TBits,
-  fIsValid: Boolean)
-
-case class EventHeader(fEvtNum: Int, fRun: Int, fDate: Int)
-
-case class Track(
-  fPx: Float,
-  fPy: Float,
-  fPz: Float,
-  fRandom: Float,
-  fMass2: Float,
-  fBx: Float,
-  fBy: Float,
-  fMeanCharge: Float,
-  fXfirst: Float,
-  fXlast: Float,
-  fYfirst: Float,
-  fYlast: Float,
-  fZfirst: Float,
-  fZlast: Float,
-  fCharge: Double,
-  fVertex: Seq[Double],
-  fNpoint: Int,
-  fValid: Short,
-  fNsp: Int,
-  fPointValue: Option[Double],
-  fTriggerBits: TBits)
-
-case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
-
+  object RootTreeIterator {
+    def apply[TYPE : TypeTag](fileLocations: Seq[String],
+                              treeLocation: String,
+                              includes: Seq[String] = Nil,
+                              libs: Seq[String] = Nil,
+                              inferTypes: Boolean = false,
+                              start: Long = 0L,
+                              end: Long = -1L,
+                              command: String = "./root2avro",
+                              environment: Map[String, String] = Map[String, String](),
+                              numberOfTrials: Int = 4) =
+      new RootTreeIterator[TYPE](fileLocations, treeLocation, includes, libs, inferTypes, start, end, command, environment, numberOfTrials)
+  }
 }
