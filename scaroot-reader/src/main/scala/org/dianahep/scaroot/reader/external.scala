@@ -20,6 +20,7 @@ import scala.reflect.runtime.universe.NoSymbol
 import scala.reflect.runtime.universe.Symbol
 import scala.reflect.runtime.universe.Type
 import scala.reflect.runtime.universe.WeakTypeTag
+import scala.reflect.runtime.universe.weakTypeOf
 
 import org.dianahep.scaroot.reader.schema._
 import org.dianahep.scaroot.reader.factory._
@@ -27,7 +28,6 @@ import org.dianahep.scaroot.reader.factory._
 package external {
   class RootTreeIterator[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
                                                   treeLocation: String,
-                                                  schema: SchemaClass,
                                                   includes: Seq[String] = Nil,
                                                   libs: Seq[String] = Nil,
                                                   inferTypes: Boolean = false,
@@ -44,15 +44,6 @@ package external {
     if (end >= 0  &&  start >= end)
       throw new IllegalArgumentException(s"If an ending index is given (greater than or equal to zero), then start ($start) must be less than end ($end).")
 
-    import scala.reflect.runtime.universe.weakTypeOf
-    val allmyclasses =
-      if (!(myclasses.keySet contains schema.name)  &&  !(weakTypeOf[TYPE] =:= weakTypeOf[Generic]  ||  weakTypeOf[TYPE] =:= weakTypeOf[AnyRef]))
-        myclasses.updated(schema.name, implicitly[My[TYPE]])
-      else
-        myclasses
-
-    val factory = FactoryClass[TYPE](schema, allmyclasses)
-
     private def packageName(sym: Symbol) = {
       def enclosingPackage(sym: Symbol): Symbol = {
         if (sym == NoSymbol) NoSymbol
@@ -66,6 +57,28 @@ package external {
 
     val name = weakTypeOf[TYPE].typeSymbol.asClass.name.toString
     val ns = packageName(weakTypeOf[TYPE].typeSymbol.asClass)
+
+    val repr = {
+      val processBuilder = new java.lang.ProcessBuilder(arguments("repr", 0L))
+      val env = processBuilder.environment
+      environment foreach {case (n, v) => env.put(n, v)}
+
+      val process = processBuilder.start()
+      val returnCode = process.waitFor
+
+      new java.util.Scanner(process.getInputStream).useDelimiter("\\A").next
+    }
+
+    val schema = reprToSchema(repr, name)
+
+    import scala.reflect.runtime.universe.weakTypeOf
+    val allmyclasses =
+      if (!(myclasses.keySet contains schema.name)  &&  !(weakTypeOf[TYPE] =:= weakTypeOf[Generic]  ||  weakTypeOf[TYPE] =:= weakTypeOf[AnyRef]))
+        myclasses.updated(schema.name, implicitly[My[TYPE]])
+      else
+        myclasses
+
+    val factory = FactoryClass[TYPE](schema, allmyclasses)
 
     def arguments(mode: String, index: Long = start) = List(command, fileLocations.head, treeLocation, "--mode=" + mode) ++
       (if (includes.isEmpty) Nil else List("--includes=" + includes.mkString(","))) ++
@@ -136,4 +149,20 @@ package external {
       out
     }
   }
+
+  object RootTreeIterator {
+    def apply[TYPE : WeakTypeTag : My](fileLocations: Seq[String],
+                                       treeLocation: String,
+                                       includes: Seq[String] = Nil,
+                                       libs: Seq[String] = Nil,
+                                       inferTypes: Boolean = false,
+                                       myclasses: Map[String, My[_]] = Map[String, My[_]](),
+                                       start: Long = 0L,
+                                       end: Long = -1L,
+                                       command: String = "./root2avro",
+                                       environment: Map[String, String] = Map[String, String](),
+                                       numberOfTrials: Int = 4) =
+      new RootTreeIterator[TYPE](fileLocations, treeLocation, includes, libs, inferTypes, myclasses, start, end, command, environment, numberOfTrials)
+  }
+
 }

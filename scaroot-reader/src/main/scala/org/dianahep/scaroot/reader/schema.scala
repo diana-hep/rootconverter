@@ -22,6 +22,7 @@ import com.sun.jna.Pointer
 
 import org.dianahep.scaroot.reader._
 import org.dianahep.scaroot.reader.factory._
+import org.dianahep.scaroot.reader.json._
 
 package schema {
   // Numerical enums from C++ that can be matched in case statements.
@@ -200,4 +201,55 @@ package schema {
     def cpp = s"SEQUENCE<$content>"
     override def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) = s"""SchemaSequence(${content.toString(indent, memo, avoidCycles)})"""
   }
+}
+
+package object schema {
+  def reprToSchemaRecursive(json: Json, memo: mutable.Map[String, SchemaClass]): Schema = json match {
+    case JsonString("bool") | JsonString("Bool_t") => SchemaBool
+    case JsonString("char") | JsonString("Char_t") | JsonString("Int8_t") => SchemaChar
+    case JsonString("unsigned char") | JsonString("UChar_t") | JsonString("UInt8_t") => SchemaUChar
+    case JsonString("short") | JsonString("Short_t") | JsonString("Short16_t") | JsonString("Int16_t") => SchemaShort
+    case JsonString("unsigned short") | JsonString("UShort_t") | JsonString("UShort16_t") | JsonString("UInt16_t") => SchemaUShort
+    case JsonString("int") | JsonString("Int_t") | JsonString("Int32_t") => SchemaInt
+    case JsonString("unsigned int") | JsonString("UInt_t") | JsonString("UInt32_t") => SchemaUInt
+    case JsonString("long") | JsonString("long long") | JsonString("Long_t") | JsonString("Long64_t") => SchemaLong
+    case JsonString("unsigned long") | JsonString("unsigned long long") | JsonString("ULong_t") | JsonString("ULong64_t") => SchemaULong
+    case JsonString("float") | JsonString("Float_t") | JsonString("Float16_t") => SchemaFloat
+    case JsonString("double") | JsonString("Double_t") | JsonString("Double32_t") => SchemaDouble
+    case JsonString("char*") | JsonString("Char_t*") => SchemaString
+
+    case JsonString(ref) => memo(ref)
+
+    case JsonObject((JsonString("*"), t)) => SchemaPointer(reprToSchemaRecursive(t, memo))
+
+    case JsonObject((JsonString("TObjArray") | JsonString("TRefArray") | JsonString("TClonesArray") | JsonString("std::vector"), t)) =>
+      SchemaSequence(reprToSchemaRecursive(t, memo))
+
+    case JsonObject((JsonString("[]"), JsonObject((JsonString("numItems"), _), (JsonString("sizeOf"), _), (JsonString("type"), t)))) =>
+      SchemaSequence(reprToSchemaRecursive(t, memo))
+
+    case JsonObject((JsonString(className), JsonObject(fields @ _*))) =>
+      val out = SchemaClass(className, fields.toList map {
+        case (JsonString(fieldName), t) => SchemaField(fieldName, "", reprToSchemaRecursive(t, memo))
+      })
+      memo(className) = out   // FIXME: won't work for true recursive types
+      out
+
+    case x => throw new Exception(x.toString)
+  }
+
+  def reprToSchema(repr: String, name: String): SchemaClass = Json.parse(repr) match {
+    case Some(JsonObject(branches @ _*)) =>
+      SchemaClass(name, branches.toList map {
+        case (JsonString(branchName), JsonObject(extractorFields @ _*)) => extractorFields.collectFirst({
+          case (JsonString("type"), t) => SchemaField(branchName, "", reprToSchemaRecursive(t, mutable.Map[String, SchemaClass]()))
+        }).get
+        case _ => throw new IllegalArgumentException("invalid repr structure")
+      })
+    case None =>
+      throw new IllegalArgumentException("invalid JSON")
+    case _ =>
+      throw new IllegalArgumentException("invalid repr structure")
+  }
+
 }
