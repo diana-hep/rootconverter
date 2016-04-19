@@ -2798,7 +2798,7 @@ const void *TreeWalker::getData(const void *address, int index) {
   return field->unpack(field->getAddress());
 }
 
-void TreeWalker::copyToBuffer(int64_t entry, int microBatchSize, void *buffer, size_t size) {
+size_t TreeWalker::copyToBuffer(int64_t entry, int microBatchSize, void *buffer, size_t size) {
   // Sanity check lock between C++ and Java: the first byte denotes the
   // reading vs writing state of the buffer.
   // Currently not used (C++ and Java code work in the same thread).
@@ -2824,13 +2824,35 @@ void TreeWalker::copyToBuffer(int64_t entry, int microBatchSize, void *buffer, s
     for (auto iter = fields.begin();  iter != fields.end();  ++iter)
       ptr = (*iter)->copyToBuffer(ptr, limit, (*iter)->getAddress());
 
-    if (ptr == nullptr) {
+    if (ptr == nullptr)
       *((char*)beginningOfRecord) = StatusTooSmall;
-      return;
-    }
     else
       *((char*)beginningOfRecord) = StatusReading;
+
+    return (size_t)ptr - (size_t)buffer - sizeof(char);
   }
+}
+
+void TreeWalker::dumpRaw(int64_t entry) {
+  if (rawBuffer == nullptr)
+    rawBuffer = ::operator new(rawBufferSize);
+
+  ((char*)(rawBuffer))[0] = StatusWriting;
+
+  size_t size = 0;
+
+  while (((char*)(rawBuffer))[0] != StatusReading) {
+    size = copyToBuffer(entry, 1, rawBuffer, rawBufferSize);
+    if (((char*)(rawBuffer))[0] == StatusTooSmall) {
+      ::operator delete(rawBuffer);
+      rawBufferSize *= 2;
+      rawBuffer = ::operator new(rawBufferSize);
+      ((char*)(rawBuffer))[0] = StatusWriting;
+    }
+  }
+
+  fwrite(&entry, sizeof(entry), 1, stdout);
+  fwrite((void*)((size_t)rawBuffer + sizeof(char)), 1, size, stdout);
 }
 
 void resetSignals() {

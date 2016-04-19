@@ -63,7 +63,7 @@ package schema {
 
   sealed trait Schema {
     def cpp: String  // just for error messages
-    def toString(indent: Int, memo: mutable.Set[String]): String = toString()
+    def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean): String = toString()
   }
   object Schema {
     def apply(treeWalker: Pointer): SchemaClass = {
@@ -174,30 +174,30 @@ package schema {
   case object SchemaString extends Schema { val cpp = "STRING" }
 
   case class SchemaField(name: String, comment: String, schema: Schema) {
-    override def toString() = toString(0, mutable.Set[String]())
-    def toString(indent: Int, memo: mutable.Set[String]) =
-      s"""SchemaField(${Literal(Constant(name))}, ${Literal(Constant(comment))}, ${schema.toString(indent, memo)})"""
+    override def toString() = toString(0, mutable.Set[String](), true)
+    def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) =
+      s"""SchemaField(${Literal(Constant(name))}, ${Literal(Constant(comment))}, ${schema.toString(indent, memo, avoidCycles)})"""
   }
 
   case class SchemaClass(name: String, fields: List[SchemaField]) extends Schema {
     def cpp = name
-    override def toString() = toString(0, mutable.Set[String]())
-    override def toString(indent: Int, memo: mutable.Set[String]) =
-      if (memo contains name)
+    override def toString() = toString(0, mutable.Set[String](), true)
+    override def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) =
+      if (avoidCycles  &&  (memo contains name))
         s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = <see above>)"""
       else {
         memo += name
-        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields.map("\n" + " " * indent + "  " + _.toString(indent + 2, memo)).mkString(",")}${"\n" + " " * indent}))"""
+        s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields.map("\n" + " " * indent + "  " + _.toString(indent + 2, memo, avoidCycles)).mkString(",")}${"\n" + " " * indent}))"""
       }
   }
 
   case class SchemaPointer(referent: Schema) extends Schema {
     def cpp = s"POINTER<$referent>"
-    override def toString(indent: Int, memo: mutable.Set[String]) = s"""SchemaPointer(${referent.toString(indent, memo)})"""
+    override def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) = s"""SchemaPointer(${referent.toString(indent, memo, avoidCycles)})"""
   }
 
   case class SchemaSequence(content: Schema) extends Schema {
     def cpp = s"SEQUENCE<$content>"
-    override def toString(indent: Int, memo: mutable.Set[String]) = s"""SchemaSequence(${content.toString(indent, memo)})"""
+    override def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) = s"""SchemaSequence(${content.toString(indent, memo, avoidCycles)})"""
   }
 }

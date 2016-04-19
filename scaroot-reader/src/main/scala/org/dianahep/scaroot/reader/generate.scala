@@ -34,6 +34,7 @@ Options:
                             ROOT file itself by inspecting its embedded streamers.
   --name=NAME               Name for TTree class (taken from TTree name if not provided).
   --ns=NAMESPACE            Package namespace for class ("data.root" if not provided).
+  --with-schema             Write a schema as well, so that it does not need to be determined by inspection.
 """
 
     val libsPrefix = "--libs=(.*)".r
@@ -41,6 +42,7 @@ Options:
     val inferTypesPrefix = "--inferTypes"
     val namePrefix = "--name=(.*)".r
     val nsPrefix = "--ns=(.*)".r
+    val withSchemaPrefix = "--with-schema"
 
     def main(args: Array[String]) {
       var fileLocation: String = null
@@ -50,6 +52,7 @@ Options:
       var inferTypes: Boolean = false
       var name: String = null
       var ns: String = "data.root"
+      var withSchema = false
 
       // Handle arguments in the same way as root2avro.
       args.foreach(_.trim match {
@@ -58,6 +61,7 @@ Options:
         case `inferTypesPrefix` => inferTypes = true
         case namePrefix(x) => name = x
         case nsPrefix(x) => ns = x
+        case `withSchemaPrefix` => withSchema = true
         case x if (fileLocation == null) => fileLocation = x
         case x if (treeLocation == null) => treeLocation = x
         case _ =>
@@ -100,10 +104,10 @@ Options:
       val originalName = schemaClass.name
       val renamedSchemaClass = schemaClass.copy(name = if (name == null) schemaClass.name else name)
 
-      println(generateScala(ns1, ns2, originalName, renamedSchemaClass, treeLocation))
+      println(generateScala(ns1, ns2, originalName, renamedSchemaClass, treeLocation, withSchema))
     }
 
-    def generateScala(ns1: String, ns2: String, originalName: String, schema: Schema, treeLocation: String) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
+    def generateScala(ns1: String, ns2: String, originalName: String, schema: Schema, treeLocation: String, withSchema: Boolean) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
 // you to perform your analysis.
 //
 // You can add member data or member functions to these classes (in curly brackets after the "extends Serializable").
@@ -133,13 +137,13 @@ Options:
 // Note that the JVM (and therefore Scala) has no unsigned integer types. Unsigned integers are mapped to the next
 // larger numeric type (e.g. "unsigned int" goes to Long and "unsigned long" goes to Double).
 
-${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}import org.dianahep.scaroot.reader._
+${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}import org.dianahep.scaroot.reader._${if (withSchema) "\nimport org.dianahep.scaroot.reader.schema._" else ""}
 
 package $ns2 {
-${generateScalaClasses(ns2, originalName, schema, treeLocation)}
+${generateScalaClasses(ns2, originalName, schema, treeLocation, withSchema)}
 }"""
 
-    def generateScalaClasses(ns2: String, originalName: String, schema: Schema, treeLocation: String) = {
+    def generateScalaClasses(ns2: String, originalName: String, schema: Schema, treeLocation: String, withSchema: Boolean) = {
       def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
         case SchemaClass(name, _) if (memo contains name) => Nil
         case schemaClass @ SchemaClass(name, fields) => {
@@ -179,7 +183,7 @@ ${generateScalaClasses(ns2, originalName, schema, treeLocation)}
       def generateScalaClass(schemaClass: SchemaClass) = {
         val (pre, post) =
           if (schemaClass.name contains "::")
-            ("package " + schemaClass.name.split("::").init.mkString(".") + " {\n", "\n  }")
+            ("package " + schemaClass.name.split("::").init.mkString(".") + " {\n", "\n}")
           else
             ("", "")
 
@@ -259,7 +263,13 @@ $indent      }"""
         }
       }
 
-      val packageObject = "\n}\n\npackage object " + ns2 + " {\n" + myclasses + "\n\n" + tl
+      val printSchema =
+        if (withSchema)
+          "\n\n  val schema = " + schema.toString(2, mutable.Set[String](), false)
+        else
+          ""
+
+      val packageObject = "\n}\n\npackage object " + ns2 + " {\n" + myclasses + "\n\n" + tl + printSchema
           
       schemaClasses.map(generateScalaClass).mkString("\n\n") + packageObject
     }

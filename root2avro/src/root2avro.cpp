@@ -61,6 +61,7 @@ void help(bool banner) {
             << "  --mode=MODE               What to write to standard output:" << std::endl
             << "                                * \"avro\" (Avro file, default)" << std::endl
             << "                                * \"avro-stream\" (schemaless Avro fragments with entry numbers)" << std::endl
+            << "                                * \"dump\" (raw dump of data that can be interpreted by ScaROOT-Reader)" << std::endl
             << "                                * \"json\" (one JSON object per line, schemaless)" << std::endl
             << "                                * \"schema\" (just the Avro schema as a JSON document)" << std::endl
             << "                                * \"repr\" (custom JSON schema representing the ROOT source)" << std::endl
@@ -285,6 +286,25 @@ int main(int argc, char **argv) {
           treeWalker->closeAvro();
           return -1;
         }
+
+        currentEntry += 1;
+      } while (treeWalker->next());
+    }
+
+    // dump data for ScaROOT-Reader
+    else if (mode == std::string("dump")) {
+      if (start != NA  &&  start > currentEntry) {
+        treeWalker->setEntryInCurrentTree(start - currentEntry);
+        currentEntry = start;
+      }
+      else
+      treeWalker->setEntryInCurrentTree(0);
+
+      do {
+        if (end != NA  &&  currentEntry >= end)
+          return 0;
+
+        treeWalker->dumpRaw(currentEntry);
 
         currentEntry += 1;
       } while (treeWalker->next());

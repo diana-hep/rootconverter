@@ -986,6 +986,8 @@ public:
   std::string errorMessage = "";
   TFile *file;
   TTreeReader *reader;
+  void *rawBuffer = nullptr;
+  size_t rawBufferSize = 1024;
 
   std::map<const std::string, ClassWalker*> defs;
   std::vector<ExtractableWalker*> fields;
@@ -1023,7 +1025,8 @@ public:
 #endif
   int getDataSize(const void *address);
   const void *getData(const void *address, int index);
-  void copyToBuffer(int64_t entry, int microBatchSize, void *buffer, size_t size);
+  size_t copyToBuffer(int64_t entry, int microBatchSize, void *buffer, size_t size);
+  void dumpRaw(int64_t entry);
 };
 
 extern "C" {
