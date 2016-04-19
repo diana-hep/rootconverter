@@ -180,7 +180,8 @@ package schema {
       s"""SchemaField(${Literal(Constant(name))}, ${Literal(Constant(comment))}, ${schema.toString(indent, memo, avoidCycles)})"""
   }
 
-  case class SchemaClass(name: String, fields: List[SchemaField]) extends Schema {
+  class SchemaClass(val name: String, getFields: => List[SchemaField]) extends Schema {
+    lazy val fields = getFields
     def cpp = name
     override def toString() = toString(0, mutable.Set[String](), true)
     override def toString(indent: Int, memo: mutable.Set[String], avoidCycles: Boolean) =
@@ -190,6 +191,16 @@ package schema {
         memo += name
         s"""SchemaClass(name = ${Literal(Constant(name)).toString}, fields = List(${fields.map("\n" + " " * indent + "  " + _.toString(indent + 2, memo, avoidCycles)).mkString(",")}${"\n" + " " * indent}))"""
       }
+    def copy(name: String = this.name, fields: List[SchemaField] = this.fields) = new SchemaClass(name, fields)
+    override def equals(that: Any) = that match {
+      case that: SchemaClass => this.name == that.name  &&  this.fields == that.fields
+      case _ => false
+    }
+    override def hashCode() = (name, fields).hashCode()
+  }
+  object SchemaClass {
+    def apply(name: String, getFields: => List[SchemaField]) = new SchemaClass(name, getFields)
+    def unapply(x: SchemaClass) = Some((x.name, x.fields))
   }
 
   case class SchemaPointer(referent: Schema) extends Schema {
@@ -232,24 +243,29 @@ package object schema {
       val out = SchemaClass(className, fields.toList map {
         case (JsonString(fieldName), t) => SchemaField(fieldName, "", reprToSchemaRecursive(t, memo))
       })
-      memo(className) = out   // FIXME: won't work for true recursive types
-      out
+      memo(className) = out
+      val tmp = out.fields     // Strictly evaluate the contents so they'll go into memo.
+      out                      // Please, compiler, don't optimize this out!
 
     case x => throw new Exception(x.toString)
   }
 
-  def reprToSchema(repr: String, name: String): SchemaClass = Json.parse(repr) match {
-    case Some(JsonObject(branches @ _*)) =>
-      SchemaClass(name, branches.toList map {
-        case (JsonString(branchName), JsonObject(extractorFields @ _*)) => extractorFields.collectFirst({
-          case (JsonString("type"), t) => SchemaField(branchName, "", reprToSchemaRecursive(t, mutable.Map[String, SchemaClass]()))
-        }).get
-        case _ => throw new IllegalArgumentException("invalid repr structure")
-      })
-    case None =>
-      throw new IllegalArgumentException("invalid JSON")
-    case _ =>
-      throw new IllegalArgumentException("invalid repr structure")
+  def reprToSchema(repr: String, name: String): SchemaClass = {
+    val memo = mutable.Map[String, SchemaClass]()
+
+    Json.parse(repr) match {
+      case Some(JsonObject(branches @ _*)) =>
+        SchemaClass(name, branches.toList map {
+          case (JsonString(branchName), JsonObject(extractorFields @ _*)) => extractorFields.collectFirst({
+            case (JsonString("type"), t) => SchemaField(branchName, "", reprToSchemaRecursive(t, memo))
+          }).get
+          case _ => throw new IllegalArgumentException("invalid repr structure")
+        })
+      case None =>
+        throw new IllegalArgumentException("invalid JSON")
+      case _ =>
+        throw new IllegalArgumentException("invalid repr structure")
+    }
   }
 
 }
