@@ -22,6 +22,7 @@ import org.scalatest.Matchers
 
 import org.dianahep.scaroot.reader._
 import org.dianahep.scaroot.reader.schema._
+import org.dianahep.scaroot.reader.factory._
 
 ///////////////////////////////////////////////////////////////// Event.root classes
 
@@ -72,25 +73,25 @@ case class TBits(fNbits: Long, fNbytes: Long, fAllBits: Option[Short])
 
 ///////////////////////////////////////////////////////////////// Bacon.root classes
 
-  case class Tree2(Info: baconhep.TEventInfo,
-                   GenEvtInfo: baconhep.TGenEventInfo,
-                   GenParticle: Seq[baconhep.TGenParticle],
-                   LHEWeight: Seq[baconhep.TLHEWeight],
-                   Electron: Seq[baconhep.TElectron],
-                   Muon: Seq[baconhep.TMuon],
-                   Tau: Seq[baconhep.TTau],
-                   Photon: Seq[baconhep.TPhoton],
-                   PV: Seq[baconhep.TVertex],
-                   AK4CHS: Seq[baconhep.TJet],
-                   AK8CHS: Seq[baconhep.TJet],
-                   AddAK8CHS: Seq[baconhep.TAddJet],
-                   CA15CHS: Seq[baconhep.TJet],
-                   AddCA15CHS: Seq[baconhep.TAddJet],
-                   AK4Puppi: Seq[baconhep.TJet],
-                   CA8Puppi: Seq[baconhep.TJet],
-                   AddCA8Puppi: Seq[baconhep.TAddJet],
-                   CA15Puppi: Seq[baconhep.TJet],
-                   AddCA15Puppi: Seq[baconhep.TAddJet]) extends Serializable
+case class Tree2(Info: baconhep.TEventInfo,
+                 GenEvtInfo: baconhep.TGenEventInfo,
+                 GenParticle: Seq[baconhep.TGenParticle],
+                 LHEWeight: Seq[baconhep.TLHEWeight],
+                 Electron: Seq[baconhep.TElectron],
+                 Muon: Seq[baconhep.TMuon],
+                 Tau: Seq[baconhep.TTau],
+                 Photon: Seq[baconhep.TPhoton],
+                 PV: Seq[baconhep.TVertex],
+                 AK4CHS: Seq[baconhep.TJet],
+                 AK8CHS: Seq[baconhep.TJet],
+                 AddAK8CHS: Seq[baconhep.TAddJet],
+                 CA15CHS: Seq[baconhep.TJet],
+                 AddCA15CHS: Seq[baconhep.TAddJet],
+                 AK4Puppi: Seq[baconhep.TJet],
+                 CA8Puppi: Seq[baconhep.TJet],
+                 AddCA8Puppi: Seq[baconhep.TAddJet],
+                 CA15Puppi: Seq[baconhep.TJet],
+                 AddCA15Puppi: Seq[baconhep.TAddJet]) extends Serializable
 
 package baconhep {
   class TEventInfo(val runNum: Long,   // run number, event number, lumi section in data
@@ -159,7 +160,7 @@ package baconhep {
                    val rhoJet: Float,   // event energy density
                    val hasGoodPV: Boolean)   // event has a good PV?
                    extends Serializable
-  }
+}
 
 package baconhep {
   case class TGenEventInfo(id_1: Int,   // parton flavor PDG ID
@@ -170,7 +171,7 @@ package baconhep {
                            xs: Float,   // cross section from LHE file
                            weight: Float)   // generator-level event weight
                            extends Serializable
-  }
+}
 
 package baconhep {
   case class TGenParticle(parent: Int,
@@ -181,13 +182,13 @@ package baconhep {
                           phi: Float,
                           mass: Float,
                           y: Float) extends Serializable
-  }
+}
 
 package baconhep {
   case class TLHEWeight(id: Int,   // parton flavor PDG ID
                         weight: Float)   // generator-level event weight
                         extends Serializable
-  }
+}
 
 package baconhep {
   class TElectron(val pt: Float,   // kinematics
@@ -240,7 +241,7 @@ package baconhep {
                   val scID: Int,   // supercluster ID number (unique per event)
                   val trkID: Int)   // track ID number (unique per event)
                   extends Serializable
-  }
+}
 
 package baconhep {
   class TMuon(val pt: Float,   // kinematics
@@ -289,7 +290,7 @@ package baconhep {
               val nMatchStn: Long,   // number of stations with muon segments
               val trkID: Int)   // tracker track ID (unique per event)
               extends Serializable
-  }
+}
 
 package baconhep {
   class TTau(val pt: Float,   // kinematics
@@ -317,7 +318,7 @@ package baconhep {
              val puppiNeuHadIsoNoLep: Float,   // Puppi Isolation R=0.4 no lep
              val hpsDisc: Double)   // HPS tau discriminators
              extends Serializable
-  }
+}
 
 package baconhep {
   class TPhoton(val pt: Float,   // kinematics
@@ -344,7 +345,7 @@ package baconhep {
                 val hasPixelSeed: Boolean,   // has pixel seed?
                 val passElectronVeto: Boolean,   // if false, its not a photon
                 val isConv: Boolean) extends Serializable
-  }
+}
 
 package baconhep {
   case class TVertex(nTracksFit: Long,   // number of tracks in vertex fit
@@ -354,7 +355,7 @@ package baconhep {
                      y: Float,   // position
                      z: Float)   // position
                      extends Serializable
-  }
+}
 
 package baconhep {
   class TJet(val pt: Float,   // kinematics
@@ -397,7 +398,7 @@ package baconhep {
              val nNeutrals: Long,   // constituent multiplicity
              val nParticles: Long)   // constituent multiplicity
              extends Serializable
-  }
+}
 
 package baconhep {
   class TAddJet(val index: Long,   // index in original jet collection
@@ -485,28 +486,82 @@ package baconhep {
                 val top_m_123: Float,
                 val top_fRec: Float,
                 val topchi2: Float) extends Serializable
-  }
+}
 
 ///////////////////////////////////////////////////////////////// actual tests
 
 class DefaultSuite extends FlatSpec with Matchers {
   "Event.root" must "work" in {
-    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits])
+    val schema = SchemaClass(name = "Tree", fields = List(
+      SchemaField("event", "", SchemaClass(name = "Event", fields = List(
+        SchemaField("fType", "event type", SchemaString),
+        SchemaField("fEventName", "run+event number in character format", SchemaPointer(SchemaString)),
+        SchemaField("fNtrack", "Number of tracks", SchemaInt),
+        SchemaField("fNseg", "Number of track segments", SchemaInt),
+        SchemaField("fNvertex", "", SchemaInt),
+        SchemaField("fFlag", "", SchemaUInt),
+        SchemaField("fTemperature", "", SchemaDouble),
+        SchemaField("fMeasures", "", SchemaSequence(SchemaInt)),
+        SchemaField("fMatrix", "", SchemaSequence(SchemaSequence(SchemaDouble))),
+        SchemaField("fClosestDistance", "[fNvertex][0,0,6]", SchemaPointer(SchemaDouble)),
+        SchemaField("fEvtHdr", "", SchemaClass(name = "EventHeader", fields = List(
+          SchemaField("fEvtNum", "", SchemaInt),
+          SchemaField("fRun", "", SchemaInt),
+          SchemaField("fDate", "", SchemaInt)
+        ))),
+        SchemaField("fTracks", "->array with all tracks (Track)", SchemaPointer(SchemaSequence(SchemaClass(name = "Track", fields = List(
+          SchemaField("fPx", "X component of the momentum", SchemaFloat),
+          SchemaField("fPy", "Y component of the momentum", SchemaFloat),
+          SchemaField("fPz", "Z component of the momentum", SchemaFloat),
+          SchemaField("fRandom", "A random track quantity", SchemaFloat),
+          SchemaField("fMass2", "[0,0,8] The mass square of this particle", SchemaFloat),
+          SchemaField("fBx", "[0,0,10] X intercept at the vertex", SchemaFloat),
+          SchemaField("fBy", "[0,0,10] Y intercept at the vertex", SchemaFloat),
+          SchemaField("fMeanCharge", "Mean charge deposition of all hits of this track", SchemaFloat),
+          SchemaField("fXfirst", "X coordinate of the first point", SchemaFloat),
+          SchemaField("fXlast", "X coordinate of the last point", SchemaFloat),
+          SchemaField("fYfirst", "Y coordinate of the first point", SchemaFloat),
+          SchemaField("fYlast", "Y coordinate of the last point", SchemaFloat),
+          SchemaField("fZfirst", "Z coordinate of the first point", SchemaFloat),
+          SchemaField("fZlast", "Z coordinate of the last point", SchemaFloat),
+          SchemaField("fCharge", "[-1,1,2] Charge of this track", SchemaDouble),
+          SchemaField("fVertex", "[-30,30,16] Track vertex position", SchemaSequence(SchemaDouble)),
+          SchemaField("fNpoint", "Number of points for this track", SchemaInt),
+          SchemaField("fValid", "Validity criterion", SchemaShort),
+          SchemaField("fNsp", "Number of points for this track with a special value", SchemaInt),
+          SchemaField("fPointValue", "[fNsp][0,3] a special quantity for some point.", SchemaPointer(SchemaDouble)),
+          SchemaField("fTriggerBits", "Bits triggered by this track.", SchemaClass(name = "TBits", fields = List(
+            SchemaField("fNbits", "Highest bit set + 1", SchemaUInt),
+            SchemaField("fNbytes", "Number of UChars in fAllBits", SchemaUInt),
+            SchemaField("fAllBits", "[fNbytes] array of UChars", SchemaPointer(SchemaUChar))
+          )))
+        ))))),
+        SchemaField("fTriggerBits", "Bits triggered by this event.", SchemaClass(name = "TBits", fields = List(
+          SchemaField("fNbits", "Highest bit set + 1", SchemaUInt),
+          SchemaField("fNbytes", "Number of UChars in fAllBits", SchemaUInt),
+          SchemaField("fAllBits", "[fNbytes] array of UChars", SchemaPointer(SchemaUChar))
+        ))),
+        SchemaField("fIsValid", "", SchemaBool)
+      )))
+    ))
 
-    val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, myclasses = myclasses)
+    val myclasses = Map("Event" -> My[Event], "EventHeader" -> My[EventHeader], "Track" -> My[Track], "TBits" -> My[TBits], "Tree" -> My[Tree])
 
-    println(iterator.schema)
-    println(iterator.factory)
-    println(iterator.repr)
+  //   val iterator = RootTreeIterator[Tree](List("../root2avro/test_Event/Event.root"), "T", inferTypes = true, myclasses = myclasses)
 
-    var i = 0
-    while (iterator.hasNext  &&  i < 10) {
-      println(iterator.next().event.fEventName)
-      i += 1
-    }
+  //   println(iterator.schema)
+  //   println(iterator.factory)
+  //   println(iterator.repr)
+
+  //   var i = 0
+  //   while (iterator.hasNext  &&  i < 10) {
+  //     println(iterator.next().event.fEventName)
+  //     i += 1
+  //   }
   }
 
   "Bacon.root" must "work" in {
+
     val schema = SchemaClass(name = "Tree2", fields = List(
       SchemaField("Info", "", SchemaClass(name = "baconhep::TEventInfo", fields = List(
         SchemaField("runNum", "run number, event number, lumi section in data", SchemaUInt),
@@ -1354,18 +1409,38 @@ class DefaultSuite extends FlatSpec with Matchers {
 
     val myclasses = Map("Events" -> My[Tree2], "baconhep::TEventInfo" -> My[baconhep.TEventInfo], "baconhep::TGenEventInfo" -> My[baconhep.TGenEventInfo], "baconhep::TGenParticle" -> My[baconhep.TGenParticle], "baconhep::TLHEWeight" -> My[baconhep.TLHEWeight], "baconhep::TElectron" -> My[baconhep.TElectron], "baconhep::TMuon" -> My[baconhep.TMuon], "baconhep::TTau" -> My[baconhep.TTau], "baconhep::TPhoton" -> My[baconhep.TPhoton], "baconhep::TVertex" -> My[baconhep.TVertex], "baconhep::TJet" -> My[baconhep.TJet], "baconhep::TAddJet" -> My[baconhep.TAddJet])
 
-    val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses)
 
-    println(iterator.schema)
-    println(iterator.factory)
-    println(iterator.repr)
+    // val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses)
 
-    var i = 0
-    while (iterator.hasNext  &&  i < 10) {
-      val x = iterator.next()
-      println(x.PV)
-      println(x.Photon)
-      i += 1
-    }
+    // println(iterator.schema)
+    // println(iterator.factory)
+    // println(iterator.repr)
+
+    // var i = 0
+    // while (iterator.hasNext  &&  i < 10) {
+    //   val x = iterator.next()
+    //   println(x.PV)
+    //   println(x.Photon)
+    //   i += 1
+    // }
+
+
+
+
+    // val factory = FactoryClass[Tree2](schema, myclasses)
+    // val inChannel = new java.io.RandomAccessFile("bacon.raw", "r").getChannel
+    // val buffer = inChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, inChannel.size)
+    // buffer.order(java.nio.ByteOrder.nativeOrder)
+
+    // var tmp: Tree2 = null.asInstanceOf[Tree2]
+    // while (buffer.hasRemaining) {
+    //   println(buffer.getLong)
+    //   tmp = factory(buffer)
+    // }
+
+
+
+
   }
+
 }
