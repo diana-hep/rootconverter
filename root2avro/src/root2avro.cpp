@@ -206,6 +206,8 @@ int main(int argc, char **argv) {
       declareClasses(code, classNames);
   }
 
+  bool stream = (mode == std::string("avro-stream")  ||  mode == std::string("schema-stream"));
+    
   TreeWalker *treeWalker = nullptr;
 
   // main loop
@@ -221,7 +223,7 @@ int main(int argc, char **argv) {
       if (treeWalker->valid) treeWalker->next();
     }
     else {
-      treeWalker = new TreeWalker(url, treeLocation, schemaName, ns);
+      treeWalker = new TreeWalker(url, treeLocation, schemaName, ns, stream);
       while (treeWalker->valid  &&  !treeWalker->resolved()  &&  treeWalker->next())
         treeWalker->resolve();
       if (!treeWalker->resolved()) {
@@ -249,14 +251,14 @@ int main(int argc, char **argv) {
       else
       treeWalker->setEntryInCurrentTree(0);
 
-      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, false)) return -1;
+      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, stream)) return -1;
       do {
         if (end != NA  &&  currentEntry >= end) {
           treeWalker->closeAvro();
           return 0;
         }
 
-        if (!treeWalker->printAvro(false, currentEntry)) {
+        if (!treeWalker->printAvro(stream, currentEntry)) {
           treeWalker->closeAvro();
           return -1;
         }
@@ -265,7 +267,7 @@ int main(int argc, char **argv) {
       } while (treeWalker->next());
     }
 
-    // print out Avro bytes (without the "Obj" header)
+    // print out Avro bytes (WITHOUT the "Obj" header)
     else if (mode == std::string("avro-stream")) {
       if (start != NA  &&  start > currentEntry) {
         treeWalker->setEntryInCurrentTree(start - currentEntry);
@@ -274,14 +276,14 @@ int main(int argc, char **argv) {
       else
       treeWalker->setEntryInCurrentTree(0);
 
-      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, true)) return -1;
+      if (!treeWalker->printAvroHeaderOnce(codec, blockKB * 1024, stream)) return -1;
       do {
         if (end != NA  &&  currentEntry >= end) {
           treeWalker->closeAvro();
           return 0;
         }
 
-        if (!treeWalker->printAvro(true, currentEntry)) {
+        if (!treeWalker->printAvro(stream, currentEntry)) {
           treeWalker->closeAvro();
           return -1;
         }
@@ -309,7 +311,7 @@ int main(int argc, char **argv) {
     }
 
     // print the schema and exit
-    else if (mode == std::string("schema")) {
+    else if (mode == std::string("schema")  ||  mode == std::string("schema-stream")) {
       std::cout << treeWalker->avroSchema() << std::endl;
       return 0;
     }

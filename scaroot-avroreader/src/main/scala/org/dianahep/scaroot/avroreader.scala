@@ -60,7 +60,7 @@ package avroreader {
       parser.parse(dataType.schema.toString)
     }
     val writerSchema = {
-      val processBuilder = new java.lang.ProcessBuilder(arguments("schema", 0L))
+      val processBuilder = new java.lang.ProcessBuilder(arguments("schema-stream", 0L))
       val env = processBuilder.environment
       environment foreach {case (n, v) => env.put(n, v)}
       
@@ -71,8 +71,8 @@ package avroreader {
       parser.parse(process.getInputStream)
     }
 
-    // if (readerSchema != writerSchema)
-    //   throw new RuntimeException(s"Reader's schema:\n    $readerSchema\ndoes not match writer's schema:\n    $writerSchema")
+    if (readerSchema != writerSchema)
+      throw new RuntimeException(s"Reader's schema:\n    $readerSchema\ndoes not match writer's schema:\n    $writerSchema")
 
     private var entryIndex = -1L
     def index = entryIndex
