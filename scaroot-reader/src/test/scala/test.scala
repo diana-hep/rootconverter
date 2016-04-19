@@ -505,25 +505,25 @@ class DefaultSuite extends FlatSpec with Matchers {
       println(iterator2.next().event.fEventName)
   }
 
-  "Bacon.root" must "work" in {
-    val myclasses = Map("Events" -> My[Tree2], "baconhep::TEventInfo" -> My[baconhep.TEventInfo], "baconhep::TGenEventInfo" -> My[baconhep.TGenEventInfo], "baconhep::TGenParticle" -> My[baconhep.TGenParticle], "baconhep::TLHEWeight" -> My[baconhep.TLHEWeight], "baconhep::TElectron" -> My[baconhep.TElectron], "baconhep::TMuon" -> My[baconhep.TMuon], "baconhep::TTau" -> My[baconhep.TTau], "baconhep::TPhoton" -> My[baconhep.TPhoton], "baconhep::TVertex" -> My[baconhep.TVertex], "baconhep::TJet" -> My[baconhep.TJet], "baconhep::TAddJet" -> My[baconhep.TAddJet])
+  // "Bacon.root" must "work" in {
+  //   val myclasses = Map("Events" -> My[Tree2], "baconhep::TEventInfo" -> My[baconhep.TEventInfo], "baconhep::TGenEventInfo" -> My[baconhep.TGenEventInfo], "baconhep::TGenParticle" -> My[baconhep.TGenParticle], "baconhep::TLHEWeight" -> My[baconhep.TLHEWeight], "baconhep::TElectron" -> My[baconhep.TElectron], "baconhep::TMuon" -> My[baconhep.TMuon], "baconhep::TTau" -> My[baconhep.TTau], "baconhep::TPhoton" -> My[baconhep.TPhoton], "baconhep::TVertex" -> My[baconhep.TVertex], "baconhep::TJet" -> My[baconhep.TJet], "baconhep::TAddJet" -> My[baconhep.TAddJet])
 
-    val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses, end = 10L)
+  //   val iterator = RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses, end = 10L)
 
-    while (iterator.hasNext) {
-      val x = iterator.next()
-      println(x.PV)
-      println(x.Photon)
-    }
+  //   while (iterator.hasNext) {
+  //     val x = iterator.next()
+  //     println(x.PV)
+  //     println(x.Photon)
+  //   }
 
-    val iterator2 = external.RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses, command = "../root2avro/build/root2avro", end = 10L)
+  //   val iterator2 = external.RootTreeIterator[Tree2](List("../root2avro/test_Bacon/Output.root"), "Events", inferTypes = true, myclasses = myclasses, command = "../root2avro/build/root2avro", end = 10L)
 
-    while (iterator2.hasNext) {
-      val x = iterator2.next()
-      println(x.PV)
-      println(x.Photon)
-    }
+  //   while (iterator2.hasNext) {
+  //     val x = iterator2.next()
+  //     println(x.PV)
+  //     println(x.Photon)
+  //   }
 
-  }
+  // }
 
 }

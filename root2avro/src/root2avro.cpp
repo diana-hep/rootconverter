@@ -241,8 +241,27 @@ int main(int argc, char **argv) {
       continue;
     }
 
+    // print out JSON strings (one JSON document per line)
+    if (mode == std::string("json")) {
+      if (start != NA  &&  start > currentEntry) {
+        treeWalker->setEntryInCurrentTree(start - currentEntry);
+        currentEntry = start;
+      }
+      else
+      treeWalker->setEntryInCurrentTree(0);
+
+      do {
+        if (end != NA  &&  currentEntry >= end)
+          return 0;
+
+        treeWalker->printJSON();
+        currentEntry += 1;
+      } while (treeWalker->next());
+    }
+
+#ifdef AVRO
     // print out Avro bytes (with an "Obj" header)
-    if (mode == std::string("avro")) {
+    else if (mode == std::string("avro")) {
       if (start != NA  &&  start > currentEntry) {
         treeWalker->setEntryInCurrentTree(start - currentEntry);
         currentEntry = start;
@@ -291,6 +310,13 @@ int main(int argc, char **argv) {
       } while (treeWalker->next());
     }
 
+    // print the schema and exit
+    else if (mode == std::string("schema")) {
+      std::cout << treeWalker->avroSchema() << std::endl;
+      return 0;
+    }
+#endif // AVRO
+
     // dump data for ScaROOT-Reader
     else if (mode == std::string("dump")) {
       if (start != NA  &&  start > currentEntry) {
@@ -313,30 +339,6 @@ int main(int argc, char **argv) {
       } while (treeWalker->next());
     }
 
-    // print out JSON strings (one JSON document per line)
-    else if (mode == std::string("json")) {
-      if (start != NA  &&  start > currentEntry) {
-        treeWalker->setEntryInCurrentTree(start - currentEntry);
-        currentEntry = start;
-      }
-      else
-      treeWalker->setEntryInCurrentTree(0);
-
-      do {
-        if (end != NA  &&  currentEntry >= end)
-          return 0;
-
-        treeWalker->printJSON();
-        currentEntry += 1;
-      } while (treeWalker->next());
-    }
-
-    // print the schema and exit
-    else if (mode == std::string("schema")) {
-      std::cout << treeWalker->avroSchema() << std::endl;
-      return 0;
-    }
-
     // print the ROOT representation and exit
     else if (mode == std::string("repr")) {
       std::cout << treeWalker->repr() << std::endl;
@@ -354,6 +356,8 @@ int main(int argc, char **argv) {
     fwrite(&endMarker, sizeof(endMarker), 1, stdout);
   }
 
+#ifdef AVRO
   treeWalker->closeAvro();
+#endif
   return 0;
 }

@@ -34,7 +34,7 @@ package external {
                                                   myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                                   start: Long = 0L,
                                                   end: Long = -1L,
-                                                  command: String = "./root2avro",
+                                                  command: String = "root2avro",
                                                   environment: Map[String, String] = Map[String, String](),
                                                   numberOfTrials: Int = 4) extends Iterator[TYPE] {
     if (fileLocations.isEmpty)
@@ -159,7 +159,7 @@ package external {
                                        myclasses: Map[String, My[_]] = Map[String, My[_]](),
                                        start: Long = 0L,
                                        end: Long = -1L,
-                                       command: String = "./root2avro",
+                                       command: String = "root2avro",
                                        environment: Map[String, String] = Map[String, String](),
                                        numberOfTrials: Int = 4) =
       new RootTreeIterator[TYPE](fileLocations, treeLocation, includes, libs, inferTypes, myclasses, start, end, command, environment, numberOfTrials)
