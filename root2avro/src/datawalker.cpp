@@ -1029,7 +1029,7 @@ TTreeReaderArrayBase *TStringWalker::readerArray(TTreeReader *reader) {
 
 ///////////////////////////////////////////////////////////////////// MemberWalker
 
-MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
+MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(dataMember->GetName(), dataMember->GetTrueTypeName()),
   offset(dataMember->GetOffset()),
   comment(dataMember->GetTitle())
@@ -1038,13 +1038,13 @@ MemberWalker::MemberWalker(TDataMember *dataMember, std::string avroNamespace, s
   if (arrayDim > 0  &&  (typeName == std::string("char")  ||  typeName == std::string("const char")  ||  typeName == std::string("Char_t")  ||  typeName == std::string("const Char_t")))
     walker = new CStringWalker(fieldName);
   else {
-    walker = specializedWalker(fieldName, typeName, avroNamespace, defs, stream);
+    walker = specializedWalker(fieldName, typeName, avroNamespace, defs);
     for (int i = arrayDim - 1;  i >= 0;  i--)
       walker = new ArrayWalker(fieldName, walker, dataMember->GetMaxIndex(i));
   }
 }
 
-FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string typeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) {
+FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string typeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) {
   std::string tn(typeName);
   std::string vectorPrefix("vector<");
   std::string constPrefix("const ");
@@ -1056,10 +1056,10 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
     return new PointerWalker(fieldName, new CStringWalker(fieldName));
 
   else if (!tn.empty()  &&  tn.back() == '*')
-    return new PointerWalker(fieldName, specializedWalker(fieldName, tn.substr(0, tn.size() - 1), avroNamespace, defs, stream));
+    return new PointerWalker(fieldName, specializedWalker(fieldName, tn.substr(0, tn.size() - 1), avroNamespace, defs));
 
   else if (tn == std::string("TRef"))
-    return new TRefWalker(fieldName, avroNamespace, defs, stream);
+    return new TRefWalker(fieldName, avroNamespace, defs);
 
   else if (tn == std::string("vector<bool>"))
     return new StdVectorBoolWalker(fieldName);
@@ -1067,17 +1067,17 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
   else if (tn.substr(0, vectorPrefix.size()) == vectorPrefix  &&  tn.back() == '>') {
     tn = tn.substr(vectorPrefix.size(), tn.size() - vectorPrefix.size() - 1);
     while (!tn.empty()  &&  tn.back() == ' ') tn.pop_back();
-    return new StdVectorWalker(fieldName, typeName, specializedWalker(fieldName, tn, avroNamespace, defs, stream));
+    return new StdVectorWalker(fieldName, typeName, specializedWalker(fieldName, tn, avroNamespace, defs));
   }
 
   else if (tn == std::string("TObjArray"))
-    return new TObjArrayWalker(fieldName, avroNamespace, defs, stream);
+    return new TObjArrayWalker(fieldName, avroNamespace, defs);
 
   else if (tn == std::string("TRefArray"))
-    return new TRefArrayWalker(fieldName, avroNamespace, defs, stream);
+    return new TRefArrayWalker(fieldName, avroNamespace, defs);
 
   else if (tn == std::string("TClonesArray"))
-    return new TClonesArrayWalker(fieldName, avroNamespace, defs, stream);
+    return new TClonesArrayWalker(fieldName, avroNamespace, defs);
 
   else {
     if (tn == std::string("bool")  ||  tn == std::string("Bool_t"))
@@ -1113,7 +1113,7 @@ FieldWalker *MemberWalker::specializedWalker(std::string fieldName, std::string 
         if (defs.count(tn) > 0)
           return defs.at(tn);
         else {
-          ClassWalker *out = new ClassWalker(fieldName, tclass, avroNamespace, defs, stream);
+          ClassWalker *out = new ClassWalker(fieldName, tclass, avroNamespace, defs);
           defs.insert(std::pair<const std::string, ClassWalker*>(tn, out));
           out->fill();
           return out;
@@ -1190,19 +1190,18 @@ const void *ClassWalkerDataProvider::getData(const void *address, int index) {
   return memberWalker->unpack(address);
 }
 
-ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
+ClassWalker::ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, dropCppNamespace(tclass->GetName())),
   tclass(tclass),
   avroNamespace(addCppNamespace(tclass->GetName(), avroNamespace)),
   defs(defs),
-  stream(stream),
   dataProvider(this) { }
 
 void ClassWalker::fill() {
   TIter nextMember = tclass->GetListOfDataMembers();
   for (TDataMember *dataMember = (TDataMember*)nextMember();  dataMember != nullptr;  dataMember = (TDataMember*)nextMember()) {
     if ((dataMember->Property() & kIsStatic) == 0) {
-      MemberWalker *member = new MemberWalker(dataMember, avroNamespace, defs, stream);
+      MemberWalker *member = new MemberWalker(dataMember, avroNamespace, defs);
       if (!member->empty())
         members.push_back(member);
     }
@@ -1278,29 +1277,12 @@ std::string ClassWalker::repr(int indent, std::set<std::string> &memo) {
   }
 }
 
-std::string ClassWalker::reference(std::set<std::string> &memo) {
-  if (memo.find(std::string("com.gensler.scalavro.Reference")) != memo.end())
-    return "\"com.gensler.scalavro.Reference\"";
-  else {
-    memo.insert(std::string("com.gensler.scalavro.Reference"));
-    return "{\"type\": \"record\", \"name\": \"Reference\", \"namespace\": \"com.gensler.scalavro\", \"fields\": [{\"name\": \"id\", \"type\": \"long\"}]}";
-  }
-}
-
 std::string ClassWalker::avroSchema(int indent, std::set<std::string> &memo) {
-  if (memo.find(avroTypeName()) != memo.end()) {
-    if (stream)
-      return std::string("[\"") + avroTypeName() + std::string("\", ") + reference(memo) + std::string("]");
-
-    else
-      return std::string("\"") + avroTypeName() + std::string("\"");
-  }
+  if (memo.find(avroTypeName()) != memo.end())
+    return std::string("\"") + avroTypeName() + std::string("\"");
   else {
     memo.insert(avroTypeName());
     std::string out;
-
-    if (stream)
-      out += "[";
 
     out += std::string("{\"type\": \"record\",\n") + std::string(indent, ' ') +
            std::string(" \"name\": \"") + typeName + std::string("\",\n") + std::string(indent, ' ');
@@ -1314,9 +1296,6 @@ std::string ClassWalker::avroSchema(int indent, std::set<std::string> &memo) {
       out += (*iter)->avroSchema(indent + 3, memo);
     }
     out += std::string("\n") + std::string(indent, ' ') + std::string(" ]\n") + std::string(indent, ' ') + std::string("}");
-
-    if (stream)
-      out += ",\n" + std::string(indent, ' ') + reference(memo) + std::string("]");
 
     return out;
   }
@@ -1360,20 +1339,10 @@ void ClassWalker::printJSON(void *address, std::ostream &stream) {
 
 #ifdef AVRO
 bool ClassWalker::printAvro(void *address, avro_value_t *avrovalue) {
-  avro_value_t branch;
-  avro_value_t *avrorecord;
-
-  if (stream) {
-    avro_value_set_branch(avrovalue, 0, &branch);
-    avrorecord = &branch;
-  }
-  else
-    avrorecord = avrovalue;
-  
   size_t index = 0;
   for (auto iter = members.begin();  iter != members.end();  ++iter) {
     avro_value_t element;
-    avro_value_get_by_index(avrorecord, index, &element, nullptr);
+    avro_value_get_by_index(avrovalue, index, &element, nullptr);
     if (!(*iter)->printAvro(address, &element))
       return false;
     index++;
@@ -1497,7 +1466,7 @@ void *PointerWalker::copyToBuffer(void *ptr, void *limit, void *address) {
 
 ///////////////////////////////////////////////////////////////////// TRefWalker
 
-TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
+TRefWalker::TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, "*"), walker(nullptr) { }
 
 size_t TRefWalker::sizeOf() { return sizeof(TRef); }
@@ -1858,8 +1827,8 @@ const void *TObjArrayWalkerDataProvider::getData(const void *address, int index)
   return tObjArrayWalker->walker->unpack((const void*)array->At(index));
 }
 
-TObjArrayWalker::TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
-  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), stream(stream), walker(nullptr), classToAssert(nullptr), dataProvider(this) { }
+TObjArrayWalker::TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "TObjArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), classToAssert(nullptr), dataProvider(this) { }
 
 size_t TObjArrayWalker::sizeOf() { return sizeof(TObjArray); }
 
@@ -1873,7 +1842,7 @@ void TObjArrayWalker::resolve(const void *address) {
   TObjArray *array = (TObjArray*)address;
   if (!array->IsEmpty()) {
     classToAssert = TClass::GetClass(array->First()->ClassName());
-    walker = new ClassWalker(fieldName, classToAssert, avroNamespace, defs, stream);
+    walker = new ClassWalker(fieldName, classToAssert, avroNamespace, defs);
     ((ClassWalker*)walker)->fill();
     walker->resolve(array->First());
   }
@@ -1957,7 +1926,7 @@ void *TObjArrayWalker::copyToBuffer(void *ptr, void *limit, void *address) {
 
 ///////////////////////////////////////////////////////////////////// TRefArrayWalker
 
-TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
+TRefArrayWalker::TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   FieldWalker(fieldName, "TRefArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr) { }
 
 size_t TRefArrayWalker::sizeOf() { return sizeof(TRefArray); }
@@ -2027,8 +1996,8 @@ const void *TClonesArrayWalkerDataProvider::getData(const void *address, int ind
   return tClonesArrayWalker->walker->unpack((void*)array->At(index));
 }
 
-TClonesArrayWalker::TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
-  FieldWalker(fieldName, "TClonesArray"), avroNamespace(avroNamespace), defs(defs), stream(stream), walker(nullptr), dataProvider(this) { }
+TClonesArrayWalker::TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
+  FieldWalker(fieldName, "TClonesArray"), avroNamespace(avroNamespace), defs(defs), walker(nullptr), dataProvider(this) { }
 
 size_t TClonesArrayWalker::sizeOf() { return sizeof(TClonesArray); }
 
@@ -2040,7 +2009,7 @@ bool TClonesArrayWalker::resolved() { return walker != nullptr; }
 
 void TClonesArrayWalker::resolve(const void *address) {
   TClonesArray *array = (TClonesArray*)address;
-  walker = new ClassWalker(fieldName, array->GetClass(), avroNamespace, defs, stream);
+  walker = new ClassWalker(fieldName, array->GetClass(), avroNamespace, defs);
   ((ClassWalker*)walker)->fill();
   if (!array->IsEmpty())
     walker->resolve(array->First());
@@ -2421,9 +2390,9 @@ GenericReaderValue::GenericReaderValue(std::string fieldName, std::string typeNa
 
 const char *GenericReaderValue::GetDerivedTypeName() const { return typeName.c_str(); }
 
-ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream) :
+ReaderValueWalker::ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs) :
   ExtractableWalker(fieldName, tbranch->GetClassName()),
-  walker(MemberWalker::specializedWalker(fieldName, typeName, avroNamespace, defs, stream)),
+  walker(MemberWalker::specializedWalker(fieldName, typeName, avroNamespace, defs)),
   value(new GenericReaderValue(fieldName, typeName, reader, walker)) { }
 
 size_t ReaderValueWalker::sizeOf() { return walker->sizeOf(); }
@@ -2574,7 +2543,7 @@ void *RawTBranchTStringWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// TreeWalker
 
-TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace, bool stream) :
+TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace) :
   fileLocation(fileLocation), treeLocation(treeLocation), schemaName(schemaName), avroNamespace(avroNamespace)
 {
   valid = tryToOpenFile();
@@ -2597,7 +2566,7 @@ TreeWalker::TreeWalker(std::string fileLocation, std::string treeLocation, std::
     else if (className == std::string("TString"))
       fields.push_back(new RawTBranchTStringWalker(branchName, reader));
     else
-      fields.push_back(new ReaderValueWalker(branchName, tbranch, reader, avroNamespace, defs, stream));
+      fields.push_back(new ReaderValueWalker(branchName, tbranch, reader, avroNamespace, defs));
   }
 }
 

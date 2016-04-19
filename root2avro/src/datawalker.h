@@ -477,8 +477,8 @@ public:
   FieldWalker *walker;
   std::string comment;
 
-  MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
-  static FieldWalker *specializedWalker(std::string fieldName, std::string typeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  MemberWalker(TDataMember *dataMember, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
+  static FieldWalker *specializedWalker(std::string fieldName, std::string typeName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
@@ -515,11 +515,10 @@ public:
   TClass *tclass;
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
-  bool stream;
   std::vector<MemberWalker*> members;
   ClassWalkerDataProvider dataProvider;
 
-  ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  ClassWalker(std::string fieldName, TClass *tclass, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   void fill();    // has side-effects, must be called soon after constructor
 
   std::vector<std::string> splitCppNamespace(std::string className);
@@ -587,7 +586,7 @@ class TRefWalker : public FieldWalker {
 public:
   FieldWalker *walker;
 
-  TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  TRefWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
@@ -734,12 +733,11 @@ class TObjArrayWalker : public FieldWalker {
 public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
-  bool stream;
   FieldWalker *walker;
   TClass *classToAssert;
   TObjArrayWalkerDataProvider dataProvider;
 
-  TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  TObjArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
@@ -765,7 +763,7 @@ public:
   std::map<const std::string, ClassWalker*> &defs;
   FieldWalker *walker;
 
-  TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  TRefArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
@@ -800,11 +798,10 @@ class TClonesArrayWalker : public FieldWalker {
 public:
   std::string avroNamespace;
   std::map<const std::string, ClassWalker*> &defs;
-  bool stream;
   FieldWalker *walker;
   TClonesArrayWalkerDataProvider dataProvider;
 
-  TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  TClonesArrayWalker(std::string fieldName, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool empty();
@@ -908,7 +905,7 @@ public:
   FieldWalker *walker;
   GenericReaderValue *value;
 
-  ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs, bool stream);
+  ReaderValueWalker(std::string fieldName, TBranch *tbranch, TTreeReader *reader, std::string avroNamespace, std::map<const std::string, ClassWalker*> &defs);
   size_t sizeOf();
   const std::type_info *typeId();
   bool resolved();
@@ -1004,7 +1001,7 @@ public:
   avro_value_t avroValue;
 #endif
 
-  TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace, bool stream);
+  TreeWalker(std::string fileLocation, std::string treeLocation, std::string schemaName, std::string avroNamespace);
   bool tryToOpenFile();
   void reset(std::string fileLocation);
 
