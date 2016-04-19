@@ -34,7 +34,6 @@ Options:
                             ROOT file itself by inspecting its embedded streamers.
   --name=NAME               Name for TTree class (taken from TTree name if not provided).
   --ns=NAMESPACE            Package namespace for class ("data.root" if not provided).
-  --hadoop                  If supplied, make the objects Hadoop writables.
 """
 
     val libsPrefix = "--libs=(.*)".r
@@ -42,7 +41,6 @@ Options:
     val inferTypesPrefix = "--inferTypes"
     val namePrefix = "--name=(.*)".r
     val nsPrefix = "--ns=(.*)".r
-    val hadoopPrefix = "--hadoop".r
 
     def main(args: Array[String]) {
       var fileLocation: String = null
@@ -52,7 +50,6 @@ Options:
       var inferTypes: Boolean = false
       var name: String = null
       var ns: String = "data.root"
-      var hadoop: Boolean = false
 
       // Handle arguments in the same way as root2avro.
       args.foreach(_.trim match {
@@ -61,7 +58,6 @@ Options:
         case `inferTypesPrefix` => inferTypes = true
         case namePrefix(x) => name = x
         case nsPrefix(x) => ns = x
-        case hadoopPrefix() => hadoop = true
         case x if (fileLocation == null) => fileLocation = x
         case x if (treeLocation == null) => treeLocation = x
         case _ =>
@@ -104,10 +100,10 @@ Options:
       val originalName = schemaClass.name
       val renamedSchemaClass = schemaClass.copy(name = if (name == null) schemaClass.name else name)
 
-      println(generateScala(ns1, ns2, originalName, renamedSchemaClass, treeLocation, hadoop))
+      println(generateScala(ns1, ns2, originalName, renamedSchemaClass, treeLocation))
     }
 
-    def generateScala(ns1: String, ns2: String, originalName: String, schema: Schema, treeLocation: String, hadoop: Boolean) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
+    def generateScala(ns1: String, ns2: String, originalName: String, schema: Schema, treeLocation: String) = s"""// These classes represent your data. ScaROOT-Reader will convert ROOT TTree data into instances of these classes for
 // you to perform your analysis.
 //
 // You can add member data or member functions to these classes (in curly brackets after the "extends Serializable").
@@ -137,13 +133,13 @@ Options:
 // Note that the JVM (and therefore Scala) has no unsigned integer types. Unsigned integers are mapped to the next
 // larger numeric type (e.g. "unsigned int" goes to Long and "unsigned long" goes to Double).
 
-${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}${if (hadoop) "import scala.language.implicitConversions\nimport org.apache.hadoop.io.Writable\n\n" else ""}import org.dianahep.scaroot.reader._
+${if (ns1.isEmpty) "" else "package " + ns1 + "\n\n"}import org.dianahep.scaroot.reader._
 
 package $ns2 {
-${generateScalaClasses(ns2, originalName, schema, treeLocation, hadoop)}
+${generateScalaClasses(ns2, originalName, schema, treeLocation)}
 }"""
 
-    def generateScalaClasses(ns2: String, originalName: String, schema: Schema, treeLocation: String, hadoop: Boolean) = {
+    def generateScalaClasses(ns2: String, originalName: String, schema: Schema, treeLocation: String) = {
       def collectClasses(s: Schema, memo: mutable.Set[String]): List[SchemaClass] = s match {
         case SchemaClass(name, _) if (memo contains name) => Nil
         case schemaClass @ SchemaClass(name, fields) => {
@@ -175,23 +171,34 @@ ${generateScalaClasses(ns2, originalName, schema, treeLocation, hadoop)}
         case SchemaFloat  => "Float"
         case SchemaDouble => "Double"
         case SchemaString => "String"
-        case SchemaClass(name, _) => name
+        case SchemaClass(name, _) => name.replace("::", ".")
         case SchemaPointer(referent) => s"Option[${generateScalaType(referent)}]"
         case SchemaSequence(content) => s"Seq[${generateScalaType(content)}]"
       }
 
       def generateScalaClass(schemaClass: SchemaClass) = {
-        val header = s"  case class ${schemaClass.name}("
+        val (pre, post) =
+          if (schemaClass.name contains "::")
+            ("package " + schemaClass.name.split("::").init.mkString(".") + " {\n", "\n  }")
+          else
+            ("", "")
+
+        val caseClass = (schemaClass.fields.size <= 22)
+
+        val header = s"""  ${if (caseClass) "case " else ""}class ${schemaClass.name.split("::").last}("""
         val delimiter = "\n" + " " * header.size
         var lastHadComment = false
+
         val fields = schemaClass.fields.zipWithIndex collect {
           case (SchemaField(name, comment, t), i) =>
             val closer = if (i == schemaClass.fields.size - 1) ")" else ","
+
             lastHadComment = !comment.isEmpty
-            name + ": " + generateScalaType(t) + closer + generateComment(comment)
+
+            (if (caseClass) "" else "val ") + name + ": " + generateScalaType(t) + closer + generateComment(comment)
         }
 
-        header + fields.mkString(delimiter) + (if (lastHadComment) "\n" + " " * header.size else " ") + "extends Serializable"
+        pre + header + fields.mkString(delimiter) + (if (lastHadComment) "\n" + " " * header.size else " ") + "extends Serializable" + post
       }
 
       val schemaClassesAndNames = {
@@ -200,7 +207,7 @@ ${generateScalaClasses(ns2, originalName, schema, treeLocation, hadoop)}
       }
 
       val myclasses =
-        "  // Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.\n  val myclasses = Map(" + schemaClassesAndNames.map({case (n, c) => s"${Literal(Constant(n))} -> My[${c.name}]"}).mkString(", ") + ")"
+        "  // Pass 'myclasses' into RootTreeIterator to tell it to fill these classes, rather than 'Generic'.\n  val myclasses = Map(" + schemaClassesAndNames.map({case (n, c) => s"""${Literal(Constant(n))} -> My[${c.name.replace("::", ".")}]"""}).mkString(", ") + ")"
 
       val tl =
         s"  // Unless you move it, this is the location of the tree, provided for convenience and reusable code.\n  val treeLocation = ${Literal(Constant(treeLocation))}"
@@ -218,7 +225,7 @@ ${generateScalaClasses(ns2, originalName, schema, treeLocation, hadoop)}
         case SchemaFloat  => "in.readFloat()"
         case SchemaDouble => "in.readDouble()"
         case SchemaString => "in.readUTF()"
-        case SchemaClass(name, _) => s"""{val x$dummy = new ${name}Writable(); x$dummy.readFields(in); x$dummy.datum}"""
+        case SchemaClass(name, _) => s"""{val x$dummy = new ${name.replace("::", ".")}Writable(); x$dummy.readFields(in); x$dummy.datum}"""
         case SchemaPointer(referent) => s"""if (in.readBoolean()) Some(${generateReadExpression(referent, dummy + 1)}) else None"""
         case SchemaSequence(content) => s"""(for (x$dummy <- 0 until in.readInt()) yield {${generateReadExpression(content, dummy + 1)}}).toSeq"""
       }
@@ -238,7 +245,7 @@ ${generateScalaClasses(ns2, originalName, schema, treeLocation, hadoop)}
           case SchemaFloat  => indent + s"out.writeFloat($n)"
           case SchemaDouble => indent + s"out.writeDouble($n)"
           case SchemaString => indent + s"out.writeUTF($n)"
-          case SchemaClass(name, _) => indent + s"""$n.write(out)"""
+          case SchemaClass(_, _) => indent + s"""$n.write(out)"""
           case SchemaPointer(referent) => indent + s"""if ($n.isEmpty)
 $indent        out.writeBoolean(false)
 $indent      else {
@@ -252,40 +259,7 @@ $indent      }"""
         }
       }
 
-      def generateHadoopConverter(schemaClass: SchemaClass) = {
-        val writable = s"${schemaClass.name}Writable"
-        val header = s"      datum = new ${schemaClass.name}("
-        val readExpressions = schemaClass.fields.zipWithIndex collect {
-          case (SchemaField(n, _, t), i) => generateReadExpression(t, 0) + (if (i == schemaClass.fields.size - 1) ")" else ",") + "    // " + n
-        }
-        val writeStatements = schemaClass.fields collect {
-          case SchemaField(n, _, t) => generateWriteStatement("datum." + n, t, 0)
-        }
-        s"""  implicit class $writable(var datum: ${schemaClass.name}) extends Writable {
-    def this() { this(null) }
-    def readFields(in: java.io.DataInput) {
-$header${readExpressions.mkString("\n" + " " * header.size)}
-    }
-    def write(out: java.io.DataOutput) {
-      ${writeStatements.mkString("\n      ")}
-    }
-  }
-  object $writable {
-    def read(in: java.io.DataInput) = {
-      val out = new $writable()
-      out.readFields(in)
-      out
-    }
-  }
-  implicit def to${schemaClass.name}(wrapper: $writable) = wrapper.datum"""
-      }
-
-      val hadoopConverters =
-        if (!hadoop) ""
-        else "  // Import these implicits into Hadoop to provide methods for Hadoop's custom serialization.\n" + schemaClasses.map(generateHadoopConverter).mkString("\n\n")
-
-      val packageObject =
-        "\n}\n\npackage object " + ns2 + " {\n" + myclasses + "\n\n" + tl + (if (!myclasses.isEmpty  &&  !hadoopConverters.isEmpty) "\n\n" else "") + hadoopConverters
+      val packageObject = "\n}\n\npackage object " + ns2 + " {\n" + myclasses + "\n\n" + tl
           
       schemaClasses.map(generateScalaClass).mkString("\n\n") + packageObject
     }
