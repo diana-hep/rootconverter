@@ -896,7 +896,6 @@ public:
 class GenericReaderValue: public TTreeReaderValueBase {
 public:
   std::string typeName;
-  GenericReaderValue();
   GenericReaderValue(std::string fieldName, std::string typeName, TTreeReader *reader, FieldWalker *walker);
   const char *GetDerivedTypeName() const;
 };

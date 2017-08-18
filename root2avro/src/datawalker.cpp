@@ -2400,8 +2400,6 @@ void *LeafWalker::getAddress() {
 
 ///////////////////////////////////////////////////////////////////// ReaderValueWalker
 
-GenericReaderValue::GenericReaderValue() {}
-
 GenericReaderValue::GenericReaderValue(std::string fieldName, std::string typeName, TTreeReader *reader, FieldWalker *walker) :
   TTreeReaderValueBase(reader, fieldName.c_str(), walker->tdictionary()),
   typeName(typeName) { }
